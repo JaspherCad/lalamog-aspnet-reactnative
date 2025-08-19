@@ -1,0 +1,39 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+
+# Node / Expo / React Native
+node_modules/
+.expo/
+.expo-shared/
+npm-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+
+# iOS / Android (if present)
+ios/
+android/
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            margin: 50px 0;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+        .user-info {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+        .token {
+            word-break: break-all;
+            background-color: #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google Authentication Test</h1>
+        
+        <div id="login-section">
+            <p>Click the button below to authenticate with Google:</p>
+            <button onclick="loginWithGoogle()">Login with Google</button>
+        </div>
+        
+        <div id="user-section" class="hidden">
+            <h2>Welcome!</h2>
+            <div id="user-info" class="user-info"></div>
+            <button onclick="testProtectedEndpoint()">Test Weather Forecast (Protected)</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+        
+        <div id="weather-section" class="hidden">
+            <h3>Weather Forecast:</h3>
+            <div id="weather-info"></div>
+        </div>
+        
+        <div id="message" class="hidden"></div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('jwt_token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Check if user is already logged in
+        if (token && user.email) {
+            showUserInfo();
+        }
+
+        function loginWithGoogle() {
+            // Redirect to Google OAuth endpoint
+            window.location.href = '/api/auth/google';
+        }
+
+        function logout() {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('user');
+            location.reload();
+        }
+
+        function showUserInfo() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
+            
+            document.getElementById('user-info').innerHTML = `
+                <h3>User Information:</h3>
+                <p><strong>Name:</strong> ${user.name}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>ID:</strong> ${user.id}</p>
+                <div class="token">
+                    <strong>JWT Token:</strong><br>
+                    ${token}
+                </div>
+            `;
+        }
+
+        async function testProtectedEndpoint() {
+            if (!token) {
+                showMessage('No token available. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/weather/forecast', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const weather = await response.json();
+                    document.getElementById('weather-section').classList.remove('hidden');
+                    document.getElementById('weather-info').innerHTML = `
+                        <ul>
+                            ${weather.map(w => `
+                                <li>
+                                    <strong>${w.date}:</strong> ${w.temperatureC}°C (${w.temperatureF}°F) - ${w.summary}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    showMessage('Weather forecast loaded successfully!', 'success');
+                } else {
+                    showMessage(`Failed to load weather data: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Check URL parameters for authentication callback
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('token')) {
+            token = urlParams.get('token');
+            user = {
+                id: urlParams.get('id'),
+                email: urlParams.get('email'),
+                name: urlParams.get('name')
+            };
+            
+            localStorage.setItem('jwt_token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            // Clean URL
+            
+            
+            showUserInfo();
+            showMessage('Successfully logged in with Google!', 'success');
+        }
+    </script>
+</body>
+</html>
