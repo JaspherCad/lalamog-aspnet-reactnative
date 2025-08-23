@@ -245,7 +245,7 @@ namespace MyApi.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("Availabilities");
+                    b.ToTable("Availabilities", (string)null);
                 });
 
             modelBuilder.Entity("MyApi.Models.FightSchedule", b =>
@@ -338,7 +338,7 @@ namespace MyApi.Migrations
 
                     b.HasIndex("MatchId");
 
-                    b.ToTable("FightSchedules", t =>
+                    b.ToTable("FightSchedules", null, t =>
                         {
                             t.HasCheckConstraint("CK_FightSchedule_FutureTime", "\"ScheduledDateTime\" > NOW()");
 
@@ -376,7 +376,7 @@ namespace MyApi.Migrations
                     b.HasIndex("User1Id", "User2Id")
                         .IsUnique();
 
-                    b.ToTable("Matches", t =>
+                    b.ToTable("Matches", null, t =>
                         {
                             t.HasCheckConstraint("CK_Match_NoSelfMatch", "\"User1Id\" != \"User2Id\"");
 
@@ -424,7 +424,7 @@ namespace MyApi.Migrations
 
                     b.HasIndex("SenderId", "ReceiverId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("MyApi.Models.Profile", b =>
@@ -467,7 +467,7 @@ namespace MyApi.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Profiles");
+                    b.ToTable("Profiles", (string)null);
                 });
 
             modelBuilder.Entity("MyApi.Models.SwipeAction", b =>
@@ -498,7 +498,7 @@ namespace MyApi.Migrations
                     b.HasIndex("SwiperId", "SwipeeId")
                         .IsUnique();
 
-                    b.ToTable("SwipeActions", t =>
+                    b.ToTable("SwipeActions", null, t =>
                         {
                             t.HasCheckConstraint("CK_Swipe_Direction", "\"Direction\" IN ('right', 'left')");
                         });
@@ -523,7 +523,7 @@ namespace MyApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Forecasts");
+                    b.ToTable("Forecasts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

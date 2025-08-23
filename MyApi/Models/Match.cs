@@ -26,6 +26,36 @@ namespace MyApi.Models
         //#note: List of FightSchedules (ONE TO MANY) -- just reverse link
         public ICollection<FightSchedule> FightSchedules { get; set; } = new List<FightSchedule>();
 
+        // Helper methods for head-to-head stats (calculated from FightSchedules)
+        public int GetWinsForUser(Guid userId)
+        {
+            return FightSchedules?.Count(fs => fs.Status == "completed" && fs.WinnerId == userId) ?? 0;
+        }
+
+        public int GetLossesForUser(Guid userId)
+        {
+            var opponentId = userId == User1Id ? User2Id : User1Id;
+            return FightSchedules?.Count(fs => fs.Status == "completed" && fs.WinnerId == opponentId) ?? 0;
+        }
+
+        public int GetDrawsCount()
+        {
+            return FightSchedules?.Count(fs => fs.Status == "completed" && fs.FightResult == "draw") ?? 0;
+        }
+
+        public int GetTotalCompletedFights()
+        {
+            return FightSchedules?.Count(fs => fs.Status == "completed" && fs.ResultRecordedAt != null) ?? 0;
+        }
+
+        public FightSchedule? GetLatestCompletedFight()
+        {
+            return FightSchedules?
+                .Where(fs => fs.Status == "completed" && fs.ResultRecordedAt != null)
+                .OrderByDescending(fs => fs.ScheduledDateTime)
+                .FirstOrDefault();
+        }
+
     }
 
 

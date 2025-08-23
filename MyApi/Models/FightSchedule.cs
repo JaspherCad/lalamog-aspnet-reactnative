@@ -86,7 +86,41 @@ namespace MyApi.Models
         public int? User2Rating { get; set; }
         public string? User1Feedback { get; set; }
         public string? User2Feedback { get; set; }
-        
+
+
+
+
+
+
+
+
+
+        // #note
+        // PSEUDOCODE
+        // in a match, we have many fightSchedule where
+        // FightSchedule1 → WinnerId = user1Id → User1 wins++, User2 losses++
+        // FightSchedule2 → WinnerId = user1Id → User1 wins++, User2 losses++
+        // FightSchedule3 → WinnerId = user2Id → User2 wins++, User1 losses++
+        // #end-note
+
+
+        // Fight Result Tracking (FOR THIS SPECIFIC FIGHT SCHEDULE)
+        public Guid? WinnerId { get; set; } // null if draw/no result yet
+        public string FightResult { get; set; } = "pending"; // "user1_win", "user2_win", "draw", "no_contest", "pending"
+        public string? WinMethod { get; set; } // "KO", "TKO", "Decision", "Submission", etc.c
+        public int? FightDurationMinutes { get; set; }
+        public string? ResultNotes { get; set; }
+
+        // Rating changes for this fight
+        public int? User1RatingBefore { get; set; }
+        public int? User1RatingAfter { get; set; }
+        public int? User2RatingBefore { get; set; }
+        public int? User2RatingAfter { get; set; }
+
+        // When the result was recorded
+        public DateTime? ResultRecordedAt { get; set; }
+        public Guid? ResultRecordedByUserId { get; set; } // Who recorded the result
+
 
     }
 }

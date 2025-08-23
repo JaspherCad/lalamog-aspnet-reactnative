@@ -45,13 +45,57 @@ namespace MyApi.Models
 
         public string? ProfilePictureUrl { get; set; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Competitive Statistics (updated when fight results are recorded)
+        public int TotalWins { get; set; } = 0;
+        public int TotalLosses { get; set; } = 0;
+        public int TotalDraws { get; set; } = 0;
+        public int TotalFights { get; set; } = 0;
+        
+        // Win percentage (calculated property)
+        public double WinPercentage => TotalFights > 0 ? (double)TotalWins / TotalFights * 100 : 0;
+        
+        // Elo-style rating system
+        public int Rating { get; set; } = 1200; // Starting rating
+        
+        // Current win/loss streak
+        public int CurrentWinStreak { get; set; } = 0;
+        public int CurrentLossStreak { get; set; } = 0;
+        public int BestWinStreak { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Relational table for availability instead of JSONB
-    public class Availability
+    public class Availability //DEPRECATED. bro gumawa ng table for this. bad move tho
     {
         [Key]
         public Guid UserId { get; set; } // Primary key and foreign key

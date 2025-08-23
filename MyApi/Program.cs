@@ -86,6 +86,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISwipeService, SwipeService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFightingScheduleService, FightingScheduleService>();
+builder.Services.AddScoped<IFightStatsService, FightStatsService>();
 
 
 
