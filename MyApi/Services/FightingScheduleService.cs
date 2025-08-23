@@ -171,6 +171,41 @@ namespace MyApi.Services
         }
 
 
+
+
+        public async Task<FightScheduleDto> GetScheduleInfo(long matchId, long fightScheduleId)
+        {
+
+            //keep simple no need extra validations just str8 to the point.
+            var fightSchedule = await _context.FightSchedules
+                .Include(fs => fs.Match)
+                .FirstOrDefaultAsync(fs => fs.Id == fightScheduleId && fs.MatchId == matchId);
+
+            if (fightSchedule == null) throw new ArgumentException("Fight schedule not found");
+
+            
+
+            return new FightScheduleDto
+            {
+                Id = fightSchedule.Id,
+                MatchId = fightSchedule.MatchId,
+                ScheduledDateTime = fightSchedule.ScheduledDateTime,
+                LocationName = fightSchedule.LocationName,
+                LocationAddress = fightSchedule.LocationAddress,
+                LocationCoordinates = fightSchedule.LocationCoordinates != null
+                    ? new LocationDto
+                    {
+                        X = fightSchedule.LocationCoordinates.X,
+                        Y = fightSchedule.LocationCoordinates.Y
+                    }
+                    : null,
+                User1SkillLevelAtTimeOfScheduling = fightSchedule.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fightSchedule.User2SkillLevelAtTimeOfScheduling,
+                Status = fightSchedule.Status
+            };
+        }
+
+
         public async Task<FightScheduleDto> ConfirmFight(
         Guid userId,
         long fightScheduleId,
@@ -264,10 +299,98 @@ namespace MyApi.Services
 
 
 
+        public async Task<IEnumerable<FightScheduleDto>> GetAllSchedulesForUser(Guid userId)
+        {
+            var fights = await _context.FightSchedules
+                .Include(fs => fs.Match)
+                .Where(fs => fs.Match.User1Id == userId || fs.Match.User2Id == userId)
+                .ToListAsync();
 
+            //returns list then .map the list  to get DTOs
+            
+            return fights.Select(fight => new FightScheduleDto
+            {
+                Id = fight.Id,
+                MatchId = fight.MatchId,
+                ScheduledDateTime = fight.ScheduledDateTime,
+                LocationName = fight.LocationName,
+                LocationAddress = fight.LocationAddress,
+                LocationCoordinates = fight.LocationCoordinates != null
+                    ? new LocationDto { X = fight.LocationCoordinates.X, Y = fight.LocationCoordinates.Y }
+                    : null,
+                IsSafetyWaiverAcceptedByUser1 = fight.IsSafetyWaiverAcceptedByUser1,
+                IsSafetyWaiverAcceptedByUser2 = fight.IsSafetyWaiverAcceptedByUser2,
+                User1EmergencyContactName = fight.User1EmergencyContactName ?? string.Empty,
+                User1EmergencyContactPhone = fight.User1EmergencyContactPhone ?? string.Empty,
+                User2EmergencyContactName = fight.User2EmergencyContactName ?? string.Empty,
+                User2EmergencyContactPhone = fight.User2EmergencyContactPhone ?? string.Empty,
+                User1SkillLevelAtTimeOfScheduling = fight.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
+                Status = fight.Status,
+                CreatedAt = fight.CreatedAt,
+                UpdatedAt = fight.UpdatedAt
+            });
+        }
 
+       
+        public async Task<FightScheduleDto> CompleteFight(
+            Guid userId,
+            long fightScheduleId,
+            CompleteFightDto dto)
+        {
+            var fight = await _context.FightSchedules
+                .Include(fs => fs.Match)
+                .FirstOrDefaultAsync(fs => fs.Id == fightScheduleId);
 
+            if (fight == null) throw new ArgumentException("Fight not found");
+            if (fight.Match == null) throw new ArgumentException("Fight is not associated with a match");
 
+            // Verify user is part of this fight
+            if (fight.Match.User1Id != userId && fight.Match.User2Id != userId)
+            {
+                throw new UnauthorizedAccessException("You are not a participant in this fight");
+            }
+
+            // Verify fight is in confirmed status
+            if (fight.Status != "confirmed")
+            {
+                throw new ArgumentException("Fight must be confirmed before it can be completed");
+            }
+
+            // Update fight status to completed
+            fight.Status = "completed";
+            fight.UpdatedAt = DateTime.UtcNow;
+
+           
+
+            await _context.SaveChangesAsync();
+
+            // Return updated fight as DTO
+            var fightDto = new FightScheduleDto
+            {
+                Id = fight.Id,
+                MatchId = fight.MatchId,
+                ScheduledDateTime = fight.ScheduledDateTime,
+                LocationName = fight.LocationName,
+                LocationAddress = fight.LocationAddress,
+                LocationCoordinates = fight.LocationCoordinates != null
+                    ? new LocationDto { X = fight.LocationCoordinates.X, Y = fight.LocationCoordinates.Y }
+                    : null,
+                IsSafetyWaiverAcceptedByUser1 = fight.IsSafetyWaiverAcceptedByUser1,
+                IsSafetyWaiverAcceptedByUser2 = fight.IsSafetyWaiverAcceptedByUser2,
+                User1EmergencyContactName = fight.User1EmergencyContactName ?? string.Empty,
+                User1EmergencyContactPhone = fight.User1EmergencyContactPhone ?? string.Empty,
+                User2EmergencyContactName = fight.User2EmergencyContactName ?? string.Empty,
+                User2EmergencyContactPhone = fight.User2EmergencyContactPhone ?? string.Empty,
+                User1SkillLevelAtTimeOfScheduling = fight.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
+                Status = fight.Status, 
+                CreatedAt = fight.CreatedAt,
+                UpdatedAt = fight.UpdatedAt
+            };
+
+            return fightDto;
+        }
 
         public async Task<FightSchedule> CancelFight(
         Guid userId,
@@ -294,7 +417,54 @@ namespace MyApi.Services
             return fight;
         }
 
+        /// <summary>
+        /// Get all fight schedules for a specific match (both users can see their fight history together)
+        /// </summary>
+        public async Task<IEnumerable<FightScheduleDto>> GetAllSchedulesForMatch(long matchId, Guid requestingUserId)
+        {
+            // First verify the requesting user is part of this match
+            var match = await _context.Matches
+                .FirstOrDefaultAsync(m => m.Id == matchId && 
+                    (m.User1Id == requestingUserId || m.User2Id == requestingUserId));
 
+            if (match == null)
+            {
+                throw new UnauthorizedAccessException("You are not a participant in this match");
+            }
+
+            // Get all fight schedules for this specific match
+            var fights = await _context.FightSchedules
+                .Include(fs => fs.Match)
+                .Where(fs => fs.MatchId == matchId)
+                .OrderByDescending(fs => fs.ScheduledDateTime)
+                .ToListAsync();
+
+            return fights.Select(fight => new FightScheduleDto
+            {
+                Id = fight.Id,
+                MatchId = fight.MatchId,
+                ScheduledDateTime = fight.ScheduledDateTime,
+                LocationName = fight.LocationName,
+                LocationAddress = fight.LocationAddress,
+                LocationCoordinates = fight.LocationCoordinates != null
+                    ? new LocationDto { X = fight.LocationCoordinates.X, Y = fight.LocationCoordinates.Y }
+                    : null,
+                IsSafetyWaiverAcceptedByUser1 = fight.IsSafetyWaiverAcceptedByUser1,
+                IsSafetyWaiverAcceptedByUser2 = fight.IsSafetyWaiverAcceptedByUser2,
+                User1EmergencyContactName = fight.User1EmergencyContactName ?? string.Empty,
+                User1EmergencyContactPhone = fight.User1EmergencyContactPhone ?? string.Empty,
+                User2EmergencyContactName = fight.User2EmergencyContactName ?? string.Empty,
+                User2EmergencyContactPhone = fight.User2EmergencyContactPhone ?? string.Empty,
+                User1SkillLevelAtTimeOfScheduling = fight.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
+                Status = fight.Status,
+                CancellationReason = fight.CancellationReason ?? string.Empty,
+                CanceledAt = fight.CanceledAt,
+                CanceledByUserId = fight.CanceledByUserId,
+                CreatedAt = fight.CreatedAt,
+                UpdatedAt = fight.UpdatedAt
+            });
+        }
 
     }
 }

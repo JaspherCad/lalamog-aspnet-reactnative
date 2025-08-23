@@ -46,7 +46,7 @@ namespace MyApi.DTOs
 
     public class ScheduleFightRequestDto
     {
-        public Guid UserId { get; set; }
+        // UserId removed - extracted from JWT token automatically
         public long MatchId { get; set; }
         public DateTime ScheduledDateTime { get; set; }
         public string LocationName { get; set; } = string.Empty;
@@ -57,8 +57,15 @@ namespace MyApi.DTOs
 
     public class ConfirmFightRequestDto
     {
-        public Guid UserId { get; set; }
+        // UserId removed - extracted from JWT token automatically
         public long FightScheduleId { get; set; }
         public SafetyWaiverDto? SafetyWaiver { get; set; }
+    }
+
+   
+    public class CompleteFightDto
+    {
+        public string? CompletionNotes { get; set; }
+        
     }
 }
