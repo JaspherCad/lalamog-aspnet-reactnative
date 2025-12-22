@@ -12,7 +12,7 @@ The name **LALAMOG** is inspired by the Filipino delivery app **Lalamove**, but 
 - **"LAMOG"** - A Tagalog word meaning **"BEATEN UP"** or **"BATTERED"**
 
 So while Lalamove delivers packages, LALAMOG delivers... well, you get the idea! 😄 HAHA
-**Remember: LALAMOG - Where mga siga within the vicinity meet to get LAMOG'd!** 😄💪
+**Remember: LALAMOG - Where mga siga within the vicinity meet to get LAMOG'd!** 😄
 ---
 
 ## Features
@@ -42,12 +42,12 @@ So while Lalamove delivers packages, LALAMOG delivers... well, you get the idea!
 
 
 ### Planned Features
-- 🔮 Fight statistics and history
-- 🔮 Rating and review system
-- 🔮 Public fight events
-- 🔮 Training partner finder
-- 🔮 Gym integration
-- 🔮 Tournament brackets
+- X Fight statistics and history
+- X Rating and review system
+- X Public fight events
+- X Training partner finder
+- X Gym integration
+- X Tournament brackets
 
 ---
 
@@ -240,7 +240,7 @@ This is a personal project currently under development. Contributions, suggestio
 
 ---
 
-## 👨‍💻 Developer
+## meveloper
 
 Built with ❤️ and 🥊 by Jaspher
 
