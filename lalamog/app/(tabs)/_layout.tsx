@@ -36,15 +36,44 @@ export default function TabLayout() {
         <Tabs.Screen
           name="messages/index"
           options={{
-            title: 'chat',
+            title: 'Chat',
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="snapchat" color={color} />,
           }}
         />
 
+        <Tabs.Screen
+          name="myPage"
+          options={{
+            title: 'Public Fights',
+            tabBarIcon: ({ color }) => <FontAwesome size={28} name="map-marker" color={color} />,
+          }}
+        />
 
-
-
-
+        {/* Hide these from tab bar - they're sub-routes */}
+        <Tabs.Screen
+          name="messages/[matchId]"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="messages/matchSettings"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="messages/scheduleFight"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="indexOriginalDontTouch"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
 
 
       </Tabs>

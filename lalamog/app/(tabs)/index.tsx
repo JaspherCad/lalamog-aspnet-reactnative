@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Redirect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { processSwipeAPI, ProfileData, SwipeData } from '@/api/axiosInstance';
 
 
@@ -335,6 +335,18 @@ export default function Home() {
 
 
 
+    // Show loading state
+    if (fetching || currentProfiles.length === 0) {
+        return (
+            <View style={styles.wrapper}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2089dc" />
+                    <Text style={styles.loadingText}>Loading profiles...</Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
 
         <View style={styles.wrapper}>
@@ -353,11 +365,19 @@ export default function Home() {
                         const baseUrl = (API_BASE_URL ? API_BASE_URL.replace(/\/api$/, "") : "") || "http://localhost:5248"
                         const fullImageUrl = currentSelectedProfile.profilePictureUrl
                             ? `${baseUrl}${currentSelectedProfile.profilePictureUrl}`
-                            : undefined;
+                            : null;
 
-                        return (
-                            <Image source={{ uri: fullImageUrl }} style={styles.image} />
-                        )
+                        if (fullImageUrl) {
+                            return (
+                                <Image source={{ uri: fullImageUrl }} style={styles.image} />
+                            )
+                        } else {
+                            return (
+                                <View style={styles.avatarPlaceholder}>
+                                    <Text style={styles.placeholderText}>No Photo</Text>
+                                </View>
+                            )
+                        }
                     }}
                     customRender={(p) => { // I WILL PROVIDE THIS FUNCTION, self provide dapat
                         const levelLabel =
@@ -374,16 +394,16 @@ export default function Home() {
                         const baseUrl = (API_BASE_URL ? API_BASE_URL.replace(/\/api$/, "") : "") || "http://localhost:5248"
                         const fullImageUrl = p.profilePictureUrl
                             ? `${baseUrl}${p.profilePictureUrl}`
-                            : undefined;
+                            : null;
 
                         return (
                             <View style={styles.card}>
-                                {p.profilePictureUrl ? (
+                                {fullImageUrl ? (
                                     <Image source={{ uri: fullImageUrl }} style={styles.image} />
 
                                 ) : (
                                     <View style={styles.avatarPlaceholder}>
-                                        <Text>No Avatar</Text>
+                                        <Text style={styles.placeholderText}>No Photo</Text>
                                     </View>
                                 )}
 
@@ -528,6 +548,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    placeholderText: {
+        fontSize: 18,
+        color: '#999',
+        fontWeight: '600',
+    },
     bio: {
         marginTop: 4,
         color: '#f0f0f0',
@@ -572,6 +597,18 @@ const styles = StyleSheet.create({
         marginRight: 6,
         marginBottom: 6,
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#666',
+    },
+
 
     dayText: {
         color: '#fff',

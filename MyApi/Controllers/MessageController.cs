@@ -5,6 +5,17 @@ using MyApi.Services;
 using MyApi.Interfaces;
 using System.Security.Claims;
 
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
+
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
+
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
 namespace MyApi.Controllers
 {
     [ApiController]
@@ -60,6 +71,8 @@ namespace MyApi.Controllers
             }
         }
 
+
+        //get msg by match (more unique than userIDS)
         [HttpGet("match/{matchId}")]
         [Authorize]
         public async Task<IActionResult> GetMessageHistory(long matchId)

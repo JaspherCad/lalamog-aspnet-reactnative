@@ -1,0 +1,15 @@
+.git
+**/bin
+**/obj
+**/node_modules
+**/dist
+.env
+.env.*
+MyApi
+lalamog
+tests
+artifacts
+.cache
+**/data
+**/test-results
+**/playwright-report

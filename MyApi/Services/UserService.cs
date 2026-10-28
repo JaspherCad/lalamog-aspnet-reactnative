@@ -32,58 +32,109 @@ namespace MyApi.Services
 
         public async Task<IdentityResult> RegisterAsync(RegisterDto registerDto)
         //use native account to create user THEN create profile too./
+        //  { ---------------
+        //   "email": "AlterEgo2@gmail.com",
+        //   "password": "Password123!",
+        //   "confirmPassword": "Password123!",
+        //   "fullName": "Lance Gonzales",
+        //   "birthDate": "1990-05-14T00:00:00Z"
+        // }
         {
-            var user = new ApplicationUser
+            try
             {
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-                FullName = registerDto.FullName,
-                BirthDate = registerDto.BirthDate
-            };
-
-            //user manager registers user, sign in manager of course signs in (probably handles hashing password, validation, etc.)
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (result.Succeeded)
-            {
-                var profile = new Profile
+                var user = new ApplicationUser
                 {
-                    UserId = user.Id,
-                    Nickname = registerDto.FullName?.Split(' ').FirstOrDefault(),
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UserName = registerDto.Email,
+                    Email = registerDto.Email,
+                    FullName = registerDto.FullName,
+                    BirthDate = registerDto.BirthDate
                 };
 
-                _Databasecontext.Profiles.Add(profile);
-                await _Databasecontext.SaveChangesAsync();
-            }
+                //user manager registers user, sign in manager of course signs in (probably handles hashing password, validation, etc.)
+                var result = await _userManager.CreateAsync(user, registerDto.Password);
 
-            return result;
+                if (result.Succeeded)
+                {
+                    var profile = new Profile
+                    {
+                        UserId = user.Id,
+                        Nickname = registerDto.FullName?.Split(' ').FirstOrDefault(),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _Databasecontext.Profiles.Add(profile);
+                    await _Databasecontext.SaveChangesAsync();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in RegisterAsync: {ex.Message}");
+                throw new Exception($"Registration failed: {ex.Message}", ex);
+            }
         }
 
         public async Task<ProfileDto?> LoginAsync(LoginDto loginDto)
+        // {
+        //   "email": "user@example.com",
+        //   "password": "password123"
+        // }
+
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            if (user == null) return null;
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
-            if (!result.Succeeded) return null;
-
-            var token = _jwtService.GenerateToken(user.Id.ToString(), user.Email!, user.FullName ?? user.UserName!);
-
-            var response = await GetProfileAsync(user.Id);
-            if (response != null)
+            try
             {
-                // Include the JWT token in the profile response
-                response.JwtToken = token;
-            }
+                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                if (user == null)
+                {
+                    Console.WriteLine($"Login failed: User not found for email {loginDto.Email}");
+                    return null;
+                }
 
-            return response;
+                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+                if (!result.Succeeded)
+                {
+                    Console.WriteLine($"Login failed: Invalid password for user {loginDto.Email}");
+                    return null;
+                }
+
+                var token = _jwtService.GenerateToken(user.Id.ToString(), user.Email!, user.FullName ?? user.UserName!);
+
+                var response = await GetProfileAsync(user.Id);
+                if (response != null)
+                {
+                    // Include the JWT token in the profile response
+                    response.JwtToken = token;
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in LoginAsync: {ex.Message}");
+                throw new Exception($"Login failed: {ex.Message}", ex);
+            }
         }
 
 
         public async Task<ImageDto?> UploadUserProfileImageAsync(Guid userGuid, IFormFile file)
         {
+            //q and a?
+            // is wwwroot required? yes because of app.UseStaticFiles().
+            // can i change it? yes but 
+            /*
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
+                RequestPath = "/uploads"
+            });
+
+
+            then in UserService.cs:
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "profile-images", userGuid.ToString());
+            */
 
             try
             {
@@ -129,7 +180,8 @@ namespace MyApi.Services
                 // If user has an existing profile image, prepare to delete it
                 if (currentProfile?.ProfilePictureUrl != null && currentProfile.ProfilePictureUrl.Contains("/uploads/profile-images/"))
                 {
-                    var oldFileName = Path.GetFileName(new Uri(currentProfile.ProfilePictureUrl).LocalPath);
+                    //just the filename from the URL path 
+                    var oldFileName = Path.GetFileName(currentProfile.ProfilePictureUrl);
                     // Old image should be in the same user folder
                     oldImagePath = Path.Combine(uploadsPath, oldFileName);
                 }
@@ -258,6 +310,33 @@ namespace MyApi.Services
             };
         }
 
+
+        // SELECT json_build_object(
+        //     'ProfileId', p."Id",
+        //     'UserId', p."UserId",
+        //     'Nickname', p."Nickname",
+        //     'Bio', p."Bio",
+        //     'Location', json_build_object(
+        //         'x', ST_X(p."Location"::geometry),
+        //         'y', ST_Y(p."Location"::geometry)
+        //     ),
+        //     'FightingStyle', p."FightingStyle",
+        //     'ExperienceLevel', p."ExperienceLevel",
+        //     'ProfilePictureUrl', p."ProfilePictureUrl",
+        //     'CreatedAt', p."CreatedAt",
+        //     'UpdatedAt', p."UpdatedAt",
+        //     'Availability', json_build_object(
+        //         'days', a."Days",   
+        //         'time', a."Time"
+        //     ),
+        //     'UserName', u."UserName",
+        //     'Email', u."Email"
+        // )
+        // FROM "Profiles" p
+        // JOIN "AspNetUsers" u
+        //     ON p."UserId" = u."Id"
+        // LEFT JOIN "Availabilities" a
+        //     ON a."UserId" = p."UserId";
         public async Task<ProfileDto?> UpdateProfileAsync(Guid userId, UpdateProfileDto updateDto)
         // ⚠️ WARNING: IF we are going to use prefill everything that are existing in the profile 
         {

@@ -6,6 +6,7 @@ import { useMessages } from '@/lib/MessageContext';
 import { getMatchesDataAPI, MessageData, ProfileData } from '@/api/axiosInstance';
 import { getMatchesAPI } from '@/api/axiosInstance';
 import { Avatar } from '@rneui/themed';
+import { Ionicons } from '@expo/vector-icons';
 
 interface MatchDetails {
     id: number;
@@ -73,7 +74,7 @@ interface MatchDetails {
 const MessageScreen = () => {
     const { session } = useAuth();
     const { messages, sendMessage, loadMessages, clearMessages } = useMessages();
-    // #note: messages here are filled using websocket
+    // #note: messages here are filled using websocket... we did setMessages in useMessages.ts
 
 
     // #warning: HOW DID WE FILTEREDOUT THE MESSAGES? example:
@@ -151,7 +152,7 @@ const MessageScreen = () => {
     // #warning: RETURNS PROFILE NOT USER!
     const getOtherUser = () => {
         if (!matchDetails || !session) return null;
-        return session?.user?.id === matchDetails.user1.userId ? matchDetails.user2 : matchDetails.user1;
+        return session?.user?.userId === matchDetails.user1.userId ? matchDetails.user2 : matchDetails.user1;
     };
 
 
@@ -194,7 +195,7 @@ const MessageScreen = () => {
 
     //USED IN FLATLIST
     const renderMessage = ({ item }: { item: MessageData }) => {
-        const isCurrentUser = session?.user?.id === item.senderId;
+        const isCurrentUser = session?.user?.userId === item.senderId;
 
         return (
             <View style={[
@@ -219,7 +220,7 @@ const MessageScreen = () => {
 
 
 
-    //base case
+    //base case BEFORE jsx return
     if (loadingMatch) {
         return (
             <View style={styles.loaderContainer}>
@@ -268,7 +269,23 @@ const MessageScreen = () => {
                             {matchDetails.status === 'active' ? 'Online' : 'Last seen recently'}
                         </Text>
                     </View>
+
+
+                    
+                    
                 </View>
+
+
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.push({
+                        pathname: '/(tabs)/messages/matchSettings' as any,
+                        params: { matchId: matchId }
+                    })}
+                >
+                    <Text style={styles.backText}>←SETINGS</Text>
+                </TouchableOpacity>
+                
             </View>
 
             <FlatList
@@ -314,6 +331,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
         backgroundColor: '#fff',
+        justifyContent: 'space-between',
     },
     backButton: {
         marginRight: 10,
@@ -324,6 +342,11 @@ const styles = StyleSheet.create({
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
+    },
+    settingsButton: {
+        padding: 8,
+        marginLeft: 10,
     },
     avatar: {
         backgroundColor: '#f0f0f0',

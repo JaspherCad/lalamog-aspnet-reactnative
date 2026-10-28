@@ -106,8 +106,10 @@ namespace MyApi.Models
 
         // Fight Result Tracking (FOR THIS SPECIFIC FIGHT SCHEDULE)
         public Guid? WinnerId { get; set; } // null if draw/no result yet
+        
+        [Column("MatchResult")]
         public string FightResult { get; set; } = "pending"; // "user1_win", "user2_win", "draw", "no_contest", "pending"
-        public string? WinMethod { get; set; } // "KO", "TKO", "Decision", "Submission", etc.c
+        public string? WinMethod { get; set; } // "KO", "TKO", "Decision", "Submission", etc.
         public int? FightDurationMinutes { get; set; }
         public string? ResultNotes { get; set; }
 
@@ -120,6 +122,9 @@ namespace MyApi.Models
         // When the result was recorded
         public DateTime? ResultRecordedAt { get; set; }
         public Guid? ResultRecordedByUserId { get; set; } // Who recorded the result
+
+        // Fight GIF URL (uploaded after fight completion)
+        public string? FightGifUrl { get; set; }
 
 
     }

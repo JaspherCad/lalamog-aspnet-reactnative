@@ -14,6 +14,15 @@ using NpgsqlTypes;
 using MyApi.Interfaces;
 
 
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
+//#error: WE ARE NO LONGER USING THIS!
+//#error: WE ARE NOW USING MessageHub.cs (SignalR WEBSOCKET)
+
 
 namespace MyApi.Services
 {
@@ -30,13 +39,15 @@ namespace MyApi.Services
 
         //jane doe: f2603802-deb3-4377-8651-1134db7837a7
         //jaspher: 5c344aee-e3c1-4faf-846b-73cb28574d76
+
         //postman sample 
         // {
         //     "SwipeeId":"5c344aee-e3c1-4faf-846b-73cb28574d76",
         //     "Direction": "right"
-        // }
+        // } --from future me WHAT THE FUCK IS THAT POSTMAN SAMPLE?? ill keep it .
 
 
+        //MESSAGE: you can only send message to someone you have MATCHID with.
 
         public async Task<MessageDto> SendMessageAsync(Guid senderId, Guid receiverId, string content, long matchId)
         {

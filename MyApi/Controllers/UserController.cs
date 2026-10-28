@@ -30,38 +30,72 @@ namespace MyApi.Controllers
 
 
         [HttpPost("register")]
+        //  { ---------------
+        //   "email": "AlterEgo2@gmail.com",
+        //   "password": "Password123!",
+        //   "confirmPassword": "Password123!",
+        //   "fullName": "Lance Gonzales",
+        //   "birthDate": "1990-05-14T00:00:00Z"
+        // }
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = await _userService.RegisterAsync(registerDto);
-
-            if (result.Succeeded)
+            try
             {
-                return Ok(new { message = "User registered successfully" });
-            }
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return BadRequest(new { message = "Validation failed", errors });
+                }
 
-            foreach (var error in result.Errors)
+                var result = await _userService.RegisterAsync(registerDto);
+
+                if (result.Succeeded)
+                {
+                    return Ok(new { message = "User registered successfully" });
+                }
+
+                var identityErrors = result.Errors.Select(e => e.Description).ToList();
+                return BadRequest(new { message = "Registration failed", errors = identityErrors });
+            }
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                Console.WriteLine($"Error in Register endpoint: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred during registration", error = ex.Message });
             }
-
-            return BadRequest(ModelState);
         }
 
+
+
         [HttpPost("login")]
+        // {
+        //   "email": "user@example.com",
+        //   "password": "password123"
+        // }
+
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return BadRequest(new { message = "Validation failed", errors });
+                }
 
-            var profileWithToken = await _userService.LoginAsync(loginDto);
+                var profileWithToken = await _userService.LoginAsync(loginDto);
 
-            if (profileWithToken == null)
-                return Unauthorized(new { message = "Invalid email or password" });
+                if (profileWithToken == null)
+                {
+                    return Unauthorized(new { message = "Invalid email or password" });
+                }
 
-            return Ok(profileWithToken);
+                return Ok(profileWithToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in Login endpoint: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred during login", error = ex.Message });
+            }
         }
 
         //postgresql command: 
@@ -82,6 +116,20 @@ namespace MyApi.Controllers
             var profile = await _userService.GetProfileAsync(userGuid);
             if (profile == null)
                 return NotFound(new { message = "Profile not found" });
+
+            return Ok(profile);
+        }
+
+
+        [HttpGet("profile/{id}")]
+        public async Task<IActionResult> GetProfileById([FromRoute] Guid id)
+        {
+            var profile = await _userService.GetProfileAsync(id);
+
+            if (profile == null)
+            {
+                return NotFound(new { message = "Profile not found" });
+            }
 
             return Ok(profile);
         }
@@ -134,7 +182,50 @@ namespace MyApi.Controllers
             }
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // SELECT json_build_object(
+        //     'ProfileId', p."Id",
+        //     'UserId', p."UserId",
+        //     'Nickname', p."Nickname",
+        //     'Bio', p."Bio",
+        //     'Location', json_build_object(
+        //         'x', ST_X(p."Location"::geometry),
+        //         'y', ST_Y(p."Location"::geometry)
+        //     ),
+        //     'FightingStyle', p."FightingStyle",
+        //     'ExperienceLevel', p."ExperienceLevel",
+        //     'ProfilePictureUrl', p."ProfilePictureUrl",
+        //     'CreatedAt', p."CreatedAt",
+        //     'UpdatedAt', p."UpdatedAt",
+        //     'Availability', json_build_object(
+        //         'days', a."Days",   
+        //         'time', a."Time"
+        //     ),
+        //     'UserName', u."UserName",
+        //     'Email', u."Email"
+        // )
+        // FROM "Profiles" p
+        // JOIN "AspNetUsers" u
+        //     ON p."UserId" = u."Id"
+        // LEFT JOIN "Availabilities" a
+        //     ON a."UserId" = p."UserId";
         [HttpPut("profile")]
+
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto updateDto)
         {

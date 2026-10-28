@@ -15,26 +15,13 @@ import { Avatar, Image } from '@rneui/themed';
 
 interface MatchItem {
   id: number;
-  user1Id: string;
-  user2Id: string;
+  user1Id?: string; // Optional since backend might not provide it
+  user2Id?: string; // Optional since backend might not provide it
   status: string;
   createdAt: string;
-  updatedAt: string;
-  user1: {
-    id: string;
-    email: string;
-    fullName: string;
-    nickname: string;
-
-    profile: ProfileData;
-  };
-  user2: {
-    id: string;
-    email: string;
-    fullName: string;
-    profile: ProfileData;
-    nickname: string;
-  };
+  updatedAt?: string;
+  user1: ProfileData; // Direct profile data, not nested
+  user2: ProfileData; // Direct profile data, not nested
 }
 
 
@@ -69,13 +56,33 @@ export default function Index() {
 
   //helper function to get the otherUser Except me ofc
   const getOtherUser = (match: MatchItem) => {
-    return match.user1Id === session?.user.id ? match.user2 : match.user1;
+    // Debug logging
+    console.log('=== DEBUGGING MATCH ===');
+    console.log('My session user ID (userId):', session?.user.userId);
+    console.log('My session profile ID (id):', session?.user.id);
+    console.log('Match ID:', match.id);
+    console.log('Match user1Id:', match.user1Id);
+    console.log('Match user2Id:', match.user2Id);
+    console.log('Match user1.userId:', match.user1.userId);
+    console.log('Match user2.userId:', match.user2.userId);
+    console.log('Match user1.nickname:', match.user1.nickname);
+    console.log('Match user2.nickname:', match.user2.nickname);
+    
+    // Compare using the userId field from the profile data with session.user.userId (not .id)
+    const isUser1Me = match.user1.userId === session?.user.userId;
+    console.log('Is user1 me?', isUser1Me);
+    
+    const otherUser = isUser1Me ? match.user2 : match.user1;
+    console.log('Selected other user:', otherUser.nickname, otherUser.userId);
+    console.log('=== END DEBUG ===');
+    
+    return otherUser;
   };
 
 
   const renderMatchItem = ({ item }: { item: MatchItem }) => { 
     const otherUser = getOtherUser(item);
-    const profile = otherUser.profile;
+    // otherUser is now directly a ProfileData object
 
     return (
       <TouchableOpacity
@@ -84,8 +91,8 @@ export default function Index() {
           pathname: '/messages/[matchId]',
           params: {
             matchId: item.id,
-            receiverId: otherUser.id,
-            receiverName: otherUser.fullName || otherUser.email
+            receiverId: otherUser.userId, // Use userId from profile
+            receiverName: otherUser.nickname || 'Unknown User'
           }
         })}
       >
@@ -93,18 +100,18 @@ export default function Index() {
           <Avatar
             size={60}
             rounded
-            source={profile?.profilePictureUrl ? { uri: profile.profilePictureUrl } : undefined}
-            icon={!profile?.profilePictureUrl ? { type: 'font-awesome', name: 'user' } : undefined}
+            source={otherUser?.profilePictureUrl ? { uri: otherUser.profilePictureUrl } : undefined}
+            icon={!otherUser?.profilePictureUrl ? { type: 'font-awesome', name: 'user' } : undefined}
             containerStyle={styles.avatar}
           />
           {item.status === 'active' && <View style={styles.onlineIndicator} />}
         </View>
         <View style={styles.matchDetails}>
           <Text style={styles.name}>
-            {otherUser.nickname || otherUser.email}
+            {otherUser.nickname || 'Unknown User'}
           </Text>
           <Text style={styles.lastMessage} numberOfLines={1}>
-            {profile?.bio || 'No bio yet'}
+            {otherUser?.bio || 'No bio yet'}
           </Text>
         </View>
         <Text style={styles.time}>
@@ -135,7 +142,24 @@ export default function Index() {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()}>
+        <TouchableOpacity 
+          style={styles.retryButton} 
+          onPress={async () => {
+            if (!session) return;
+            try {
+              setLoading(true);
+              setError(null);
+              const response = await getMatchesDataAPI();
+              setMatches(response.data);
+              console.log('Matches reloaded successfully:', response.data);
+            } catch (err) {
+              setError('Failed to load matches');
+              console.error('Error reloading matches:', err);
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
       </View>

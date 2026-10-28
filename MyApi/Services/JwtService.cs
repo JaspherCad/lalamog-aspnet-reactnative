@@ -37,7 +37,7 @@ namespace MyApi.Services
                     new Claim(ClaimTypes.Email, email),
                     new Claim(ClaimTypes.Name, name)
                 }),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddMinutes(15), // 15 minutes
                 Issuer = jwtSettings["Issuer"],
                 Audience = jwtSettings["Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

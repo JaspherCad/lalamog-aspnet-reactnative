@@ -2,6 +2,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
+
+//#error: WE ARE NO LONGER USING SUPABASE! all is .netCore backend
 
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;

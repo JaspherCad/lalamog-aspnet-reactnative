@@ -81,24 +81,39 @@ namespace MyApi.Services
         Guid userId,
         ScheduleFightRequestDto dto)
         {
-
-
-            // 1. Validate scheduling ability
-            if (!await CanScheduleFight(userId, dto.MatchId))
-            {
-                Console.WriteLine($"MatchId: {dto.MatchId}");
-                throw new ArgumentException("Cannot schedule fight");
-            }
-
-
-
-            // 2. Get match details
+            // 1. Verify user is part of the match and get match details with includes
             var match = await _context.Matches
                 .Include(m => m.User1)
                 .Include(m => m.User2)
-                .FirstOrDefaultAsync(m => m.Id == dto.MatchId);
+                .Where(m => m.Id == dto.MatchId &&
+                    (m.User1Id == userId || m.User2Id == userId))
+                .FirstOrDefaultAsync();
 
-            if (match == null) throw new ArgumentException("Match not found");
+            if (match == null)
+            {
+                throw new ArgumentException("You are not part of this match or match not found");
+            }
+
+            // 2. Check for existing active fight schedules
+            var existingFight = await _context.FightSchedules
+                .AnyAsync(fs => fs.MatchId == dto.MatchId &&
+                    fs.Status != "canceled" && fs.Status != "completed");
+
+            if (existingFight)
+            {
+                throw new ArgumentException("This match already has an active fight schedule. Please cancel or complete the existing fight before scheduling a new one.");
+            }
+
+            // 3. Verify user's profile is complete
+            var profile = await _context.Profiles
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile == null ||
+                profile.ExperienceLevel == null ||
+                string.IsNullOrEmpty(profile.FightingStyle))
+            {
+                throw new ArgumentException("Please complete your profile (experience level and fighting style) before scheduling a fight");
+            }
 
             //#info: since match is in lexicographically order, we can automate the user1/user2 assignment here
 
@@ -201,7 +216,8 @@ namespace MyApi.Services
                     : null,
                 User1SkillLevelAtTimeOfScheduling = fightSchedule.User1SkillLevelAtTimeOfScheduling,
                 User2SkillLevelAtTimeOfScheduling = fightSchedule.User2SkillLevelAtTimeOfScheduling,
-                Status = fightSchedule.Status
+                Status = fightSchedule.Status,
+                FightGifUrl = fightSchedule.FightGifUrl
             };
         }
 
@@ -261,7 +277,7 @@ namespace MyApi.Services
             //         public ICollection<FightSchedule> FightSchedules { get; set; } = new List<FightSchedule>();
             // #note: remember: always ONLY Many to One code, no need for One to Many that causes issue like this.. so return DTO to avoid error
 
-            //#end-error: 
+            //#end-error: nvm, an error occured here haha.
 
             //#info: fight here is already updated ---> idk why but not very SPRING BOOT.
 
@@ -289,7 +305,8 @@ namespace MyApi.Services
                 User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
                 Status = fight.Status,
                 CreatedAt = fight.CreatedAt,
-                UpdatedAt = fight.UpdatedAt
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
                 // add whatever other safe fields you want
             };
 
@@ -328,7 +345,8 @@ namespace MyApi.Services
                 User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
                 Status = fight.Status,
                 CreatedAt = fight.CreatedAt,
-                UpdatedAt = fight.UpdatedAt
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
             });
         }
 
@@ -386,26 +404,29 @@ namespace MyApi.Services
                 User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
                 Status = fight.Status, 
                 CreatedAt = fight.CreatedAt,
-                UpdatedAt = fight.UpdatedAt
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
             };
 
             return fightDto;
         }
 
-        public async Task<FightSchedule> CancelFight(
+        public async Task<FightScheduleDto> CancelFight(
         Guid userId,
         long fightScheduleId,
         string reason)
         {
             var fight = await _context.FightSchedules
+                .Include(fs => fs.Match) // #warning: Match is from different table so eager load.
                 .FirstOrDefaultAsync(fs => fs.Id == fightScheduleId);
 
             if (fight == null) throw new ArgumentException("Fight not found");
+            if (fight.Match == null) throw new ArgumentException("Fight is not associated with a match");
 
             // Verify user is part of this fight
             if (fight.Match.User1Id != userId && fight.Match.User2Id != userId)
             {
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedAccessException("You are not a participant in this fight");
             }
 
             fight.Status = "canceled";
@@ -414,7 +435,72 @@ namespace MyApi.Services
             fight.CanceledByUserId = userId;
 
             await _context.SaveChangesAsync();
-            return fight;
+
+            // Return as DTO to avoid circular reference
+            var fightDto = new FightScheduleDto
+            {
+                Id = fight.Id,
+                MatchId = fight.MatchId,
+                ScheduledDateTime = fight.ScheduledDateTime,
+                LocationName = fight.LocationName,
+                LocationAddress = fight.LocationAddress,
+                LocationCoordinates = fight.LocationCoordinates != null
+                    ? new LocationDto { X = fight.LocationCoordinates.X, Y = fight.LocationCoordinates.Y }
+                    : null,
+                IsSafetyWaiverAcceptedByUser1 = fight.IsSafetyWaiverAcceptedByUser1,
+                IsSafetyWaiverAcceptedByUser2 = fight.IsSafetyWaiverAcceptedByUser2,
+                User1EmergencyContactName = fight.User1EmergencyContactName ?? string.Empty,
+                User1EmergencyContactPhone = fight.User1EmergencyContactPhone ?? string.Empty,
+                User2EmergencyContactName = fight.User2EmergencyContactName ?? string.Empty,
+                User2EmergencyContactPhone = fight.User2EmergencyContactPhone ?? string.Empty,
+                User1SkillLevelAtTimeOfScheduling = fight.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
+                Status = fight.Status,
+                CancellationReason = fight.CancellationReason ?? string.Empty,
+                CanceledAt = fight.CanceledAt,
+                CanceledByUserId = fight.CanceledByUserId,
+                CreatedAt = fight.CreatedAt,
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
+            };
+
+            return fightDto;
+        }
+
+
+        public async Task<IEnumerable<FightScheduleDto>> GetAllPublicFightSchedules()
+        {
+            var fights = await _context.FightSchedules
+                .Include(fs => fs.Match)
+                .OrderByDescending(fs => fs.ScheduledDateTime)
+                .ToListAsync();
+
+            return fights.Select(fight => new FightScheduleDto
+            {
+                Id = fight.Id,
+                MatchId = fight.MatchId,
+                ScheduledDateTime = fight.ScheduledDateTime,
+                LocationName = fight.LocationName,
+                LocationAddress = fight.LocationAddress,
+                LocationCoordinates = fight.LocationCoordinates != null
+                    ? new LocationDto { X = fight.LocationCoordinates.X, Y = fight.LocationCoordinates.Y }
+                    : null,
+                IsSafetyWaiverAcceptedByUser1 = fight.IsSafetyWaiverAcceptedByUser1,
+                IsSafetyWaiverAcceptedByUser2 = fight.IsSafetyWaiverAcceptedByUser2,
+                User1EmergencyContactName = fight.User1EmergencyContactName ?? string.Empty,
+                User1EmergencyContactPhone = fight.User1EmergencyContactPhone ?? string.Empty,
+                User2EmergencyContactName = fight.User2EmergencyContactName ?? string.Empty,
+                User2EmergencyContactPhone = fight.User2EmergencyContactPhone ?? string.Empty,
+                User1SkillLevelAtTimeOfScheduling = fight.User1SkillLevelAtTimeOfScheduling,
+                User2SkillLevelAtTimeOfScheduling = fight.User2SkillLevelAtTimeOfScheduling,
+                Status = fight.Status,
+                CancellationReason = fight.CancellationReason ?? string.Empty,
+                CanceledAt = fight.CanceledAt,
+                CanceledByUserId = fight.CanceledByUserId,
+                CreatedAt = fight.CreatedAt,
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
+            });
         }
 
         /// <summary>
@@ -424,7 +510,7 @@ namespace MyApi.Services
         {
             // First verify the requesting user is part of this match
             var match = await _context.Matches
-                .FirstOrDefaultAsync(m => m.Id == matchId && 
+                .FirstOrDefaultAsync(m => m.Id == matchId &&
                     (m.User1Id == requestingUserId || m.User2Id == requestingUserId));
 
             if (match == null)
@@ -462,8 +548,122 @@ namespace MyApi.Services
                 CanceledAt = fight.CanceledAt,
                 CanceledByUserId = fight.CanceledByUserId,
                 CreatedAt = fight.CreatedAt,
-                UpdatedAt = fight.UpdatedAt
+                UpdatedAt = fight.UpdatedAt,
+                FightGifUrl = fight.FightGifUrl
             });
+        }
+
+        public async Task<ImageDto?> UploadFightGif(Guid userId, long fightScheduleId, IFormFile file)
+        {
+            try
+            {
+                // 1. Validate file size (max 10MB for GIFs)
+                const long maxFileSize = 10 * 1024 * 1024; // 10MB
+                if (file.Length > maxFileSize)
+                    throw new ArgumentException("File size cannot exceed 10MB");
+
+                // 2. Validate file type (only GIF)
+                var allowedExtensions = new[] { ".gif" };
+                var allowedMimeTypes = new[] { "image/gif" };
+
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                    throw new ArgumentException("Invalid file type. Only GIF files are allowed");
+
+                if (!allowedMimeTypes.Contains(file.ContentType.ToLowerInvariant()))
+                    throw new ArgumentException("Invalid file content type");
+
+                // 3. Get fight schedule and validate
+                var fight = await _context.FightSchedules
+                    .Include(fs => fs.Match)
+                    .FirstOrDefaultAsync(fs => fs.Id == fightScheduleId);
+
+                if (fight == null)
+                    throw new ArgumentException("Fight schedule not found");
+
+                if (fight.Match == null)
+                    throw new ArgumentException("Fight is not associated with a match");
+
+                // 4. Verify user is part of the match
+                if (fight.Match.User1Id != userId && fight.Match.User2Id != userId)
+                    throw new UnauthorizedAccessException("You are not part of this match");
+
+                // 5. Verify fight is completed
+                if (fight.Status != "completed")
+                    throw new ArgumentException("Can only upload GIF for completed fights");
+
+                // 6. Create upload directory
+                var uploadsPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "uploads",
+                    "fight-gifs",
+                    fightScheduleId.ToString()
+                );
+
+                if (!Directory.Exists(uploadsPath))
+                    Directory.CreateDirectory(uploadsPath);
+
+                // 7. Generate unique filename
+                var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var uniqueFileName = $"fight_{timestamp}{fileExtension}";
+                var filePath = Path.Combine(uploadsPath, uniqueFileName);
+
+                // 8. Get old GIF path if exists
+                string oldGifPath = null;
+                if (!string.IsNullOrEmpty(fight.FightGifUrl) && fight.FightGifUrl.Contains("/uploads/fight-gifs/"))
+                {
+                    var oldFileName = Path.GetFileName(fight.FightGifUrl);
+                    oldGifPath = Path.Combine(uploadsPath, oldFileName);
+                }
+
+                // 9. Save file to disk
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // 10. Generate URL
+                var fileUrl = $"/uploads/fight-gifs/{fightScheduleId}/{uniqueFileName}";
+
+                // 11. Update fight schedule
+                fight.FightGifUrl = fileUrl;
+                fight.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                // 12. Delete old GIF if exists
+                if (!string.IsNullOrEmpty(oldGifPath) && System.IO.File.Exists(oldGifPath))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldGifPath);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        Console.WriteLine($"Warning: Could not delete old fight GIF: {deleteEx.Message}");
+                    }
+                }
+
+                return new ImageDto
+                {
+                    Message = "Fight GIF uploaded successfully",
+                    ImageUrl = fileUrl,
+                    FileName = uniqueFileName,
+                    FileSize = file.Length
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading fight GIF: {ex.Message}");
+                return new ImageDto
+                {
+                    Message = $"Error uploading fight GIF: {ex.Message}",
+                    ImageUrl = string.Empty,
+                    FileName = string.Empty,
+                    FileSize = 0
+                };
+            }
         }
 
     }

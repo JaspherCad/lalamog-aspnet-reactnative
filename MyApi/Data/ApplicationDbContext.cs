@@ -136,14 +136,18 @@ namespace MyApi.Data
                 entity.Property(fs => fs.LocationCoordinates)
                     .HasColumnType("geography"); // PostGIS geography type
 
+                // Map FightResult property to MatchResult column
+                entity.Property(fs => fs.FightResult)
+                    .HasColumnName("MatchResult");
+
                 // Check constraint for status values
                 entity.HasCheckConstraint("CK_FightSchedule_Status",
                     "\"Status\" IN ('scheduled', 'confirmed', 'in-progress', 'completed', 'canceled')");
 
 
-                // Ensure scheduled time is in future
+                // Ensure scheduled time is in future (except for canceled/completed fights)
                 entity.HasCheckConstraint("CK_FightSchedule_FutureTime",
-                    "\"ScheduledDateTime\" > NOW()");
+                    "(\"Status\" IN ('canceled', 'completed')) OR (\"ScheduledDateTime\" > NOW())");
 
                 // Skill level constraints (1-5 scale)
                 entity.HasCheckConstraint("CK_FightSchedule_SkillLevel",

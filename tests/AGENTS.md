@@ -1,0 +1,5 @@
+# Test scope
+
+Read repository [AGENTS.md](../AGENTS.md), then [codex-bootstrap.md](../codex-bootstrap.md) and its required sequence, plus [testing runbook](../docs/runbooks/TESTING.md). Automatically update the affected feature's verification/work record and handoff under [the memory protocol](../docs/memory/PROTOCOL.md) when changing feature tests. Supported backend tests are `Lalamog.Api.Tests/CoreFlowTests.cs` with ApiFixture and real SQL Server. ApiFactory/WorkflowTests are excluded superseded scaffolds.
+
+Test fixture creates/drops a unique LalamogTests database. Use a local test server and preserve cleanup-name safeguards. Never point these fixtures at a customer SQL server or replace SQL concurrency coverage with in-memory assumptions. Time-dependent session checks use TestClock. New Blob/RabbitMQ behavior needs real local Azurite/broker tests with isolated data/topology.

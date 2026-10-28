@@ -50,7 +50,7 @@
 // 4 Hub sends to:
 //      Receiver's group (so User B gets it)
 //      Sender's connection (so User A sees their message immediately)
-// 5 Both clients receive the message in their ReceiveMessage handler
+// 5 Both clients (sender and reciever) receive the message in their ReceiveMessage handler
 // 6 Our filtering logic determines if it's relevant for the current screen
 //#end-info
 
@@ -130,7 +130,7 @@ class SignalRService {
             });
 
             // Set up message handler BEFORE starting connection
-            // #warning set up all Our event handlers (.on()) before calling .start().
+            // #warning set up all Our event handlers (.onX()) before calling .start().
             //include this setupMessageHandlers -> to readily receive msgs from ReceiveMessage
             // #end-warning
 
@@ -176,7 +176,10 @@ class SignalRService {
     // main logic: this.connection.on();
 
     //https://learn.microsoft.com/en-us/aspnet/core/signalr/javascript-client?view=aspnetcore-9.0&tabs=visual-studio
+    // #note: onReceiveMessage is built in by library.
+
     onReceiveMessage(callback: (message: any) => void): void {
+        //built in serice by SignalR
         this.messageCallback = callback;
 
         // If connection is already established, set up the handler immediately
@@ -208,6 +211,8 @@ class SignalRService {
 
         try {
             await this.connection!.invoke('SendMessage', receiverId, content, matchId);
+                    // ☝️ calls backend MessageHub.SendMessage()
+
         } catch (error) {
             console.error('Error sending message:', error);
             throw error;

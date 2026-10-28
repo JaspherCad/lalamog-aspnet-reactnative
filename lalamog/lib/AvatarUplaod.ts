@@ -37,6 +37,10 @@ export function useAvatarUpload() {
     const [uploading, setUploading] = useState(false)
     // const { updatePictureProfileToFix } = useProfiles('accountrr'); //'account' try if bugged again
 
+
+
+
+    //uploads the BYTE (ng image) to backend
     async function uploadAvatar(userId: string, setAvatarUrl: (url: string) => void) {
         setUploading(true)
 
@@ -73,19 +77,52 @@ export function useAvatarUpload() {
                 return
             }
 
-            const asset = result.assets[0]
-            const uri = asset.uri
+            //3459.jpeg", 
+            // #error "type": "image", -------aaaaaaaaaaaaaaa not jpeg
+            // "uri": "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252Flalamog-c053604c-6aee-4f3c-a07d-5ef14ec8b1a0/ImagePicker/b0ba2811-da1b-4f61-bc2f-75dcc9c33459.jpeg"}
 
+
+            // #note: REVIEW uri vs blob... here we send the URI link of our 
+                // #note byte uploaded image (asset.uri provided by ImagePicker lib.)
+            const asset = result.assets[0]
+            const uri = asset.uri //directory where to find that uploaded image
+
+            console.log('where to find that image BYTE link uri? here: \n', uri)
             // Create file object for FormData
             const filename = uri.split('/').pop() || 'profile.jpg'
-            const fileType = asset.type || 'image/jpeg'
+            
+            // Determine proper MIME type from file extension
+            const extension = filename.toLowerCase().split('.').pop()
+            let mimeType = 'image/jpeg' // default
+            
+            switch (extension) {
+                case 'png':
+                    mimeType = 'image/png'
+                    break
+                case 'jpg':
+                case 'jpeg':
+                    mimeType = 'image/jpeg'
+                    break
+                case 'gif':
+                    mimeType = 'image/gif'
+                    break
+                case 'webp':
+                    mimeType = 'image/webp'
+                    break
+            }
+            
+            console.log('File details:', { filename, extension, mimeType })
+            
 
+            //#warning: THIS IS WHAT WE SEND TO BACKEND! File structure
             // Create a File-like object for React Native
             const file = {
-                uri: uri,
-                type: fileType,
+                uri: uri, //actual file data LINK --> contains the BYTE of uploaded image...  byte only since computer only read 0-1 not actual FILE haha.
+                type: mimeType,
                 name: filename,
             } as any
+            console.log('Final file object:', file)
+
 
             // Upload to ASP.NET backend instead of Supabase
             const response = await uploadImageProfile(file) // returns directory of uploaded image (from localstorage of my pc)

@@ -245,7 +245,7 @@ namespace MyApi.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("Availabilities", (string)null);
+                    b.ToTable("Availabilities");
                 });
 
             modelBuilder.Entity("MyApi.Models.FightSchedule", b =>
@@ -269,6 +269,14 @@ namespace MyApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("FightDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FightResult")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("MatchResult");
+
                     b.Property<bool>("IsSafetyWaiverAcceptedByUser1")
                         .HasColumnType("boolean");
 
@@ -289,6 +297,15 @@ namespace MyApi.Migrations
 
                     b.Property<long>("MatchId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("ResultNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResultRecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResultRecordedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("ScheduledDateTime")
                         .HasColumnType("timestamp with time zone");
@@ -314,6 +331,12 @@ namespace MyApi.Migrations
                     b.Property<int?>("User1Rating")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("User1RatingAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("User1RatingBefore")
+                        .HasColumnType("integer");
+
                     b.Property<int>("User1SkillLevelAtTimeOfScheduling")
                         .HasColumnType("integer");
 
@@ -331,16 +354,28 @@ namespace MyApi.Migrations
                     b.Property<int?>("User2Rating")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("User2RatingAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("User2RatingBefore")
+                        .HasColumnType("integer");
+
                     b.Property<int>("User2SkillLevelAtTimeOfScheduling")
                         .HasColumnType("integer");
+
+                    b.Property<string>("WinMethod")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("WinnerId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MatchId");
 
-                    b.ToTable("FightSchedules", null, t =>
+                    b.ToTable("FightSchedules", t =>
                         {
-                            t.HasCheckConstraint("CK_FightSchedule_FutureTime", "\"ScheduledDateTime\" > NOW()");
+                            t.HasCheckConstraint("CK_FightSchedule_FutureTime", "(\"Status\" IN ('canceled', 'completed')) OR (\"ScheduledDateTime\" > NOW())");
 
                             t.HasCheckConstraint("CK_FightSchedule_SkillLevel", "\"User1SkillLevelAtTimeOfScheduling\" BETWEEN 1 AND 5 AND \"User2SkillLevelAtTimeOfScheduling\" BETWEEN 1 AND 5");
 
@@ -376,7 +411,7 @@ namespace MyApi.Migrations
                     b.HasIndex("User1Id", "User2Id")
                         .IsUnique();
 
-                    b.ToTable("Matches", null, t =>
+                    b.ToTable("Matches", t =>
                         {
                             t.HasCheckConstraint("CK_Match_NoSelfMatch", "\"User1Id\" != \"User2Id\"");
 
@@ -424,7 +459,7 @@ namespace MyApi.Migrations
 
                     b.HasIndex("SenderId", "ReceiverId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("MyApi.Models.Profile", b =>
@@ -433,12 +468,21 @@ namespace MyApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("BestWinStreak")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Bio")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentLossStreak")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CurrentWinStreak")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("ExperienceLevel")
                         .HasColumnType("integer");
@@ -456,6 +500,21 @@ namespace MyApi.Migrations
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("text");
 
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalDraws")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalFights")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalLosses")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalWins")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -467,7 +526,7 @@ namespace MyApi.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Profiles", (string)null);
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("MyApi.Models.SwipeAction", b =>
@@ -498,7 +557,7 @@ namespace MyApi.Migrations
                     b.HasIndex("SwiperId", "SwipeeId")
                         .IsUnique();
 
-                    b.ToTable("SwipeActions", null, t =>
+                    b.ToTable("SwipeActions", t =>
                         {
                             t.HasCheckConstraint("CK_Swipe_Direction", "\"Direction\" IN ('right', 'left')");
                         });
@@ -523,7 +582,7 @@ namespace MyApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Forecasts", (string)null);
+                    b.ToTable("Forecasts");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

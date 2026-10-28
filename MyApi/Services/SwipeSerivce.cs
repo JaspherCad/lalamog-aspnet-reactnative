@@ -57,6 +57,9 @@ namespace MyApi.Services
                 existingSwipe.CreatedAt = DateTime.UtcNow;
                 _context.SwipeActions.Update(existingSwipe);
             }
+
+
+            //default meaning swiper and swipee is new
             else
             {
 
@@ -72,7 +75,8 @@ namespace MyApi.Services
 
             await _context.SaveChangesAsync();
             //#info: after INSERT on "SwipeActions" table.
-            //#note: simple pseudocode: this will check if both swiper liked each other then if confirmed: it will sort the swiperId / swipeeId lexicographically THEN INSERT into matches table so that MATCH TABLE HAVE ""ALPHABETICAL"" arrangement.
+            //#note: simple pseudocode: this will check if both swiper liked each other then "IF" confirmed: 
+                //------ //#note:  it will sort the swiperId / swipeeId lexicographically THEN INSERT into matches table so that MATCH TABLE HAVE ""ALPHABETICAL"" arrangement.
 
             // $ sql:
             // CREATE TRIGGER on_swipe_action 
@@ -151,6 +155,8 @@ namespace MyApi.Services
 
                 var match = await _context.Matches
                     .FirstOrDefaultAsync(m => m.User1Id == userId1 && m.User2Id == userId2);
+
+                //if match found return MATCHED! with matchid!
 
                 if (match != null)
                 {
@@ -276,6 +282,8 @@ namespace MyApi.Services
 
                 matchDtos.Add(new MatchDto
                 {
+                    User1Id = match.User1Id.ToString(),
+                    User2Id = match.User2Id.ToString(),
                     User1 = user1Profile,
                     User2 = user2Profile,
                     CreatedAt = match.CreatedAt,

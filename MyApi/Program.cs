@@ -46,18 +46,14 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+// Register NpgsqlDataSource as singleton (reuse same instance)
+var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("DefaultConnection"));
+dataSourceBuilder.UseNetTopologySuite(); // Keep this for geographic data.. spatial data
+var dataSource = dataSourceBuilder.Build();
+builder.Services.AddSingleton(dataSource);
+
 builder.Services.AddDbContext<ApplicationDbContext>(opts =>
 {
-    var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("DefaultConnection"));
-    dataSourceBuilder.UseNetTopologySuite(); // Keep this for geographic data.. spatial data
-
-    //dataSourceBuilder.UseSomethingData()
-    //dataSourceBuilder.UseMoreConfig()
-    //like in java, the CHAIN OF BUILD.
-
-
-    var dataSource = dataSourceBuilder.Build();
-    
     opts.UseNpgsql(dataSource, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory").UseNetTopologySuite());
 });
 

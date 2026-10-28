@@ -48,7 +48,7 @@ namespace MyApi.Controllers
         public async Task<IActionResult> ScheduleFight(ScheduleFightRequestDto dto)
         {
 
-            //             {
+            // {
             //   "matchId": 12,
             //   "scheduledDateTime": "2025-08-26T18:00:00Z",
             //   "locationName": "Downtown Boxing Gym",
@@ -58,6 +58,7 @@ namespace MyApi.Controllers
             //     "y": 34.0522
             //   }
             // }
+
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -103,15 +104,15 @@ namespace MyApi.Controllers
         [Authorize]
         public async Task<IActionResult> InfoOfSchedule(long matchId, long fightScheduleId)
         {
-            
+
 
             var result = await _fightingScheduleService.GetScheduleInfo(matchId, fightScheduleId);
             return Ok(result);
         }
 
-    
 
-       
+
+
         [HttpGet("match/{matchId}/schedules")]
         [Authorize]
         public async Task<IActionResult> GetAllSchedulesForMatch(long matchId)
@@ -125,12 +126,7 @@ namespace MyApi.Controllers
                 }
 
                 var result = await _fightingScheduleService.GetAllSchedulesForMatch(matchId, userId);
-                return Ok(new
-                {
-                    matchId = matchId,
-                    schedules = result,
-                    totalCount = result.Count()
-                });
+                return Ok(result);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -185,12 +181,53 @@ namespace MyApi.Controllers
             }
         }
 
-        [HttpPost("cancel")]
-        public async Task<IActionResult> CancelFight(Guid userId, long fightScheduleId, string reason)
+
+        [HttpGet("all-public-fightschedule")]
+        public async Task<IActionResult> GetAllPublicFightSchedules()
         {
-            var result = await _fightingScheduleService.CancelFight(userId, fightScheduleId, reason);
-            if (result == null) return BadRequest("Failed to cancel fight.");
-            return Ok(result);
+            try
+            {
+                var result = await _fightingScheduleService.GetAllPublicFightSchedules();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        [HttpPut("cancel")]
+        [Authorize]
+        public async Task<IActionResult> CancelFight([FromBody] CancelFightRequestDto dto)
+        {
+
+
+            // Extract userId from JWT token automatically
+            try
+            {
+                // Extract userId from JWT token automatically
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized("Invalid user credentials");
+                }
+
+                var result = await _fightingScheduleService.CancelFight(userId, dto.FightScheduleId, dto.Reason);
+                if (result == null) return BadRequest("Failed to cancel fight.");
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
         }
 
 
@@ -212,6 +249,47 @@ namespace MyApi.Controllers
                     message = "Fight marked as completed successfully",
                     fight = result
                 });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+
+        [HttpPost("upload-gif/{fightScheduleId}")]
+        [Authorize]
+        public async Task<IActionResult> UploadFightGif(long fightScheduleId, IFormFile file)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized("Invalid user credentials");
+                }
+
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { message = "No file provided" });
+                }
+
+                var result = await _fightingScheduleService.UploadFightGif(userId, fightScheduleId, file);
+                
+                if (result == null || string.IsNullOrEmpty(result.ImageUrl))
+                {
+                    return BadRequest(new { message = result?.Message ?? "Failed to upload GIF" });
+                }
+
+                return Ok(result);
             }
             catch (ArgumentException ex)
             {

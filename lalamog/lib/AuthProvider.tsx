@@ -2,8 +2,9 @@
 
 import { Session } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { Alert } from 'react-native';
 import { supabase } from './supabase';
-import { getProfileAPI, loginAPI, setToken, setUserInfo, getUserInfo, removeToken, getToken, removeUserInfo, isTokenExpired, validateSessionAPI } from '@/api/axiosInstance';
+import { getProfileAPI, loginAPI, setToken, setUserInfo, getUserInfo, removeToken, getToken, removeUserInfo, isTokenExpired, validateSessionAPI, getProfileAuthAPI } from '@/api/axiosInstance';
 import { SessionData, LoginCredentials, UserInfo } from '@/api/axiosInstance';
 
 interface AuthContextType {
@@ -11,6 +12,7 @@ interface AuthContextType {
     isLoading: boolean;
     signInEmail: (credentials: LoginCredentials) => Promise<{ data: any }>;
     signOut: () => Promise<void>;
+    refreshSession: () => Promise<void>;  // Add refresh function
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,23 +20,26 @@ const AuthContext = createContext<AuthContextType>({
     isLoading: true,
     signInEmail: async () => ({ data: null }),
     signOut: async () => { },
+    refreshSession: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<SessionData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Initialize auth state on component mount
+    //onount auth state on component mount
     useEffect(() => {
         const initAuth = async () => {
+            console.log('Initializing auth...');
             try {
                 const token = await getToken();
                 if (token && !isTokenExpired(token)) {
+                    console.log('Token found and valid, validating with backend...');
                     try {
                         const response = await validateSessionAPI();
                         const profile = response.data;
                         
-                        // Create SessionData from validated profile
+                        //do sessionData from validated profile
                         const sessionData: SessionData = {
                             user: {
                                 id: profile.id,
@@ -56,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         setSession(sessionData);
                     } catch (validationError) {
                         console.log('Session validation failed:', validationError);
-                        // Token exists but validation failed - clear everything
+                        // Token TRUE but validation failed THEN clear everything
                         await removeToken();
                         await removeUserInfo();
                         setSession(null);
@@ -137,14 +142,67 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const refreshSession = async () => {
+        try {
+            const token = await getToken();
+            if (!token || isTokenExpired(token)) {
+                await signOut();
+                return;
+            }
+
+            // Fetch fresh profile data from backend
+            const response = await getProfileAuthAPI();
+            const profile = response.data;
+
+            // Update session with fresh data
+            const sessionData: SessionData = {
+                user: {
+                    id: profile.id,
+                    userId: profile.userId,
+                    nickname: profile.nickname,
+                    bio: profile.bio,
+                    location: profile.location,
+                    fightingStyle: profile.fightingStyle,
+                    experienceLevel: profile.experienceLevel,
+                    profilePictureUrl: profile.profilePictureUrl,
+                    createdAt: profile.createdAt,
+                    updatedAt: profile.updatedAt,
+                    availability: profile.availability,
+                },
+                jwt: token
+            };
+
+            await setUserInfo(sessionData);
+            setSession(sessionData);
+        } catch (error) {
+            console.error('Session refresh error:', error);
+            await signOut();
+        }
+    };
+
     // Token validation effect
     useEffect(() => {
         const checkToken = async () => {
+            console.log('=== Token check running ===');
             const token = await getToken();
             if (token) {
+                console.log('Token found, checking expiration...');
                 if (isTokenExpired(token)) {
-                    await signOut();
+                    console.log('Token is EXPIRED - showing alert');
+                    Alert.alert(
+                        'Session Expired',
+                        'Your session has expired. Please log in again.',
+                        [
+                            {
+                                text: 'OK',
+                                onPress: async () => {
+                                    await signOut();
+                                }
+                            }
+                        ]
+                    );
                 } else {
+                    console.log('Token is still valid');
                     // Periodically validate session with backend
                     try {
                         const response = await validateSessionAPI();
@@ -172,7 +230,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         setSession(sessionData);
                     } catch (validationError) {
                         console.log('Periodic session validation failed:', validationError);
-                        await signOut();
+                        Alert.alert(
+                            'Session Invalid',
+                            'Your session is no longer valid. Please log in again.',
+                            [
+                                {
+                                    text: 'OK',
+                                    onPress: async () => {
+                                        await signOut();
+                                    }
+                                }
+                            ]
+                        );
                     }
                 }
             }
@@ -189,7 +258,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         session,
         isLoading,
         signInEmail,
-        signOut
+        signOut,
+        refreshSession
     };
 
     return (

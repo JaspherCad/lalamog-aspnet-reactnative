@@ -24,6 +24,7 @@ export default function Account() {
   const [fullName, setfullName] = useState('')
 
   ///useProfiles and useAvatarUpload
+  const hah = 'tangina'
 
 
 
@@ -39,7 +40,7 @@ export default function Account() {
   const router = useRouter()
   const [marker, setMarker] = useState<{ latitude: number; longitude: number } | null>(null)
 
-  const { session, isLoading } = useAuth()
+  const { session, isLoading, refreshSession } = useAuth()
 
   const [region, setRegion] = useState<{
     latitude: number;
@@ -48,6 +49,7 @@ export default function Account() {
     longitudeDelta: number;
   } | null>(null);
 
+  console.log(hah)
 
   const { uploadAvatar, uploading } = useAvatarUpload()
   //uploadImageProfile axios
@@ -169,10 +171,7 @@ export default function Account() {
       };
 
 
-      // personal note: when sending IMAGE URL just keep "/uploads/profile-images/f2603802-deb3-4377-8651-1134db7837a7/profile_1754030873.jpeg", 
-      // dont include the base URL, it will be handled by the backend
-
-      // Updated format to match ASP.NET backend ProfileDto structure
+      // Include current profilePictureUrl to preserve it during updates
       const updates = {
         id: session?.user?.id,                    // Profile ID (GUID)
         userId: session?.user?.userId,            // User ID (GUID)
@@ -181,24 +180,22 @@ export default function Account() {
         location: locationDto,                    // LocationDto format (undefined if no marker)
         fightingStyle: fightingStyle,            // Updated field name
         experienceLevel: parseInt(experienceLevel) || 0,
-        profilePictureUrl: avatarUrl,            // Updated field name
+        profilePictureUrl: avatarUrl || null,    // Include current avatar URL to preserve it
         createdAt: session?.user?.createdAt,     // Keep existing
         updatedAt: new Date().toISOString(),     // Current timestamp
         availability: availabilityDto            // Availability format
       };
 
-      //verify first here if ok uncomment process
-      console.log("Updates to send:", updates)
 
+      console.log("Updates to send:", updates)
 
       const response = await updateProfileAPI(updates);
       console.log("Update response:", response.data);
 
+      // Refresh session from backend to sync latest changes
+      await refreshSession()
+
       Alert.alert('Success', 'Profile updated successfully!');
-      console.log("AWAIT DONE")
-
-
-      router.replace('/Account')
 
     } catch (error) {
       if (error instanceof Error) {
@@ -216,6 +213,11 @@ export default function Account() {
 
     }
   }, [marker])
+
+
+  useEffect(() => {
+    console.log('🔄 avatarUrl changed:', avatarUrl)
+  }, [avatarUrl])
 
 
   const formatTime = (date: Date) =>
@@ -335,13 +337,18 @@ export default function Account() {
             <View style={styles.avatarContainer}>
               {/* {        const baseUrl = (API_BASE_URL ? API_BASE_URL.replace(/\/api$/, "") : "") || "http://localhost:5248";
             } */}
-              <Image source={{ uri: `${(API_BASE_URL ? API_BASE_URL.replace(/\/api$/, "") : "") || "http://localhost:5248"}${avatarUrl}` }} style={styles.avatar} />
+              <Image 
+                key={avatarUrl} 
+                source={{ uri: `${(API_BASE_URL ? API_BASE_URL.replace(/\/api$/, "") : "") || "http://localhost:5248"}${avatarUrl}` }} 
+                style={styles.avatar} 
+              />
               <Button
                 title={uploading ? 'Uploading...' : 'Change Avatar'}
-                onPress={() => {
+                onPress={async () => {
                   if (session?.user?.userId) {
-                    uploadAvatar(session.user.userId, setAvatarUrl)
-                    // idea is to use the setAvatarUrl inside the uploadAvatar function to update the avatarUrl state here. 
+                    await uploadAvatar(session.user.userId, setAvatarUrl)
+                    // Refresh session from backend with latest data
+                    await refreshSession()
                   } else {
                     Alert.alert('Error', 'User not authenticated')
                   }
@@ -352,9 +359,11 @@ export default function Account() {
           ) : (
             <Button
               title={uploading ? 'Uploading...' : 'Change Avatar'}
-              onPress={() => {
+              onPress={async () => {
                 if (session?.user?.userId) {
-                  uploadAvatar(session.user.userId, setAvatarUrl)
+                  await uploadAvatar(session.user.userId, setAvatarUrl)
+                  // Refresh session from backend with latest data
+                  await refreshSession()
                 } else {
                   Alert.alert('Error', 'User not authenticated')
                 }

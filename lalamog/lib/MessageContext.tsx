@@ -36,7 +36,7 @@
 
 // Typical data flow
 
-// Component => MessageContext.sendMessage => SignalRService.send => server => broadcast
+// Component => MessageContext.sendMessage => SignalRService.ts.send => server => broadcast
 // Server => SignalRService.on('message') => MessageContext updates state => Components re-render
 
 
@@ -107,11 +107,11 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
             setMessages(prev => [...prev, message]);
         };
 
-
+        // built in service...
         signalRService.onReceiveMessage(handleMessage);
         // we trigger the handleMessage() inside onReceiveMessage().... where onReceiveMessage is built in by library.
 
-
+        //basic callback to stop incoming requests. 
         return () => {
             // Clean up !"WHEN"! component unmounts
             signalRService.offReceiveMessage();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace MyApi.DTOs
 {
@@ -35,6 +36,7 @@ namespace MyApi.DTOs
         public int? User2Rating { get; set; }
         public string? User1Feedback { get; set; }
         public string? User2Feedback { get; set; }
+        public string? FightGifUrl { get; set; }
     }
 
     public class SafetyWaiverDto
@@ -61,11 +63,18 @@ namespace MyApi.DTOs
         public long FightScheduleId { get; set; }
         public SafetyWaiverDto? SafetyWaiver { get; set; }
     }
+    
+    public class CancelFightRequestDto
+    {
+        public long FightScheduleId { get; set; }
+        
+        public string Reason { get; set; } = string.Empty;
+    }
 
    
     public class CompleteFightDto
     {
         public string? CompletionNotes { get; set; }
-        
+
     }
 }

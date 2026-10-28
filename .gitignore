@@ -37,3 +37,17 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# Web rewrite
+web/dist/
+web/*.tsbuildinfo
+.cache/
+artifacts/
+!.env.example
+!src/Lalamog.Api/appsettings.json
+!web/package-lock.json
+src/Lalamog.Api/data/
+web/*.tsbuildinfo
+web/test-results/
+web/playwright-report/
+!src/Lalamog.Api/packages.lock.json

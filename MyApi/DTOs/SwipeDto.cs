@@ -34,6 +34,8 @@ namespace MyApi.DTOs
 
     public class MatchDto
     {
+        public string User1Id { get; set; } = string.Empty;
+        public string User2Id { get; set; } = string.Empty;
         public ProfileDto? User1 { get; set; }
         public ProfileDto? User2 { get; set; }
         public DateTime CreatedAt { get; set; }

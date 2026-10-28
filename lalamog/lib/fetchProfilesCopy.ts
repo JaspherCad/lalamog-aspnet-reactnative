@@ -29,30 +29,47 @@ import { getAvailableProfilesAPI, ProfileData, AllProfileData, getMatchesAPI } f
 
 //helper function for getting actual address rather than numerics FReE?? idk try
 
-async function reverseGeocode(lat: number, lng: number) {
+async function reverseGeocode(lat: number, lng: number, timeoutMs: number = 3000) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'MyApp/1.0' } // Required by OSM
-  });
-  const data = await response.json();
   
-//    Latitude corresponds to the Y coordinate.
+  try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'FightApp/1.0' },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Geocoding failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.address) {
+      return 'Address unavailable';
+    }
+    
+    const address = data.address;
+    const parts = [
+      address.road,
+      address.suburb,
+      address.city || address.town || address.village,
+      address.state,
+      address.country,
+    ].filter(Boolean);
 
-//    Longitude corresponds to the X coordinate.
-
-
-
-  const address = data.address;
-
-  const parts = [
-    address.road,
-    address.suburb,
-    address.city || address.town || address.village,
-    address.state,
-    address.country,
-  ].filter(Boolean);
-
-  return parts.join(', ');
+    return parts.length > 0 ? parts.join(', ') : 'Address unavailable';
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.warn('Geocoding timeout');
+    }
+    return 'Address unavailable';
+  }
 }
 
 
@@ -164,45 +181,39 @@ export function useProfiles(context: string) {
 
         // helper function to add address to profiles
         const addAddress = async (profiles: ProfileData[]) => {
-
-          //personal note: WHY USE Promise.all?
-          //    const result = profiles.map(async (profile) => {
-          //    returns a Promise<Profile> only not actual result
-          //
-          //    console.log(result); // [Promise, Promise, ...]
-
-          // so always use promise.all() when using for loop or .map function that alwyas await async
-
           return Promise.all(
             profiles.map(async (profile) => {
               const lat = profile.location?.y;
               const lng = profile.location?.x;
               if (typeof lat === "number" && typeof lng === "number") {
-
                 try {
-                  const address = await reverseGeocode(lat, lng);
+                  const address = await reverseGeocode(lat, lng, 2000); // 2 second timeout
                   return { ...profile, address };
                 } catch (err) {
-                  console.warn(`Failed to geocode profile ${profile.id}`, err);
-                  return profile;
+                  console.warn(`Failed to geocode profile ${profile.id}`);
+                  return { ...profile, address: 'Address unavailable' };
                 }
               } else {
                 // location may be missing or invalid -> skip geocoding
-                return profile;
+                return { ...profile, address: 'Location not set' };
               }
-
-
             })
           );
         };
 
-        // //sv🎯tep 6: Update state
-                              //❌geocode only not mached.. note for me WHY? Faster initial load:
-        const profilesWithAddresses = await addAddress(availableProfiles);   //await addAddress(matched) --> matched profiles are basically for chat component;
-
-        console.log("Fetched profiles with addresses:", profilesWithAddresses);
-        setProfiles(profilesWithAddresses);
+        // Set profiles immediately without addresses for fast loading
+        console.log("Setting profiles immediately...");
+        setProfiles(availableProfiles);
         setMatchedProfiles(matchedProfilesData);
+        
+        // Then geocode in background and update
+        console.log("Geocoding addresses in background...");
+        addAddress(availableProfiles).then(profilesWithAddresses => {
+          console.log("Addresses loaded, updating profiles...");
+          setProfiles(profilesWithAddresses);
+        }).catch(err => {
+          console.error("Error geocoding addresses:", err);
+        });
 
 
 

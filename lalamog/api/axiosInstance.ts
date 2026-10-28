@@ -83,10 +83,85 @@ export interface SessionData {
     jwt: string;
 }
 
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface FightScheduleData {
+    id: number;
+    matchId: number;
+    scheduledDateTime: string;
+    status: string;
+    locationName: string;
+    locationAddress: string;
+    locationCoordinates: LocationDto;
+    isSafetyWaiverAcceptedByUser1: boolean;
+    isSafetyWaiverAcceptedByUser2: boolean;
+    user1SkillLevelAtTimeOfScheduling: number;
+    user2SkillLevelAtTimeOfScheduling: number;
+    user1EmergencyContactName: string;
+    user1EmergencyContactPhone: string;
+    user2EmergencyContactName: string;
+    user2EmergencyContactPhone: string;
+    cancellationReason: string;
+    canceledAt: string | null;
+    canceledByUserId: string | null;
+    createdAt: string;
+    updatedAt: string;
+    user1Rating: number | null;
+    user2Rating: number | null;
+    user1Feedback: string | null;
+    user2Feedback: string | null;
+    fightGifUrl: string | null;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface CreateFightScheduleData {
+    matchId: number;
+    scheduledDateTime: string;
+    locationName: string;
+    locationAddress: string;
+    locationCoordinates: LocationDto;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface CancelFightScheduleData {
+    Reason: string;
+    FightScheduleId: number;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface SafetyWaiverData {
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface ConfirmFightData {
+    fightScheduleId: number;
+    safetyWaiver: SafetyWaiverData;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface CompleteFightData {
+    completionNotes?: string;
+}
+
+// ALL INTERFACE SHOULD MATCH WHAT BACKEND IS THROWING AT US
+export interface FightResultData {
+    fightScheduleId: number;
+    fightResult: string; // "user1_win", "user2_win", "draw", "no_contest"
+    winnerId?: string;
+    winMethod?: string; // "KO", "TKO", "Decision", "Submission"
+    fightDurationMinutes?: number;
+    resultNotes?: string;
+    user1Rating?: number;
+    user2Rating?: number;
+    user1Feedback?: string;
+    user2Feedback?: string;
+}
+
 // Create axios instance with base configuration
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
+    timeout: 0,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -217,6 +292,15 @@ export const getProfileAPI = async () => {
     }
 };
 
+export const getProfileAPIById = async (guid:string) => {
+    try {
+        const response = await axiosInstance.get(`/user/profile/${guid}`);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const getProfileAuthAPI = async () => {
     try {
         const response = await axiosInstance.get('/auth/profile');
@@ -325,25 +409,61 @@ export const updateProfileByIdAPI = async (userId: string, profileData: ProfileD
 
 
 
-export const uploadImageProfile = async (file: File) => {
+export const uploadImageProfile = async (file: any) => {
     try {
         const formData = new FormData();
-        formData.append('file', file); // Make sure the key matches your backend ("file")
+        
+        // React Native FormData expects this specific format
+        formData.append('file', {
+            uri: file.uri, //where will server find that uploaded BYTE image.
+            type: file.type,
+            name: file.name,
+        } as any);
 
-        const response = await axiosInstance.post('/user/uploadprofileimage', formData, {
+
+        //REVIEW blob, uri, and byte of image to be send
+        //#note REMEMBER THIS! we dont send literal file to server internet, because they only know 0-1, so we send BYTE and that BYTE (in our case URI, sometimes can be BLOB(container of byte only for web app)) is what backend will receieve.
+        console.log('Uploading file:', file.name, file.type);
+        
+        //t auth token
+        const token = await AsyncStorage.getItem('authToken');
+        console.log('Token exists:', !!token);
+        
+        //#warning: FIX!! use fetch instead of axio for reason
+        // ReactNatives fetch handles FormData correctly
+        const uploadUrl = `${API_BASE_URL}/user/uploadprofileimage`;
+        console.log('Upload URL:', uploadUrl);
+        
+        console.log('Sending request with fetch...');
+        
+        const fetchResponse = await fetch(uploadUrl, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                // sabi ni gpt, DO NOT set Content-Type - let fetch set it with boundary
+            },
+            body: formData,
         });
 
-
-        //    {
-        //     "file": "actualImageFileData",
-        //   }
-
+        console.log('Response status:', fetchResponse.status);
         
-        return response;
-    } catch (error) {
+        if (!fetchResponse.ok) {
+            const errorText = await fetchResponse.text();
+            console.error('Upload failed:', errorText);
+            throw new Error(`Upload failed with status ${fetchResponse.status}: ${errorText}`);
+        }
+        
+        const responseData = await fetchResponse.json();
+        console.log('Upload successful!');
+        
+        // Return in axios-like format for compatibility
+        return { data: responseData };
+    } catch (error: any) {
+        console.error('Upload error details:', {
+            message: error.message,
+            name: error.name,
+        });
         throw error;
     }
 };
@@ -393,7 +513,7 @@ export const getMatchesDataAPI = async () => {
 
 export const getAvailableProfilesAPI = async () => {
     try {
-        const response = await axiosInstance.get(`/swipe/all-profiles`);  
+        const response = await axiosInstance.get(`/swipe/all-profiles`);
         // userId handled by jwt claims in backend AllProfileData
         return response;
     } catch (error) {
@@ -436,16 +556,118 @@ export const getMessagesByMatchIdAPI = async (matchId: number) => {
 };
 
 export const sendMessageAPI = async (receiverId: string, content: string, matchId: number) => {
-  try {
-    const response = await axiosInstance.post('/message/sendMessage', {
-      receiverId,
-      content,
-      matchId
-    });
-    return response;
-  } catch (error) {
-    throw error;
-  }
+    try {
+        const response = await axiosInstance.post('/message/sendMessage', {
+            receiverId,
+            content,
+            matchId
+        });
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// ============ FIGHT SCHEDULE API CALLS ============
+
+export const getFightSchedulesByMatchIdAPI = async (matchId: number) => {
+    try {
+        const response = await axiosInstance.get(`/FightingSchedule/match/${matchId}/schedules`);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const createFightScheduleAPI = async (scheduleData: CreateFightScheduleData) => {
+    try {
+        const response = await axiosInstance.post('/FightingSchedule/schedule', scheduleData);
+        // {
+        //   "matchId": 12,
+        //   "scheduledDateTime": "2025-08-26T18:00:00Z",
+        //   "locationName": "Downtown Boxing Gym",
+        //   "locationAddress": "fetchedOnOpenMapApi",
+        //   "locationCoordinates": {
+        //     "x": -118.2437,
+        //     "y": 34.0522
+        //   }
+        // }
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
+export const getAllPublicFights = async () => {
+    try {
+        const response = await axiosInstance.get(`/FightingSchedule/all-public-fightschedule`);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+export const cancelFightScheduleAPI = async (cancelData: CancelFightScheduleData) => {
+    try {
+        const response = await axiosInstance.put('/FightingSchedule/cancel', cancelData);
+        // {
+        //   "Reason": "im scared",
+        //   "FightScheduleId": 5
+        // }
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const confirmFightScheduleAPI = async (confirmData: ConfirmFightData) => {
+    try {
+        const response = await axiosInstance.post('/FightingSchedule/confirm', confirmData);
+        // {
+        //   "fightScheduleId": 25,
+        //   "safetyWaiver": {
+        //     "emergencyContactName": "John Smith",
+        //     "emergencyContactPhone": "+1-555-123-4567"
+        //   }
+        // }
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const completeFightScheduleAPI = async (fightScheduleId: number, completeData: CompleteFightData) => {
+    try {
+        const response = await axiosInstance.post(`/FightingSchedule/complete/${fightScheduleId}`, completeData);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const recordFightResultAPI = async (resultData: FightResultData) => {
+    try {
+        const response = await axiosInstance.post('/FightStats/record-result', resultData);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const uploadFightGifAPI = async (fightScheduleId: number, gifFile: FormData) => {
+    try {
+        const response = await axiosInstance.post(`/FightingSchedule/upload-gif/${fightScheduleId}`, gifFile, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response;
+    } catch (error) {
+        throw error;
+    }
 };
 
 // Google OAuth login (redirects to Google)
@@ -498,14 +720,36 @@ export const decodeToken = (token: string): any | null => {
 
 export const isTokenExpired = (token: string): boolean => {
     const decoded = decodeToken(token);
-    if (!decoded) return true;
+    if (!decoded) {
+        console.log('Token decode failed');
+        return true;
+    }
 
     const currentTime = Date.now() / 1000;
-    return decoded.exp < currentTime;
+    const isExpired = decoded.exp < currentTime;
+    
+    console.log('Token expiration check:', {
+        tokenExp: new Date(decoded.exp * 1000).toISOString(),
+        currentTime: new Date(currentTime * 1000).toISOString(),
+        isExpired,
+        secondsRemaining: Math.floor(decoded.exp - currentTime)
+    });
+    
+    return isExpired;
 };
+
+
+
+
+
+
+
+
+
 
 // User info utilities
 export const setUserInfo = async (userInfo: SessionData): Promise<void> => {
+    console.log(userInfo)
     await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
 };
 
