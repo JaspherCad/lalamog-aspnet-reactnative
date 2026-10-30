@@ -2,10 +2,11 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$rootNames = @('AGENTS.md', 'web/AGENTS.md', 'src/Lalamog.Api/AGENTS.md', 'tests/AGENTS.md', 'Instructions.md', 'codex-bootstrap.md', 'GEMINI.md', 'README.md', 'backlog-rewrite.md', 'FIGHT_RESULTS_GUIDE.md')
+$projectRoot = Join-Path (Split-Path $PSScriptRoot -Parent) 'ACTIVE_backend_lalamog'
+$rootNames = @('AGENTS.md', 'Instructions.md', 'codex-bootstrap.md', 'GEMINI.md', 'README.md', 'backlog-rewrite.md', 'FIGHT_RESULTS_GUIDE.md')
 $knowledgeFiles = @($rootNames | ForEach-Object { Get-Item -LiteralPath (Join-Path $projectRoot $_) })
 $knowledgeFiles += @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'docs') -Filter '*.md' -Recurse -File)
+$knowledgeFiles += @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'plan') -Filter '*.md' -Recurse -File)
 $failures = @()
 $linkCount = 0
 foreach ($knowledgeFile in $knowledgeFiles) {

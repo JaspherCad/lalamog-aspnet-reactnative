@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Lalamog.Api.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="../tests/Lalamog.Api.Tests/Lalamog.Api.Tests.csproj" />
+  </Folder>
+</Solution>

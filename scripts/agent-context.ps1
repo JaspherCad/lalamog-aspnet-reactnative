@@ -12,7 +12,7 @@ param(
     [string[]]$FeatureFile = @()
 )
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Join-Path (Split-Path $PSScriptRoot -Parent) 'ACTIVE_backend_lalamog'
 $featureFiles = @{
     auth = 'docs/features/AUTHENTICATION.md'
     profiles = 'docs/features/PROFILES_AND_DISCOVERY.md'
@@ -44,7 +44,7 @@ $contextFiles = @(
 foreach ($featureName in $Feature) { $contextFiles += $featureFiles[$featureName] }
 $featuresRoot = [IO.Path]::GetFullPath((Join-Path $projectRoot 'docs/features'))
 foreach ($featurePath in $FeatureFile) {
-    if ([IO.Path]::IsPathRooted($featurePath)) { throw 'FeatureFile must be a repository-relative docs/features/*.md path.' }
+    if ([IO.Path]::IsPathRooted($featurePath)) { throw 'FeatureFile must be a backend-relative docs/features/*.md path.' }
     $featureFullPath = [IO.Path]::GetFullPath((Join-Path $projectRoot $featurePath))
     if (![string]::Equals([IO.Path]::GetDirectoryName($featureFullPath), $featuresRoot, [StringComparison]::OrdinalIgnoreCase) -or
         [IO.Path]::GetExtension($featureFullPath) -ine '.md' -or
@@ -68,11 +68,11 @@ Write-Output '# LALAMOG project context packet'
 Write-Output ''
 Write-Output ('Generated UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))
 Write-Output 'Markdown baseline only. Inspect current source before editing; no source files, secrets, runtime data, or private uploads are included.'
-Write-Output 'Relative links inside each section resolve from that original file path in the repository.'
+Write-Output 'Knowledge paths are relative to ACTIVE_backend_lalamog; relative links resolve from each original document.'
 foreach ($relativePath in $contextFiles) {
     Write-Output ''
     Write-Output '---'
-    Write-Output ('# File: ' + $relativePath)
+    Write-Output ('# File: ACTIVE_backend_lalamog/' + $relativePath)
     Write-Output ''
     Write-Output (Get-Content -LiteralPath (Join-Path $projectRoot $relativePath) -Raw -Encoding UTF8)
 }

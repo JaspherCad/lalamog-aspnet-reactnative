@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using Lalamog.Api.Contracts;
+using Lalamog.Api.DTOs;
 using Lalamog.Api.Data;
 using Lalamog.Api.Models;
 using Microsoft.EntityFrameworkCore;

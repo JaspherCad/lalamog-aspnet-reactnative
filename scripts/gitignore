@@ -1,0 +1,55 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+
+# Node / Expo / React Native
+node_modules/
+.expo/
+.expo-shared/
+npm-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+
+# iOS / Android (if present)
+ios/
+android/
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Web rewrite
+ACTIVE_frontend_lalamog/dist/
+ACTIVE_frontend_lalamog/*.tsbuildinfo
+.cache/
+artifacts/
+!infrastructure/.env.example
+!ACTIVE_backend_lalamog/appsettings.json
+!ACTIVE_frontend_lalamog/package-lock.json
+# Ignore runtime leaves, not Data/ source (case-insensitive on Windows).
+ACTIVE_backend_lalamog/data/uploads/
+ACTIVE_backend_lalamog/data/keys/
+ACTIVE_frontend_lalamog/*.tsbuildinfo
+ACTIVE_frontend_lalamog/test-results/
+ACTIVE_frontend_lalamog/playwright-report/
+!ACTIVE_backend_lalamog/packages.lock.json
