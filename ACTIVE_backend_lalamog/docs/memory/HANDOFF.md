@@ -39,8 +39,8 @@ Not run: SQL/native-API restart persistence, backup restore drill, public deploy
 
 Review the explicit controllers/services and Interfaces/DTOs source. No required work remains for this refactor. Resume BE-01/FE-02 (Blob/Azurite parity) or coordinated persistence/restore coverage. Keep all project Markdown/solution/manifests in backend, infrastructure settings outside frontend, and both LEGACY source folders unchanged.
 
-## Publication preparation (2026-10-30)
+## Publication integration (2026-10-30)
 
-The owner requested a safe push of the complete working tree. Fixed the Windows `data/` ignore collision so all four required `Data/` source/migration files are included while uploads/keys remain private. Original local HEAD is retained on `backup/pre-push-20261030`. Three remote README-only commits require merge integration; their final README is preserved byte-for-byte in [the historical GitHub README](../../plan/github-readme.md), linked from the current backend README. Keep the root folder-only and use a normal push.
+The owner requested a safe push of the complete working tree. Fixed the Windows `data/` ignore collision so all four required `Data/` source/migration files are included while uploads/keys remain private. Original local HEAD is retained on `backup/pre-push-20261030`. Merged three remote README-only commits without rewriting history; their final README is preserved byte-for-byte in [the historical GitHub README](../../plan/github-readme.md), linked from the current backend README. Keep the root folder-only and use a normal push.
 
 Fresh checks: zero-warning .NET build, successful frontend build, seven passing ServiceCompositionTests, all 149 legacy tracked files unchanged, private environment values absent from staged content and unpublished history. The local SQL container is stopped; real-SQL, browser and restart tests were not rerun. Ignore/privacy fix and recovery details are in [local development](../features/LOCAL_DEVELOPMENT.md).
