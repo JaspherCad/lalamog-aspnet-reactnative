@@ -5,7 +5,7 @@ namespace Lalamog.Api.Services
 {
     internal static class DtoMapper
     {
-        public static ProfileResponse ToProfileResponse(FighterProfile profile)
+        public static ProfileResponse ToProfileResponse(FighterProfile profile, bool includePrivateLocation = false)
         {
             string? avatarUrl = null;
             if (profile.AvatarKey != null)
@@ -16,6 +16,17 @@ namespace Lalamog.Api.Services
             return new ProfileResponse
             {
                 UserId = profile.UserId,
+                MapLocation = includePrivateLocation ? new MapLocation
+                {
+                    RegionCode = profile.RegionCode,
+                    ProvinceCode = profile.ProvinceCode,
+                    CityCode = profile.CityCode,
+                    BarangayCode = profile.BarangayCode,
+                    PsgcVersion = profile.PsgcVersion,
+                    Latitude = profile.Latitude,
+                    Longitude = profile.Longitude,
+                } : null,
+
                 Nickname = profile.Nickname,
                 FighterName = profile.FighterName,
                 Bio = profile.Bio,
@@ -72,6 +83,17 @@ namespace Lalamog.Api.Services
                 User1Id = fight.Match.User1Id,
                 User2Id = fight.Match.User2Id,
                 ScheduledAt = fight.ScheduledAt,
+                MapLocation = new MapLocation
+                {
+                    RegionCode = fight.RegionCode,
+                    ProvinceCode = fight.ProvinceCode,
+                    CityCode = fight.CityCode,
+                    BarangayCode = fight.BarangayCode,
+                    PsgcVersion = fight.PsgcVersion,
+                    Latitude = fight.Latitude,
+                    Longitude = fight.Longitude,
+                },
+
                 Location = fight.Location,
                 Address = fight.Address,
                 Status = fight.Status,

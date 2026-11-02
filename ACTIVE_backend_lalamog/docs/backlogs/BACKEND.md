@@ -1,10 +1,22 @@
 # Backend backlog: complete the local full stack
 
+2026-11-02 BE-07 fresh-volume fix: Development startup now migrates/seeds automatically, directly inline in Program.cs, matching owner-confirmed Compose down -v refill workflow. Current SQL volume was recreated after previous repair. Isolated missing-DB/startup/restart preservation plus inline-seed/cookie checks passed; no new schema or initializer class. Other environments remain explicit-migration workflows.
+
+2026-11-02 BE-07 local recovery: missing SQL database created by existing migrations/inline six-user seeding, standard owner-approved ignored Development JSON configured, normal API restarted and native cookie login/health verified without transient connection override. No new OAuth/auth layer or migration. Operational restore/production scope remains pending.
+
+2026-11-02 BE-03 follow-up implemented: deliberate no-key Nominatim reverse lookup, protected POST route, single-process shared one-request/second pacing/dedup/cache, safe failures and replaceable URL; settings inline in Program.cs. No migration. Distance/radius remains pending. Evidence: maps guide/handoff.
+
+2026-11-02 BE-02 delivered: bundled versioned PSA 2026-Q3 catalog with source/hash/attribution, local cacheable lookup routes, NIR/NCR/independent-city/Manila ancestry. BE-03 partial: nullable private profile/fight coordinates+codes, validation/public exclusion and additive migration applied after verified backup; distance/radius remains pending. Manual addresses chosen, no geocoder. All 43 backend tests passed; [maps guide](../features/MAPS_AND_AREAS.md) owns evidence/recovery/refresh policy.
+
+2026-11-02 working basic setup complete in source: default inline SQL retries and MVC CSRF filter resolve the four prior failures; all 34 backend tests passed. Six-user all-model repeatable seeding stays directly in Program.cs. Explicit migration/seed application and operational checks: current handoff/local-development guide. No extra options architecture.
+
+2026-11-02 native-account/model slice complete in source: no ASP.NET Identity inheritance/services/package; one model per file. Native auth/password/lockout and populated upgrade/rollback tests passed. Four current-startup CSRF/concurrency failures remain outside this slice; migration awaits explicit application. Details: [authentication](../features/AUTHENTICATION.md).
+
 2026-11-02 further startup simplification complete in source: requested custom middleware, key persistence, partial Program and SignalR removed. Chat uses REST persistence/history only. Current checks in handoff/chat guide; prior concurrency failures remain separately recorded.
 
 2026-11-02 owner correction to startup slices below: appsettings.json/DefaultConnection replaces the custom API .env flow; demo seeding/initializer mode removed. Historical setup evidence below does not describe the current configuration contract. See [local development](../features/LOCAL_DEVELOPMENT.md).
 
-Updated 2026-10-28. BE-10 is **Done**; other implementation items remain **Todo** except recorded partial slices. Active API is `ACTIVE_backend_lalamog/`; guides distinguish current behavior from targets. See [overview](../../backlog-rewrite.md).
+Updated 2026-10-28. BE-02 and BE-10 are **Done**; BE-03 is partial; other implementation items remain **Todo** except recorded partial slices. Active API is `ACTIVE_backend_lalamog/`; guides distinguish current behavior from targets. See [overview](../../backlog-rewrite.md).
 
 | ID | Priority | Work | Depends on |
 | --- | --- | --- | --- |
@@ -12,7 +24,7 @@ Updated 2026-10-28. BE-10 is **Done**; other implementation items remain **Todo*
 | BE-02 | P1 | Versioned Philippine reference catalog | verified source/terms |
 | BE-03 | P1 | Private coordinates, map support and distance | BE-02 + privacy contract |
 | BE-04 | P1 | SQL outbox/RabbitMQ notifications | domain transactions + broker |
-| BE-05 | P1 | Recovery/email verification | Identity + local delivery design |
+| BE-05 | P1 | Recovery/email verification | native AppUser + token/local delivery design |
 | BE-06 | P0 | Privacy, abuse controls and retention | participant authorization |
 | BE-07 | P0 | Reproducible checks, restore and operations | current stack; extend with integrations |
 | BE-08 | P2 | Pagination/filtering/idempotency/targeted scale | measured needs |
@@ -39,7 +51,7 @@ Acceptance: hierarchy/codes/duplicate names/exceptions fixture-tested; works whi
 
 Add migration/DTOs for nullable WGS84 lat/lon and area label/code on profiles and venues. Validate range/pair/hierarchy, preserve text, and separate public approximate area/distance from participant-only precise venue. Server filters true distance before limit/pagination, with explicit units/missing-coordinate rules and SQL-compatible indexing/calculation.
 
-Optional reverse adapter stays disabled until deliberate policy-compliant provider choice. Public Nominatim requires shared <=1 request/sec across the app, identifying header, cache/deduplication, bounded timeout, no autocomplete/bulk/confidential queries; account for replicas. Manual pin/text/catalog flow remains usable without it. Introduce Redis only for a concrete requirement.
+Explicit public-place Nominatim adapter was approved/implemented 2026-11-02; any additional reverse adapter needs deliberate policy-compliant provider choice. Public Nominatim requires shared <=1 request/sec across the app, identifying header, cache/deduplication, bounded timeout, no autocomplete/bulk/confidential queries; account for replicas. Manual pin/text/catalog flow remains usable without it. Introduce Redis only for a concrete requirement.
 
 Acceptance: known-distance and invalid/absent coordinates, lon/lat ordering, public DTO privacy, populated upgrade, provider outage/429 fixtures and fallback. No live public calls in automated tests; no client-claimed distance trusted. See [maps guide](../features/MAPS_AND_AREAS.md) and FE-04.
 
@@ -51,7 +63,7 @@ Acceptance: broker down during mutation preserves SQL/outbox then delivers after
 
 ## BE-05 — account recovery/verification
 
-Identity token-based reset/email verification, expiration/one-time use, generic enumeration-safe responses, throttling and private token handling. Choose local-only development delivery without assuming paid email. Do not expose development reset links through public endpoints or production logs.
+Native account reset/email-verification tokens (persist only token hashes; enforce expiry/one-time use), expiration/one-time use, generic enumeration-safe responses, throttling and private token handling. Choose local-only development delivery without assuming paid email. Do not expose development reset links through public endpoints or production logs.
 
 Acceptance: create/use/expire/reuse/invalid-token cases; password reset affects login correctly; auth/CSRF preserved; FE-07 completes flow. Document actual public email delivery dependency rather than returning fake success.
 

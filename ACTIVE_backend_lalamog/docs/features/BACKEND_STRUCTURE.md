@@ -1,5 +1,7 @@
 # Backend readability and horizontal N-tier structure
 
+2026-11-02 fresh-volume fix: a small Development guard directly in Program.cs after builder.Build scopes AppDbContext and awaits MigrateAsync. Existing seed callbacks remain inline; no configuration/seeder/initializer class. New SQL startup test checks absent DB creation, six-user relationships, cookie login and restart/edit preservation. Build zero warnings/errors and three targeted startup/seed/cookie cases passed; no EF model change. Owning runtime details: [local development](LOCAL_DEVELOPMENT.md).
+
 Status: implemented. Last updated/verified: 2026-11-02 (inline startup follow-up; earlier whole-backend evidence below). Owner-requested behavior-preserving refactor; one API project, no new application framework or packages.
 
 ## Purpose and folder ownership
@@ -11,10 +13,10 @@ Status: implemented. Last updated/verified: 2026-11-02 (inline startup follow-up
 | `Repositories/` | EF persistence, readable LINQ query syntax, whole-operation SQL transaction retries |
 | `Interfaces/` | One interface per file: five business services, four repositories and file storage |
 | `DTOs/` | One property-based request/response/transport class per file; validation attributes on request properties |
-| `Models/`, `Data/` | Existing domain entities and unchanged EF schema configuration |
+| Models/, Data/ | One model per .cs file, native AppUser and plain EF DbContext/migration mapping |
 | `Infrastructure/` | Shared safe API exception handling; no demo initializer |
 
-Use conventional constructors, readonly dependency fields, block-bodied methods and explicit control flow. As of 2026-11-02, `Program.cs` deliberately uses inline callbacks for all startup settings and middleware at the owner's request. No `ConfigureDatabase`, `ConfigureIdentity`, other named setup methods, or separate configuration-only C# classes are used. The explicit-method preference continues elsewhere. Generated migration/snapshot files retain their original contents. Query syntax and nameof-based EF configuration preserve SQL translation and model metadata.
+Use conventional constructors, readonly dependency fields, block-bodied methods and explicit control flow. As of 2026-11-02, `Program.cs` deliberately uses inline callbacks for all startup settings and middleware at the owner's request. No `ConfigureDatabase`, `ConfigureIdentity`, other named setup methods, or separate configuration-only C# classes are used. The explicit-method preference continues elsewhere. Preserve prior migration history; update the current snapshot only through reviewed schema migrations. The NativeAppUsers migration is now applied locally with existing account data retained. Query syntax and nameof-based EF configuration preserve SQL translation and model metadata.
 
 Controllers depend on `IAuthService`, `IProfileService`, `IMatchingService`, `IConversationService`, or `IFightService`. Conversation/session services depend on `IMatchingService` for membership. `Program.cs` registers interface-to-implementation scoped pairs. `DtoMapper` is an internal pure mapping helper, not an injectable business service. `IFileStorage` remains the storage boundary.
 
@@ -35,7 +37,7 @@ Message REST/history payloads now use `DTOs/MessageResponse.cs` instead of retur
 
 ## Source and verification map
 
-`Program.cs`; all active controllers/services/repositories; ten interface files; eighteen DTO files; `Data/AppDbContext.cs`; `Models/Entities.cs` membership helper; hub/error handler. Existing active `CoreFlowTests.cs` changed only its DTO namespace import. Archived excluded scaffolds remain unchanged and still use obsolete contracts.
+`Program.cs`; all active controllers/services/repositories; individual service/repository interfaces (including native IUserRepository); eighteen DTO files; `Data/AppDbContext.cs`; `Models/FighterMatch.cs` membership helper; native `Models/AppUser.cs` and other individual model files; error handler. Existing active `CoreFlowTests.cs` changed only its DTO namespace import. Archived excluded scaffolds remain unchanged and still use obsolete contracts.
 
 `tests/Lalamog.Api.Tests/ServiceCompositionTests.cs` replaces IAuthService through the actual application container without SQL, verifies CSRF still rejects missing tokens, resolves the dependent service graph, and exercises six HTTP request-validation cases before the replacement service runs.
 
@@ -58,6 +60,17 @@ On deletion, restore DTOs/interfaces and consumers/DI together; do not restore o
 Not rerun: SQL/native-API restart persistence test, backup/restore drill, public deployment or planned Blob/RabbitMQ/maps workflows. No work remains for this readability/interface/DTO refactor; broader persistence/operations/integration backlog remains separate.
 
 ## Latest work record
+
+- 2026-11-02 / strict beginner-readable configuration and sample data: only the necessary built-in MVC CSRF filter, default SQL retry and cookie-policy fixes were added, all inline in Program.cs. All 34 backend tests now pass; previous CSRF/concurrency failures are resolved. Both EF seed callbacks are inline and mirrored, saving users/matches/fights before child records and retaining existing data on reruns. No configuration/seed helper or options function/file was introduced.
+- Future agents must obey the prominent basic-inline rules in AGENTS/bootstrap/Instructions/scoped docs. Current six-user scenarios and database migration verification are in [local development](LOCAL_DEVELOPMENT.md); no new EF model/schema migration was required for the seeding callbacks.
+
+## Earlier work records (superseded setup/failure notes)
+
+- 2026-11-02 / native account and separate models: removed combined Entities.cs, ApplicationUser/IdentityUser inheritance, IdentityDbContext, Identity EF dependency, manager/role/token-provider registration and services. Seven individual model files; plain AppUser has native password/email/lockout/rowversion state, ordinary DbContext maps it to AppUsers. Program remains inline and simple; no framework config helper was introduced.
+- AuthService -> IUserRepository/UserRepository handles persistence; PasswordHashing uses built-in .NET cryptography and accepts saved older hash formats. Cookie authentication stays HttpOnly/SameSite Strict/Always-secure with claims-based actor IDs. Existing routes/public DTOs remain. New migration preserves account IDs/hashes/relations, archives retired metadata and supports a tested rollback/new-account recovery path; old migration history is preserved.
+- Verification: build zero warnings/errors, no pending EF model changes, all 15 new auth/hash/populated-migration cases passed; full suite 29/33 with the four current-startup CSRF/concurrency failures documented in authentication/handoff. Browser/frontend/restart checks not rerun. Current owner-edited AddControllers and direct SQL setup were preserved. Migration is not applied to the real app database.
+
+## Earlier work records
 
 - 2026-11-02 / owner-requested minimal startup and REST-only chat: removed custom security/hub middleware, persisted-key setup and partial Program. No replacement startup/helper class introduced. Tests identify the existing application assembly through AppDbContext. Removed SignalR from backend service/hub/startup and frontend package/connection/proxy code; membership and history remain in REST. Verification: backend build zero warnings/errors; frontend build, ten targeted backend checks and REST polling browser case passed. Broad browser run 9/10 due to unrelated mobile button stability timeout; current handoff/chat guide records exact results and prior concurrency limits.
 

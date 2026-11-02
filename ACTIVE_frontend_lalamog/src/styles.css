@@ -333,3 +333,26 @@ summary { cursor: pointer; min-height: 44px; padding: 10px 0; font-weight: 700; 
 @media (min-width: 1000px) { .main-nav a { flex-direction: row; gap: 10px; padding: 16px 20px; font-size: 14px; } }
 @media (max-width: 359px) { .dossier-content { grid-template-columns: 1fr; }.portrait-panel { grid-column: 1; grid-row: 1; min-height: 220px; }.record-panel { grid-column: 1; grid-row: 2; }.fighter-tags { grid-row: 3; }.style-stack { grid-row: 4; }.fighter-facts { grid-row: 5; }.fighter-bio { grid-row: 6; }.dossier-info > .text-action { grid-row: 7; }.section-heading .eyebrow { font-size: 9px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }.fighter-dossier { transform: none !important; } }
+
+/* Local area selectors and ordinary Leaflet maps. */
+.location-picker { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--ink, #302c29); min-width: 0; }
+.location-picker legend { font-weight: 700; padding: 0 .4rem; }
+.location-picker .form-grid > *, .barangay-field { min-width: 0; }
+.location-picker select { width: 100%; text-overflow: ellipsis; }
+.location-picker .actions { flex-wrap: wrap; margin: .8rem 0; }
+.location-picker .coordinates { margin: .7rem 0; }
+.map-canvas { height: 330px; width: 100%; z-index: 0; background: #e0dfd3; border: 1px solid #777; }
+.location-map { min-width: 0; }
+.venue-marker { color: #972d2a; font-size: 26px; line-height: 24px; text-shadow: 0 0 2px #fff, 0 0 2px #fff; }
+.fight-map-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr); gap: 1rem; }
+.fight-map-layout .map-canvas { height: 480px; }
+.map-venue-list { display: grid; gap: .7rem; align-content: start; min-width: 0; }
+.map-venue { text-align: left; display: grid; gap: .4rem; width: 100%; color: inherit; }
+.map-venue.is-selected { border-color: #972d2a; outline: 2px solid #972d2a; }
+.map-filter { max-width: 280px; margin-bottom: 1rem; }
+@media (max-width: 700px) { .fight-map-layout { grid-template-columns: minmax(0, 1fr); } .map-canvas, .fight-map-layout .map-canvas { height: 300px; } .location-picker { padding: .6rem; } }
+
+.map-venue:hover, .map-venue.is-selected { background: #e6dcc0; color: #191b18; }
+.address-lookup { display: grid; gap: .5rem; margin-block: 1rem; }
+.address-lookup p { margin: 0; }
+.suggested-address { display: grid; gap: .6rem; padding: 1rem; border: 1px solid currentColor; overflow-wrap: anywhere; }

@@ -1,5 +1,7 @@
 # Run and troubleshoot the active web application
 
+2026-11-02 local SQL recovery: standard ignored appsettings.Development.json supplies ConnectionStrings:DefaultConnection (owner-approved; built-in loading, no wrapper). Error 18456 can mean a rejected database login or unavailable requested database: verify existing credential against master, then verify Lalamog exists. Development startup now calls MigrateAsync inline to create/update/seed a missing local database; other environments use explicit migration commands. Current local recovery created the absent database with six fictional native accounts and verified normal cookie login/health 200. No OAuth; never change fake email addresses to fix SQL sa login.
+
 Updated 2026-11-02. The repository root contains folders only. Run each command from the indicated folder. Full setup and backup procedures are in the [backend README](../../README.md).
 
 ## First run and later starts
@@ -27,9 +29,9 @@ npm run dev
 
 For a new checkout only, copy `infrastructure/.env.example` to `.env` and choose strong passwords before the first Compose start; do not replace credentials for existing volumes. Run `npm install` if dependencies are absent (`npm.cmd` if PowerShell blocks npm.ps1).
 
-Configure `ConnectionStrings:DefaultConnection` in backend `appsettings.json`, replacing the SQL password placeholder locally. Apply migrations explicitly with `dotnet ef database update` from the backend. There is no demo seeding or initializer mode; normal startup does not migrate SQL.
+Configure ConnectionStrings:DefaultConnection in standard ignored backend appsettings.Development.json using the same SQL password as Docker. Development dotnet run now creates/updates the database and invokes inline async seeding before accepting requests. Explicit dotnet ef database update still runs the synchronous callback; other environments require explicit migration commands. No helper/initializer mode. Accounts/scenarios: [local development](../features/LOCAL_DEVELOPMENT.md#inline-seeding-and-relationships).
 
-Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). The API root `/` has no webpage. The `http` launch profile selects Development and port 5080. `appsettings.json` supplies the connection and root .cache/uploads path directly. The API never reads infrastructure/.env. Standard ASP.NET configuration still applies; details are in the [README](../../README.md#configuration-and-first-time-database-initialization). Existing Always-secure cookie settings require HTTPS for browser authentication; an HTTP development browser flow was not verified here.
+Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). The API root `/` has no webpage. The `http` launch profile selects Development and port 5080. `appsettings.json` supplies the connection and root .cache/uploads path directly. The API never reads infrastructure/.env. Standard ASP.NET configuration still applies; details are in the [README](../../README.md#configuration-and-first-time-database-initialization). Development cookies work over the local HTTP proxy; other environments use secure cookies/HTTPS. The built-in MVC filter enforces CSRF and default SQL retries support concurrent matching/scheduling. All settings stay inline in Program.cs.
 
 ## Configuration ownership
 

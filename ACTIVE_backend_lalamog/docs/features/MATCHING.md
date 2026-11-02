@@ -34,6 +34,8 @@ Run the matching SQL tests; in-memory substitutes do not prove SQL locking behav
 
 ## Latest work record
 
+- 2026-11-02 / simple setup/test data: the default inline SQL retry option resolves the reciprocal-like concurrency failure. Mirrored inline seeding creates canonical pairs, directed mutual likes and a pass, with Ana left unconnected for discovery. Full 34-case backend run passed; no matching service/helper settings were added. Details: [local development](LOCAL_DEVELOPMENT.md).
+
 - 2026-11-02 / UI redesign: `Discover.tsx` adds intent/threshold/cancel-aware pointer gestures, explicit actions/keyboard/reduced motion, synchronous duplicate guard, pending/error restoration and native mutual-match dialog using returned Match ID (match-list recovery if missing). Server transaction/matching behavior unchanged. Build and nine deterministic browser cases passed; real-SQL concurrency tests not rerun. Owning UI/recovery details: [frontend design](FRONTEND_DESIGN.md).
 
 - 2026-10-29 / behavior-preserving readability/DI refactor: IMatchingService and IMatchingRepository each have their own file. Explicit ApplySwipeAsync/ExecuteTransactionAsync functions preserve full-operation retries, canonical read order and serializable commit boundaries.

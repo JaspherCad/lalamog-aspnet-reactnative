@@ -1,5 +1,9 @@
 # Architecture decision log
 
+2026-11-02 highest-priority owner preference: beginner-readable built-in configuration and both EF seed callbacks inline in Program.cs; never extract options/seed setup into functions/classes/files. Keep only needed settings. Default SQL retries/MVC CSRF/cookie fixes and parent-save-child seeding are the accepted minimum; all 34 backend tests pass. This supersedes older no-seeding/failed-startup notes.
+
+2026-11-02 owner direction supersedes Identity: plain AppUser, ordinary DbContext, one model per named .cs file. Native salted PBKDF2 hashing plus standard cookie auth replaces manager/role/token-provider setup. Preserve passwords/account relations with a reviewed migration; retain historical migration history and unmapped metadata archives for data recovery.
+
 2026-11-02 owner direction: minimal startup with no custom header/hub middleware, explicit key-persistence block or partial Program class. Remove SignalR for now; messages use authorized REST send/history with simple browser refresh. Tests use existing AppDbContext to locate the application assembly.
 
 2026-11-02 latest owner configuration direction: use standard appsettings.json with GetConnectionString("DefaultConnection") and direct configuration key access. Remove API .env parsing, secret aliases/SQL construction, demo seeding and initializer mode. Docker Compose retains its own private credentials; application C# remains inline in Program.cs.
@@ -13,11 +17,11 @@ Recorded 2026-10-28. **Observed** means current source. **Required direction** c
 | ADR-001 | React DOM + TypeScript + Vite; mobile-first browser product | Observed + required direction | Existing Expo project remains reference; browser features must work on narrow touch screens |
 | ADR-002 | Single .NET 10 API, controllers → services → domain repositories | Observed | Business rules stay in C#; no mediator/generic repository introduced without need |
 | ADR-003 | Microsoft SQL Server/EF; no database business triggers/procedures/jobs | Observed + required direction | Real SQL concurrency tests and explicit migrations protect matching/session rules |
-| ADR-004 | Identity cookie + CSRF; same-origin frontend/API | Observed | Preserve private session/auth safeguards and DataProtection keys; retire JWT-era examples |
+| ADR-004 | Native AppUser + cookie authentication; same-origin frontend/API | Owner revision 2026-11-02 | No Identity inheritance/services; current CSRF validation gap is recorded in authentication/handoff |
 | ADR-005 | REST/SQL message history authoritative; SignalR wake-up notifications | Observed | Reconnect and delivery failures recover by cursor; not dependent on broker today |
 | ADR-006 | Azure Blob Storage with Azurite for local development/testing | Required direction, not implemented | Supersedes backlog's S3/MinIO exploration; retain IFileStorage, image safeguards and existing URLs/objects |
 | ADR-007 | RabbitMQ for durable background workflows | Required direction; outbox approach proposed | First slice is session notifications; SQL transaction/outbox and idempotency avoid lost/duplicate work |
-| ADR-008 | No-payment maps/areas, with manual/cached fallbacks | Required direction; Leaflet/OSM and cached PSGC approach proposed | Public services are limited; optional Nominatim is disabled until deliberate policy-compliant integration; no billing/card/trial dependency |
+| ADR-008 | No-payment maps/areas, with manual/cached fallbacks | Implemented basic Leaflet/OSM/local PSA selectors/private pins; distance/public maps planned | Public services are limited; explicit Nominatim suggestions authorized/implemented 2026-11-02 with shared pacing/cache and public-place notice; no billing/card/trial dependency |
 | ADR-009 | Provider-neutral Markdown as shared memory | Adopted; startup/memory requirement strengthened 2026-10-28 | AGENTS → bootstrap → navigation; each feature task automatically updates/creates its living guide and refreshes handoff under memory protocol; explicit packets serve chats without file access; host still must load instructions |
 | ADR-010 | Preserve legacy code, data, and pre-existing local changes | Observed + maintenance constraint | Cleanup is a separate explicitly authorized task; old code is not the active implementation |
 | ADR-011 | Compose runs supporting services only; API/frontend run natively | Adopted 2026-10-29 at owner request | Remove app/initializer services and builds; simplify container names/settings while preserving project/volume/port identities. Native data lives in `.cache/`; former app-volume migration is deliberate. See [local development](../features/LOCAL_DEVELOPMENT.md). |

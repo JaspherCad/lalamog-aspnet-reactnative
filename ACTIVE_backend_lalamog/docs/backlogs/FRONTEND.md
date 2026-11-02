@@ -1,8 +1,12 @@
 # Frontend backlog: mobile-first browser experience
 
+2026-11-02 FE-04 follow-up implemented: explicit public-place pin lookup with editable suggested venue address, independent PSGC selectors, stale-request cancellation/manual fallback and attribution. Distance/public publication remain pending. Evidence: maps guide/handoff.
+
+2026-11-02 FE-03 delivered: local cascading region/province/city/barangay controls, name filter/reset/manual fallback. FE-04 partial: bundled Leaflet/OSM, explicit optional GPS, pin/coordinates and private participant fight map implemented; nearby/radius discovery remains pending. Build and fixture map/profile/chat checks passed; 375/1440 px map evidence inspected. No geocoder/key; manual addresses per owner. [Maps guide](../features/MAPS_AND_AREAS.md).
+
 2026-11-02 chat transport follow-up: owner requested SignalR removal. Conversation now refreshes via REST every three seconds; no push/WebSocket client/proxy. Current contract and checks: [chat](../features/CHAT.md). Historical live-delivery evidence below remains historical.
 
-Updated 2026-10-28. Active code: `ACTIVE_frontend_lalamog/` only. Every implementation item below is **Todo** until evidence is recorded. Existing core screens already exist in source. See [overview](../../backlog-rewrite.md).
+Updated 2026-10-28. Active code: `ACTIVE_frontend_lalamog/` only. FE-03 is delivered; FE-04 is partial; other implementation items remain **Todo** except recorded slices. Existing core screens already exist in source. See [overview](../../backlog-rewrite.md).
 
 | ID | Priority | Work | Depends on |
 | --- | --- | --- | --- |

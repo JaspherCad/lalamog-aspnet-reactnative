@@ -10,7 +10,9 @@ async function fixture(page: Page, options: { failSwipe?: boolean; delaySwipe?: 
     const url = new URL(route.request().url()); const path = url.pathname.replace('/api', '');
     const body = route.request().postDataJSON();
     let value: unknown = {};
-    if (path === '/auth/csrf') value = { token: 'fixture-csrf' };
+    if (path === '/areas/regions') value = [{ code: '1300000000', name: 'National Capital Region (NCR)' }];
+    else if (path.startsWith('/areas/')) value = [];
+    else if (path === '/auth/csrf') value = { token: 'fixture-csrf' };
     else if (path === '/auth/me') value = { userId: 'me' };
     else if (path === '/profiles/discover') value = [sample, { ...sample, userId: 'second', nickname: 'Ana' }];
     else if (path === '/profiles/me') {

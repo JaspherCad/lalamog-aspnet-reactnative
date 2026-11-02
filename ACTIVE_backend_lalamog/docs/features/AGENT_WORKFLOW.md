@@ -37,6 +37,11 @@ Run local-link checker, helper parsing, default/selected/all-feature exports, ne
 
 ## Latest work record
 
+- 2026-11-02 / strict beginner-readable startup agreement: owner explicitly requires all startup settings and both EF seeding callbacks directly inline in Program.cs, using the fewest necessary built-in options/defaults. No named setup functions, configuration-only classes/files, options wrappers, extension helpers, seed classes or initializer services. Parent-first/save-ID-child seeding must be mirrored, idempotent and preserve edits. Added prominent rules to AGENTS, bootstrap, engineering/scoped instructions, plus current feature/state/handoff records.
+- This owner direction supersedes older no-seeding/abstracted-startup records. Context export includes the mandatory instructions. Actual future compliance still requires the host to read them; Markdown cannot force an arbitrary model or host to comply. Current checks/results are in handoff.
+
+## Earlier work records
+
 - 2026-11-02 / maintainable texture implementation agreement / completed documentation. Updated DESIGN.md section 4, typography/geometry, phase 1, acceptance and preview authority; added the same agreement to DESIGN_BRIEF.md. V1 uses one shared crumpled-paper background plus optional panel grain, clean SVG icons/live text and ordinary CSS buttons/tags/meters. Generated distressed controls and unique torn edges are mood references, not required implementation work. Multi-style/record/tag behavior is retained.
 - Verification: link/whitespace/context results recorded in current handoff; no app/runtime tests for prose-only edits. No frontend source, asset generation, packages or data changed. Recovery: preserve this explicit agreement when using image previews in later coding sessions. Next action: start phase 1 with reusable React/CSS primitives and supply/license the small shared texture set.
 

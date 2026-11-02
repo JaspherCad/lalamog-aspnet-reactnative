@@ -41,5 +41,6 @@ namespace Lalamog.Api.DTOs
 
         [MaxLength(200)]
         public string Availability { get; set; } = null!;
+        public MapLocation? MapLocation { get; set; }
     }
 }

@@ -1,97 +1,169 @@
+using System.Security.Claims;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Infrastructure;
 using Lalamog.Api.Interfaces;
 using Lalamog.Api.Models;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lalamog.Api.Services
-{
-    public class AuthService : IAuthService
-    {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+namespace Lalamog.Api.Services;
 
-        public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+public class AuthService : IAuthService
+{
+    private readonly IUserRepository _users;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly TimeProvider _clock;
+
+    public AuthService(IUserRepository users, IHttpContextAccessor httpContextAccessor, TimeProvider clock)
+    {
+        _users = users;
+        _httpContextAccessor = httpContextAccessor;
+        _clock = clock;
+    }
+
+    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Nickname) || request.Nickname.Trim().Length < 2)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            throw new ApiException(400, "Enter a nickname of at least 2 characters.");
+        }
+        ValidatePassword(request.Password);
+        string email = request.Email.Trim();
+        string normalizedEmail = email.ToUpperInvariant();
+        if (await _users.EmailExistsAsync(normalizedEmail))
+        {
+            throw new ApiException(400, "An account with this email already exists.");
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        var user = new AppUser
         {
-            if (string.IsNullOrWhiteSpace(request.Nickname) || request.Nickname.Trim().Length < 2)
+            Email = email,
+            NormalizedEmail = normalizedEmail,
+            PasswordHash = PasswordHashing.Hash(request.Password),
+            Profile = new FighterProfile { Nickname = request.Nickname.Trim() }
+        };
+        if (request.FighterName != null)
+        {
+            string name = request.FighterName.Trim();
+            user.Profile.NormalizedFighterName = FighterNames.Normalize(name);
+            user.Profile.FighterName = name;
+        }
+        try
+        {
+            await _users.AddAsync(user);
+        }
+        catch (DbUpdateException exception)
+        {
+            if (exception.InnerException is SqlException sql && (sql.Number == 2601 || sql.Number == 2627))
             {
-                throw new ApiException(400, "Enter a nickname of at least 2 characters.");
-            }
-
-            var user = new ApplicationUser
-            {
-                Id = Guid.NewGuid(),
-                Email = request.Email.Trim(),
-                UserName = request.Email.Trim(),
-                Profile = new FighterProfile
+                if (await _users.EmailExistsAsync(normalizedEmail))
                 {
-                    Nickname = request.Nickname.Trim()
+                    throw new ApiException(400, "An account with this email already exists.");
                 }
-            };
+                throw new ApiException(409, FighterNames.TakenMessage);
+            }
+            throw;
+        }
 
-            if (request.FighterName != null)
+        await SignInAsync(user);
+        return new AuthResponse { UserId = user.Id };
+    }
+
+    public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    {
+        string normalizedEmail = request.Email.Trim().ToUpperInvariant();
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            AppUser? user = await _users.FindByEmailAsync(normalizedEmail);
+            DateTimeOffset now = _clock.GetUtcNow();
+            if (user == null || user.LockoutEnd > now)
             {
-                string name = request.FighterName.Trim();
-                user.Profile.NormalizedFighterName = FighterNames.Normalize(name);
-                user.Profile.FighterName = name;
+                throw InvalidLogin();
             }
 
-            IdentityResult result;
+            bool valid = PasswordHashing.Verify(user.PasswordHash, request.Password);
+            if (user.LockoutEnd.HasValue)
+            {
+                user.AccessFailedCount = 0;
+                user.LockoutEnd = null;
+            }
+            if (valid)
+            {
+                user.AccessFailedCount = 0;
+            }
+            else
+            {
+                user.AccessFailedCount++;
+                if (user.AccessFailedCount >= 5)
+                {
+                    user.LockoutEnd = now.AddMinutes(5);
+                }
+            }
             try
             {
-                result = await _userManager.CreateAsync(user, request.Password);
+                await _users.UpdateAsync(user);
             }
-            catch (DbUpdateException exception)
+            catch (DbUpdateConcurrencyException)
             {
-                if (exception.InnerException is SqlException sqlException && (sqlException.Number == 2601 || sqlException.Number == 2627))
-                {
-                    throw new ApiException(409, FighterNames.TakenMessage);
-                }
-                throw;
+                continue;
             }
-            if (!result.Succeeded)
+            if (!valid)
             {
-                var errors = new List<string>();
-                foreach (IdentityError error in result.Errors)
-                {
-                    errors.Add(error.Description);
-                }
-                throw new ApiException(400, string.Join(" ", errors));
+                throw InvalidLogin();
             }
-
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            await SignInAsync(user);
             return new AuthResponse { UserId = user.Id };
         }
+        throw InvalidLogin();
+    }
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    public Task LogoutAsync()
+    {
+        return GetHttpContext().SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+
+    private Task SignInAsync(AppUser user)
+    {
+        var claims = new List<Claim>
         {
-            ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email.Trim());
-            if (user == null)
-            {
-                throw new ApiException(401, "Invalid email or password, or account temporarily locked.");
-            }
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Email ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? "")
+        };
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+        return GetHttpContext().SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            principal, new AuthenticationProperties { IsPersistent = false });
+    }
 
-            SignInResult result = await _signInManager.PasswordSignInAsync(
-                user, request.Password, isPersistent: false, lockoutOnFailure: true);
-            if (!result.Succeeded)
-            {
-                throw new ApiException(401, "Invalid email or password, or account temporarily locked.");
-            }
+    private HttpContext GetHttpContext()
+    {
+        return _httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("Authentication requires an HTTP request.");
+    }
 
-            return new AuthResponse { UserId = user.Id };
+    private static ApiException InvalidLogin()
+    {
+        return new ApiException(401, "Invalid email or password, or account temporarily locked.");
+    }
+
+    private static void ValidatePassword(string password)
+    {
+        bool lower = false;
+        bool upper = false;
+        bool digit = false;
+        bool symbol = false;
+        foreach (char character in password)
+        {
+            lower |= char.IsLower(character);
+            upper |= char.IsUpper(character);
+            digit |= char.IsDigit(character);
+            symbol |= !char.IsLetterOrDigit(character);
         }
-
-        public async Task LogoutAsync()
+        if (password.Length < 10 || password.Length > 128 || !lower || !upper || !digit || !symbol)
         {
-            await _signInManager.SignOutAsync();
+            throw new ApiException(400, "Use 10 to 128 characters with uppercase, lowercase, a number and a symbol.");
         }
     }
 }

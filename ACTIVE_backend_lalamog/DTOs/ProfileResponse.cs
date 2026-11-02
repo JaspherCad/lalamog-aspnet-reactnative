@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Lalamog.Api.DTOs
 {
     public class ProfileResponse
@@ -19,5 +21,7 @@ namespace Lalamog.Api.DTOs
         public string Availability { get; set; } = string.Empty;
 
         public string? AvatarUrl { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public MapLocation? MapLocation { get; set; }
     }
 }

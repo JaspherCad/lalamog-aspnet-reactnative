@@ -1,6 +1,10 @@
 # Profiles and discovery
 
-Status: implemented text-based profile/discovery. Audited 2026-10-28. Maps/structured area filters are planned.
+2026-11-02 address-lookup follow-up: profile pin can explicitly request a public-place address suggestion. This sends coordinates to Nominatim after the visible notice; never automatic for GPS/discovery or pin movement. Suggestion is view-only on profiles: public city text, PSGC codes and private storage contract stay unchanged. Source/provider limits/tests: [maps guide](MAPS_AND_AREAS.md).
+
+2026-11-02 latest work: ProfileEditor uses LocationPicker with manual text, local PSA selectors, optional GPS and map pin. ProfileService validates/saves nullable private fields; own GET/update/avatar includes mapLocation, discovery and match opponent omit it. Older updates omitting/null mapLocation preserve it; `{}` clears. SQL privacy/preservation/invalid-input tests passed in full 43-case backend run; fixture save/reload/failure checks passed. Source/migration/recovery: [maps guide](MAPS_AND_AREAS.md).
+
+Status: profiles/discovery implemented; private area/pin editing added 2026-11-02. Distance/area discovery filters remain planned.
 
 ## Source map
 
@@ -14,7 +18,7 @@ Authenticated users edit their own profile through `/api/profiles/me`; actor ide
 
 Discovery is authenticated and returns at most 50 other profiles, excluding targets the caller already swiped and existing matches. Stable ordering is nickname then GUID. The frontend dossier deck supports gestures/buttons/keyboard, only removes a candidate after success, restores failed choices, and opens a mutual-match dialog with conversation/keep-swiping actions. Empty states and retry/refresh remain usable. Live record/badge data is not fabricated.
 
-Avatar replacement uses the storage feature; location currently contains no coordinates or verified barangay code. Do not interpret a free-text label as an exact location.
+Avatar replacement uses the storage feature. Own profiles support validated private PSGC hierarchy/pins; discovery/opponent DTOs omit mapLocation. Public location becomes city name after structured selection. Do not interpret manually entered free text as a verified area.
 
 ## Recovery sequence
 
@@ -27,7 +31,7 @@ Avatar replacement uses the storage feature; location currently contains no coor
 
 Edit every field, refresh/relogin, and verify values persist. Upload an avatar, reload, and verify image MIME/URL. Like/pass should remove the candidate; a mutual match moves to Matches. Check long text, blank nickname/style, invalid experience, API errors, slow saving, empty discovery, and keyboard/narrow layout.
 
-Browser core flow covers profile editing; matching tests cover discovery exclusions. Complete invalid-field/accessibility coverage is still backlog work. Pagination, advanced filters, pass revisiting, blocking, and structured location/distance are pending; see FE-01/03/04/08 and BE-02/03/06/08.
+Browser core flow covers profile editing; matching tests cover discovery exclusions. Complete invalid-field/accessibility coverage is still backlog work. Pagination, advanced filters, pass revisiting, blocking, and distance/location discovery filters are pending; see FE-01/03/04/08 and BE-02/03/06/08.
 
 
 ## Latest work record

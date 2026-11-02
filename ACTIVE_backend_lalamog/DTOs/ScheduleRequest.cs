@@ -27,5 +27,6 @@ namespace Lalamog.Api.DTOs
         [Required]
         [MaxLength(300)]
         public string Address { get; set; } = null!;
+        public MapLocation? MapLocation { get; set; }
     }
 }

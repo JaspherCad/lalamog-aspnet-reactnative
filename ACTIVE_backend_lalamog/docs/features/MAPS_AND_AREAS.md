@@ -1,48 +1,71 @@
-# No-payment maps, Philippine areas, and location recovery
+# Free maps and Philippine areas
 
-Status: legacy map references exist; **active web maps/coordinates/area catalog are not implemented**. Audited 2026-10-28. Work: BE-02/03 and FE-03/04.
+Status: **implemented** local area selectors, optional GPS/pins, explicit public-place address suggestions, and participant-only fight map. Verified 2026-11-02. BE-02/FE-03 delivered; BE-03/FE-04 partial because nearby-distance filtering remains planned. Owner initially chose manual addresses, then explicitly requested **free Nominatim reverse geocoding** on 2026-11-02 after reviewing its limits. Suggested addresses are now available for deliberate public-place lookups; manual editing remains. No API key required.
 
-## What the existing project actually contains
+## Legacy provider audit and registration links
 
-- `LEGACY_frontend_lalamog/Components/InteractiveMapPicker.tsx`: legacy React Native WebView embedding Leaflet and OpenStreetMap raster tiles.
-- `LEGACY_frontend_lalamog/Components/PublicFightsMap.tsx`: legacy public-fight visualization.
-- `LEGACY_frontend_lalamog/app/(tabs)/messages/matchSettings.tsx` and `LEGACY_frontend_lalamog/lib/fetchProfilesCopy.ts`: direct Nominatim reverse lookups; display road, suburb, then city/town/village. Legacy calls can fan out and must not be copied unchanged.
-- `LEGACY_frontend_lalamog/app/Account.tsx` and `LEGACY_backend_lalamog/DTOs/UserDto.cs`: legacy X=longitude/Y=latitude convention; old backend uses PostGIS.
-- Active `ProfileRequest/ProfileResponse`, FighterProfile, ScheduleRequest/Fight, and web types use text location/address only. No active GPS/map dependency or coordinate fields.
+| Unchanged legacy source | Provider / purpose | Active choice |
+| --- | --- | --- |
+| `LEGACY_frontend_lalamog/Components/InteractiveMapPicker.tsx` and `Components/PublicFightsMap.tsx` | [Leaflet](https://leafletjs.com/) CDN; [OpenStreetMap tiles](https://operations.osmfoundation.org/policies/tiles/) | npm Leaflet 1.9.4, bundled CSS; OSM interactive tiles, no key |
+| `LEGACY_frontend_lalamog/app/(tabs)/messages/matchSettings.tsx` and `lib/fetchProfilesCopy.ts` | [Nominatim](https://nominatim.org/) reverse lookup | Explicit public-place suggested address lookup; editable venue copy |
+| No authoritative barangay catalog/boundary dataset found in inspected legacy flows | Geocoder road/suburb/city labels were not official barangay IDs | Local [PSA PSGC](https://psa.gov.ph/classification/psgc/) snapshot |
 
-No fixed list of supported barangays, boundary dataset, or specific selected service area was found in inspected source. Do not invent one or claim legacy reverse-geocoder labels are authoritative barangay IDs. Preserve recognizable area labels while adding structured data.
+No keyed map provider was found in those legacy flows. No re-registration is needed for the chosen setup. Optional future PSA API registration: official [access form](https://psa.gov.ph/classifications-api/request-access-form) and [PSGC API documentation](https://psa.gov.ph/classifications-api/psgc). The application does not call that API or need a token.
 
-## Proposed no-payment choices
+Policies checked 2026-11-02: OSM requires visible attribution, HTTPS `tile.openstreetmap.org/{z}/{x}/{y}.png`, normal browser Referer/cache headers, no bulk/offline prefetch; availability is best effort and this setup is for modest interactive use. Tests intercept tiles. Public [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/) requires app-wide throttling/caching and restricts autocomplete, systematic/confidential lookups. Do not restore legacy fan-out calls. Owner deliberately approved this specific lookup; no discovery-card/bulk/autocomplete requests.
 
-| Need | Choice / boundary |
-| --- | --- |
-| Interactive web map | [Leaflet](https://leafletjs.com/), open-source renderer; bundle dependency through npm, no native maps/WebView |
-| Basemap for modest interactive use | OpenStreetMap raster tiles subject to [tile policy](https://operations.osmfoundation.org/policies/tiles/); visible attribution, cache headers, valid browser Referer; no bulk/offline prefetch or synthetic map-panning tests |
-| Region/city/municipality/barangay names | Versioned cached PSGC reference dataset; evaluate [PSGC Cloud](https://psgc.cloud/) and [v2 docs](https://psgc.cloud/api-docs/v2) as a community free/no-signup source, with provenance and reusable-data terms checked before importing |
-| Pick a venue without geocoding | Pin + editable venue/address and cached area selection; keep functional when public providers are unavailable |
-| Optional reverse lookup | Nominatim only after deliberate provider-policy review; keep disabled by default until its constraints below are implemented |
-| Nearby distance | Server-computed geodesic distance from validated private coordinates; no paid distance matrix/routing API |
+## Reference data and provenance
 
-PSGC Cloud says it is community-provided, free, no authorization required, and rate limited; it is not the PSA itself. Cache reference data rather than making every form interaction depend on its availability. No payment is required by the documented candidate today; verify terms at integration time. The earlier `psgc.gitlab.io/api/` landing page required JavaScript in this audit and was not validated as an integration dependency.
+`Data/Reference/psgc-2026-q3.json` is reference **data**, not configuration or an EF seed helper. It is copied on build/publish and loaded once by `AreaService`. No runtime upstream catalog calls or additional startup settings. Its DI registration remains inline in Program.cs: `AddSingleton<IAreaService, AreaService>()`.
 
-**Public Nominatim is constrained, not an unlimited free backend.** Read its [usage policy](https://operations.osmfoundation.org/policies/nominatim/) before enabling: maximum one request/second across the whole app, identifying Referer/User-Agent, attribution/caching, no autocomplete, systematic lookups, or confidential submissions. The current policy also restricts generic integrations generated by coding platforms; the developer must make an informed provider choice. Policies can change and access may be withdrawn. These facts were checked 2026-10-28.
+- PSA Q3 2026, as of 2026-09-30: 18 regions including NIR, 82 provinces, 149 cities + 1,493 municipalities, 42,010 barangays. Fourteen Manila submunicipalities remain internal ancestry nodes; city endpoint returns 1,642 cities/municipalities.
+- Official [workbook](https://psa.gov.ph/system/files/scd/PSGC-3Q-2026-Publication-Datafile.xlsx) returned HTTP 403 during import. Public [workbook mirror](https://raw.githubusercontent.com/rbillyjames0221/psgc-api/main/seed/PSGC-3Q-2026-Publication-Datafile.xlsx) supplied the file; metadata identifies PSA as originator and requires acknowledgement. Official published counts/hierarchy were cross-checked; no PSA checksum independently authenticates the mirror.
+- JSON metadata records version, official URLs, actual retrieval URL/date, workbook SHA-256 and PSA attribution. Worksheet PSGC code/name/geographic level/city class supplied the hierarchy. Codes are exact ten-character strings preserving leading zeros; every parent exists.
+- HUC/ICC cities belong directly to regions; NCR has no provinces. Provincial cities/municipalities belong to provinces. Manila barangays traverse submunicipality ancestors. Duplicate names remain distinct by code.
+- [PSGC Cloud](https://psgc.cloud/) and `psgc.gitlab.io/api/` inspected but not adopted: both region feeds returned 17 regions without NIR. Do not replace this snapshot with an older feed.
 
-Project recommendation: deliver cached area selection, manual address, and map pin first. Make optional reverse lookup replaceable server configuration with one app-wide rate gate, bounded timeout, cache, deduplication, and explicit user action. Do not geocode all discovery cards, every drag event, or every keystroke. Do not send home/emergency/contact data to public geocoders. Tests use fixtures.
+Refresh deliberately: verify the next PSA release's terms/counts/codes/ancestry/exceptions; retain old snapshot in Git and define saved-code compatibility before changing version. Never overwrite user data or assume renamed/split areas are aliases. Saved rows retain source version; rollback catalog/code together.
 
-## Target data/contract design (planned)
+## Source map and API
 
-- Store PSGC codes as strings, not integers; preserve codes exactly, including leading zeros/version. Store source release/retrieval/provenance; handle region/province exceptions and independent cities.
-- Keep display label separate from hierarchy codes. A geocoder's suburb/neighbourhood/village is a label candidate, not a guaranteed official barangay mapping. Let users correct it.
-- Use explicit nullable `latitude` (-90..90) and `longitude` (-180..180), WGS84. No 0,0 sentinel; keep the old text when coordinates are absent. Map arrays commonly use lat/lng, GeoJSON uses lng/lat; document conversion at boundaries.
-- Store exact coordinates privately; discovery exposes area/approximate distance rather than raw home pins. Session venue pins are participant-only unless a future public-event visibility flow explicitly publishes them.
-- Backend must validate location pairs and area hierarchy. Distance filters must apply on the server before page limits; filtering the first 50 profiles in React is incorrect. Define units and handle missing coordinates explicitly.
-- Browser geolocation is optional and user-triggered. Handle denied permission, timeout, low accuracy, and unsupported browser. Secure context/HTTPS is needed beyond localhost; the current loopback stack does not provide phone LAN GPS testing automatically.
-- Geocoding cache needs bounded retention and privacy review; avoid logging sensitive raw queries/coordinates. Region/barangay catalogs are administrative data, not routing or precise boundary verification.
+- `Controllers/AreasController.cs`, `Interfaces/IAreaService.cs`, `Services/AreaService.cs`; reference-only `Models/AreaCatalog.cs` and `PhilippineArea.cs` are not DbSets. Anonymous lookup returns `{ code, name }[]`, cacheable for one day.
+- GET `/api/areas/regions`; `/provinces?regionCode=...`; `/cities?regionCode=...&provinceCode=...`; `/barangays?cityCode=...`. Omitted province means all cities in region; `provinceCode=none` means independent cities. Invalid ancestry returns 400.
+- Private data: `DTOs/MapLocation.cs`, profile/schedule/fight DTOs, `FighterProfile`, `Fight`, `ProfileService`, `FightService`, `DtoMapper`, `AppDbContext`.
+- Web `LocationPicker.tsx`: cascading region â†’ province/independent city â†’ city/municipality â†’ locally filtered barangay; reset children when parents change. `LocationMap.tsx`: click/drag pin, tile-error/manual fallback, visible attribution, cleanup. GPS only on explicit action with denied/timeout fallback; coordinate inputs remain usable.
+- `ProfileEditor.tsx` and `Fights.tsx` accept structured areas and optional pins. `FightMap.tsx` replaces `/map` placeholder, using participant-authorized fight list, status filtering, selected venue and arrangement links. It displays no emergency contacts.
 
-## Recovery and acceptance
+## Privacy, migration and compatibility
 
-Restore web DOM components and current API contracts rather than importing Expo dependencies. If a map fails, keep address/area forms usable. If labels differ, inspect hierarchy/version and geocoder fallbacks rather than overwriting user-entered addresses.
+Nested `mapLocation`: nullable `regionCode`, `provinceCode`, `cityCode`, `barangayCode`, `psgcVersion`, `latitude`, `longitude`. Paired finite WGS84 latitude/longitude with ranges Â±90/Â±180; 0,0 valid. A structured selection requires region/city/barangay and matching optional province. Coordinates may be used without areas; no point-in-boundary verification.
 
-Validate known Philippine examples, duplicate barangay names in different cities, NCR/no-province cases, missing suburb/road, invalid coordinates, denied GPS, public-provider timeout/429/offline, provider switching, and private/public DTO separation. Verify attribution and touch/keyboard controls on 360–390 px screens. Confirm the selected venue survives SQL reload and filtering uses true distance before pagination. Unit tests and browser fixtures must not issue live public requests; one deliberate low-volume manual integration check is sufficient when enabling a provider.
+Own profile GET/update/avatar responses include private mapLocation. Discovery/match-opponent responses omit the field entirely. A structured selection makes public location the canonical city name; exact profile barangay/pin remain private. Omitted/null update mapLocation preserves existing data for old clients; `{}` clears it. Session pins remain participant-only through existing authorized fight routes; name/address remain editable text. Explicit lookup sends the selected public-place coordinates to Nominatim; it never runs automatically on GPS/pin movement or profile browsing.
 
-No unlimited availability, official boundary accuracy, navigation/routing, or paid map subscription is assumed.
+`Migrations/20261102074948_PhilippineMapLocations.cs`: fourteen nullable columns plus two SQL pair/range checks across profiles/fights. Existing text/rows preserved; old fights remain unpinned. Verified COPY_ONLY/CHECKSUM backup preceded local Lalamog migration; private backup path is in ignored `.cache/map-backup.json`. Development startup now invokes MigrateAsync inline; seed logic remains unchanged in both Program.cs EF callbacks. Other environments use explicit migrations. No fake venue pins seeded.
+
+## Suggested address lookup (owner follow-up, 2026-11-02)
+
+Implemented source: `Controllers/MapsController.cs`, `Interfaces/IReverseGeocodingService.cs`, `Services/ReverseGeocodingService.cs`, `DTOs/ReverseGeocodeRequest.cs`, `ReverseGeocodeResponse.cs`; web `LocationPicker.tsx`, `Fights.tsx`, `types.ts`, `styles.css`. No model/schema changes or migration needed.
+
+Choose a pin, explicitly press **Find address for this pin**, review the suggestion, then **Use this address** in a venue form. Venue address remains editable and is persisted by the existing schedule contract. Long suggestions are copied up to the existing 300-character address limit with a visible notice. Profile lookup only shows a suggestion: it never replaces public city text, selects a PSGC code, or saves a new private address field. Pin changes/unmount abort obsolete lookups and clear suggestions; late results cannot apply to a different pin. GPS/pin drags/typing/screen load never trigger provider requests. Public-place notice and OSM attribution/policy link are always present.
+
+POST `/api/maps/reverse`, cookie authentication + normal CSRF, body `{ latitude, longitude }` (required finite WGS84 pair). Returns `{ address, road, suburb, city, state, country }`. Format is Road → Suburb → City/Town/Village → State → Country; neighbourhood/quarter substitute for absent suburb, and display_name is a fallback when components are absent. Missing parts are omitted. A returned label may describe a barangay but does not verify its PSGC identity. No point-in-boundary or exact-address guarantee.
+
+All settings are basic and inline in Program.cs: named HttpClient with app-identifying `Lalamog/1.0`, eight-second timeout, suppressed URL logging (provider URLs contain coordinates), a singleton gate at one external request/second, and memory cache limited to 500 entries/one day. Five-decimal coordinate cache keys include provider URL; queued identical lookups recheck the cache. No-result responses are cached, failures are not; Retry-After is respected on provider 429/403. Busy queue wait is bounded by client timeout. No automatic retries, background polling, batches, redis, EF changes or configuration helper/option class. `appsettings.json` contains only the replaceable `Maps:NominatimUrl`; change it to another compatible Nominatim server without a software update.
+
+This supported deployment is **one API process**, so the singleton gate covers all users. Multiple replicas require a shared throttle or another provider before enabling traffic; do not multiply the public-service limit. Cache is process memory and clears on restart. Auth/CSRF + POST body/no-store keep coordinates out of application request URLs; only explicit public-place lookup sends them to the provider. Do not send home/confidential locations. Provider outage/timeout gives editable manual fallback (503), no result 404, invalid input 400, local busy 429, missing auth 401/missing CSRF 400.
+
+`ReverseGeocodingTests.cs` tests formatter/fallbacks, cache/deduplication, global spacing, Retry-After, canceled/invalid input and safe offline/timeout/no-result handling using fake HTTP. `GeocodingApiTests.cs` checks real cookie/CSRF/validation/no-store and actual named-client settings via fake provider. Three added browser cases cover explicit-only calls, review/edit/save/reload, unchanged official selection, failed lookup/manual scheduling and stale pin responses/public profile privacy. Final verification: backend build has zero warnings/errors and **all 55 backend tests passed**, with test collections run sequentially to avoid local SQL resource contention. Frontend build and **all six map browser cases passed**, including three reverse-lookup additions. Final mobile suggestion screenshot reviewed; existing 375/1440 px map evidence retained. Automated checks use fixtures. One deliberate live lookup through the Development cookie/CSRF-protected API for a public Rizal Park vicinity pin returned Maria Orosa Street, Ermita, Manila, Philippines. No profile/session rows changed. EF model unchanged; no migration. Live device GPS and full browser/core restart suite were not rerun.
+
+## Latest work record and verification
+
+2026-11-02 reverse-lookup follow-up completed: protected explicit lookup, basic inline provider settings, shared cache/pacing and editable venue suggestions. Both builds, all 55 backend tests, all six fixture map browser cases, live public-place lookup, model drift and knowledge/credential checks passed. First parallel verification hit three SQL timeouts during low memory plus Edge actionability/screenshot frame stalls; sequential backend run and keyboard/software-rendered browser run passed without expanding application SQL options. Final evidence/limits are detailed above. No remaining implementation work for this request.
+
+Earlier basic-map slice, 2026-11-02: delivered selected manual-address map flow after read-only legacy/provider audit. Zero-warning backend build and **43 backend tests passed**. `MapFeatureTests.cs` covers catalog exceptions, private SQL profile roundtrip/public omission, legacy preserve/clear, invalid pair/range/hierarchy/version, participant-only SQL venue roundtrip. Populated migration test preserves old text/null map fields. EF reports no pending model changes.
+
+Frontend TypeScript/Vite build passed. `tests/maps.spec.ts` covers cascading/filtering/pin save/reload, denied GPS/catalog failure/manual 0,0, private venue map/status/attribution at 375/1440 px. Final map run: all three passed; earlier related profile/chat/REST fixture regressions also passed (six cases in the earlier combined run). Tiles are fixtures; screenshots are ignored artifacts. Fresh preview avoids existing dev Vite optimizer 504 after dependency installation; restart Vite if its old Leaflet cache is stale. Headless Edge also intermittently stalled on actionability/screenshot frames while occluded: map specs disable background rendering throttles and use actual pointer placement plus keyboard form submission. Final rerun passed and both screenshots were reviewed. Live Development HTTP health/catalog/seeded cookie login/private profile omission/participant reads passed; SQL independently confirms the map migration and no leftover temporary smoke fights. No user rows edited in that final smoke.
+
+## Recovery and remaining work
+
+Restore catalog JSON and csproj content-copy rule if lookups fail. Tile failure must leave address/area/coordinates editable. Restore mapper default private exclusion if precise profile data appears publicly. Repair DTO/entity/migration/web mapping together if pins disappear. Never drop populated nullable columns as routine rollback.
+
+No boundary polygons, routing, radius/nearby discovery, live tracking, autocomplete or public fight publication. GPS beyond localhost needs supported secure context. Fixtures do not prove full phone/device/accessibility or external-service availability. These are separate future slices; the requested basic selectors/manual-address/private-pin flow is delivered.

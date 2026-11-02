@@ -11,17 +11,20 @@ namespace Lalamog.Api.Services
         private readonly IMatchingRepository _transactions;
         private readonly IMatchingService _matchingService;
         private readonly TimeProvider _clock;
+        private readonly IAreaService _areas;
 
         public FightService(
             IFightRepository fightRepository,
             IMatchingRepository transactions,
             IMatchingService matchingService,
-            TimeProvider clock)
+            TimeProvider clock,
+            IAreaService areas)
         {
             _fightRepository = fightRepository;
             _transactions = transactions;
             _matchingService = matchingService;
             _clock = clock;
+            _areas = areas;
         }
 
         public async Task<List<FightResponse>> ListAsync(Guid actor, CancellationToken cancellationToken)
@@ -69,6 +72,17 @@ namespace Lalamog.Api.Services
                     CreatedAt = _clock.GetUtcNow(),
                     UpdatedAt = _clock.GetUtcNow()
                 };
+                if (request.MapLocation != null)
+                {
+                    _areas.Validate(request.MapLocation);
+                    fight.RegionCode = request.MapLocation.RegionCode;
+                    fight.ProvinceCode = request.MapLocation.ProvinceCode;
+                    fight.CityCode = request.MapLocation.CityCode;
+                    fight.BarangayCode = request.MapLocation.BarangayCode;
+                    fight.Latitude = request.MapLocation.Latitude;
+                    fight.Longitude = request.MapLocation.Longitude;
+                    fight.PsgcVersion = fight.RegionCode == null ? null : _areas.Version;
+                }
                 _fightRepository.Add(fight);
                 await _fightRepository.SaveAsync(cancellationToken);
                 return DtoMapper.ToFightResponse(fight);

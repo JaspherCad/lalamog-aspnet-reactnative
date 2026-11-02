@@ -1,5 +1,9 @@
 # Shared engineering instructions
 
+## Non-negotiable startup preference
+
+Follow [the mandatory basic-inline rule in AGENTS.md](AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs). All startup settings and both EF seeding callbacks live inline in Program.cs. Use the simplest built-in defaults that make existing features work. Never create configuration/option/seed helper files, local setup functions or extension-method wrappers; do not add decorative or speculative settings. Fix CSRF/cookies/SQL failures with the fewest necessary built-in options. This rule applies to all future sessions and supersedes older no-seeding/abstracted-setup records. Owner explicitly approved standard Git-ignored appsettings.Development.json for local SQL connection values on 2026-11-02; this permits JSON values only, with no custom loader or external C# setup. Authentication remains local email/password with cookies; no OAuth.
+
 Baseline: 2026-10-28. Applies to all providers, editors, and coding agents working on LALAMOG.
 
 ## Authority and evidence
@@ -19,14 +23,14 @@ When code and docs disagree, inspect the active code and tests, report the discr
 
 ## Backend
 
-- Readability preference: explicit constructors, readonly injected fields, brace-delimited methods/control flow, individual property-based DTOs and individual interfaces. Keep startup settings and middleware inline in `Program.cs` with inline callbacks (owner direction, 2026-11-02); do not extract named setup methods or configuration-only C# files. Elsewhere, use named callbacks/transaction operations and LINQ query syntax instead of arrow/lambda syntax. Keep generated migration/snapshot files unchanged and confirm no EF model drift. The structure remains one horizontal N-tier project; see [backend structure](docs/features/BACKEND_STRUCTURE.md).
+- Readability preference: explicit constructors, readonly injected fields, brace-delimited methods/control flow, individual property-based DTOs, individual interfaces and one model per Models/*.cs file (no combined Entities.cs). Keep startup settings and middleware inline in `Program.cs` with inline callbacks (owner direction, 2026-11-02); do not extract named setup methods or configuration-only C# files. Elsewhere, use named callbacks/transaction operations and LINQ query syntax instead of arrow/lambda syntax. Keep generated migration/snapshot files unchanged and confirm no EF model drift. The structure remains one horizontal N-tier project; see [backend structure](docs/features/BACKEND_STRUCTURE.md).
 
 - Use the active .NET 10 solution and SQL Server provider. Keep controllers focused on HTTP; services enforce validation, membership, and transitions; repositories own EF queries/transactions. Use constructor injection and cancellation tokens.
-- Identity owns password hashing/accounts. Derive actor IDs from claims. Return 404 for inaccessible participant resources as current services do. Do not trust user IDs in mutation bodies.
+- Plain AppUser, native PBKDF2 password hashing and cookie authentication own accounts; do not reintroduce ASP.NET Identity, IdentityUser or manager/token-provider services. Derive actor IDs from claims. Return 404 for inaccessible participant resources as current services do. Do not trust user IDs in mutation bodies.
 - Keep existing HttpOnly/SameSite cookie and antiforgery behavior. Use relative URLs through the same-origin web proxy. Do not solve cookie issues by disabling CSRF or adding permissive CORS.
-- Preserve SQL transaction execution strategies, deterministic pair ordering, filtered uniqueness, and concurrency tokens; the current owner-requested direct SQL registration omits explicit retries (known concurrency failures are recorded in handoff). Avoid an external network call inside a retriable SQL transaction.
+- Preserve SQL transaction execution strategies, deterministic pair ordering, filtered uniqueness, and concurrency tokens. Use the default inline EnableRetryOnFailure() option; it is required by the existing concurrent matching/scheduling flows. Avoid an external network call inside a retriable SQL transaction.
 - Schema changes require EF migrations and an updated snapshot, a data-preservation strategy, and real SQL validation. Both active migration directories matter; see [data model](docs/DATA_MODEL.md).
-- Apply migrations explicitly with EF tools, separate from normal API startup. Demo seeding and the custom initializer mode are removed; application settings come directly from appsettings.json (ConnectionStrings:DefaultConnection). Do not connect to the legacy PostgreSQL database.
+- Development startup now calls MigrateAsync directly inline in Program.cs to create/update the local database and run the inline async seeds, including after an intentional Compose volume reset. Other environments use explicit EF migration commands. EF UseSeeding/UseAsyncSeeding callbacks are inline in Program.cs and seed six fictional test accounts plus related records; no seeder class or custom initializer mode. Application settings come directly from appsettings.json (ConnectionStrings:DefaultConnection). Do not connect to the legacy PostgreSQL database.
 - Errors should be safe HTTP ProblemDetails; logs may include correlation IDs but must not expose passwords, tokens, message contents, emergency contacts, or precise private coordinates.
 
 ## Frontend and mobile-first design

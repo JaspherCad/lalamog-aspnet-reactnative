@@ -2,7 +2,7 @@
 
 Updated: 2026-11-02 (Asia/Manila).
 Purpose: share this file with another AI to analyze the product, architecture and modules, then propose an implementation-ready DESIGN.md.
-Implementation checkpoint (2026-11-02): the React UI foundation is now implemented; see [frontend design](features/FRONTEND_DESIGN.md). Shared paper assets/clean controls, dossier gestures/match dialog, 1–5 style selection, auth/profile/inbox/chat/fight styling and exact-pair arrangement are in source. Production build and nine deterministic fixture browser cases passed. Real SQL/live SignalR/avatar/waiver/persistence suites were not rerun. Public results/titles are demo-only on `/preview`; `/map` is an unavailable state, not a working public map.
+Implementation checkpoint (2026-11-02): the React UI foundation is now implemented; see [frontend design](features/FRONTEND_DESIGN.md). Shared paper assets/clean controls, dossier gestures/match dialog, 1–5 style selection, auth/profile/inbox/chat/fight styling and exact-pair arrangement are in source. Production build and nine deterministic fixture browser cases passed. Real SQL/live SignalR/avatar/waiver/persistence suites were not rerun. Public results/titles are demo-only on `/preview`; `/map` now shows private participant venues; public map publication remains unimplemented (later maps follow-up).
 Authority: the owner's clarified concept below supersedes the earlier training/sparring-product framing. Existing source and older documentation still reflect that earlier implementation; distinguish current code from the new target.
 
 ## 1. Assignment and project identity
@@ -200,7 +200,7 @@ Multiple videos per fight and generated thumbnails can be optional extensions. D
 
 ## 8. Implemented today versus the requested target
 
-The backend retains the earlier scheduling contracts while the React UI now reflects the clarified portfolio concept. This is a UI redesign over those contracts; results/video/maps still need backend implementation.
+The backend retains the earlier scheduling contracts while the React UI now reflects the clarified portfolio concept. This is a UI redesign over those contracts; results/video/public maps still need backend implementation; basic private pins/area selection are implemented.
 
 | Area | Implemented today | Target work still needed |
 | --- | --- | --- |
@@ -208,7 +208,7 @@ The backend retains the earlier scheduling contracts while the React UI now refl
 | Discover | Responsive dossier deck, drag/buttons/keyboard, pending/error recovery, mutual-match dialog; up to 50 candidates sorted by nickname/ID | Public record/tag data; optional richer exit transitions/filters |
 | Matching | Reciprocal likes create one persistent match; match list; dialog opens the pair's conversation | No new matching persistence required |
 | Conversation | Private REST/SignalR text chat, Start the Match CTA, current/previous Fight context, exact-pair arrangement links | Result/video actions and richer fight cards |
-| Existing fights/sessions | Text place/address, date/time, acknowledgements/contacts, cancel/complete; one unfinished fight per Match | Map-selected location/hotspots; result flow; target lifecycle if chosen |
+| Existing fights/sessions | Manual place/address, optional private pin/PSGC area, date/time, acknowledgements/contacts, cancel/complete; one unfinished fight per Match | Map-selected location/hotspots; result flow; target lifecycle if chosen |
 | Media | Local validated JPEG/PNG/WebP avatar upload | Blob/Azurite adapter; video metadata/upload/publication/playback |
 | Public map | Not implemented | Locations/coordinates, hotspot data, pin history and video/result panels |
 | Fight outcome | Completion has no win/loss/draw fields | Result persistence, agreement and display |
@@ -244,7 +244,7 @@ Keep the existing foundation:
 - Browser app, mobile-first DOM/CSS; no Expo/React Native rewrite.
 - One horizontal N-tier API with Controllers, Services, Repositories, Interfaces and DTOs.
 - Microsoft SQL Server/EF Core; C# business rules, SQL structural constraints/transactions.
-- ASP.NET Identity HttpOnly cookies, CSRF and participant authorization.
+- Native AppUser with HttpOnly cookie authentication and participant authorization; current CSRF enforcement gap is recorded in the authentication guide.
 - SQL is authoritative for matches/messages/fights and proposed results/media ownership. SignalR is a notification/recovery signal, not history storage.
 - Preserve existing SQL data, avatars, cookie keys, migration history, match uniqueness and canonical pair ordering.
 - Public map reads use explicit public DTOs, separate from private conversation/contact/arrangement responses.

@@ -40,7 +40,8 @@ The former flat backlog is retained with ownership. Prioritize functional core a
 - [ ] Statistics/history/head-to-head: FE-09 / BE-09, deferred.
 - [ ] Ratings/Elo/reviews/leaderboards: FE-09 / BE-09, deferred.
 - [ ] Public events/public fight maps: FE-09 / BE-09 after visibility contracts.
-- [ ] GPS/map pickers/geocoding/distance: FE-03/04 + BE-02/03.
+- [x] Local Philippine area selectors, private pins, optional GPS and participant fight map: BE-02/FE-03 delivered 2026-11-02; see [maps evidence](docs/features/MAPS_AND_AREAS.md).
+- [ ] Nearby/distance discovery: remaining FE-04/BE-03. Explicit free public-place address suggestions were subsequently implemented; manual editing remains.
 - [ ] GIF/video/highlights: FE-09 / BE-09; separate from avatars.
 - [ ] Object storage: FE-02 / BE-01; **Azure Blob/Azurite replaces earlier S3 exploration**.
 - [ ] Reference-aware/grace-period orphan-photo cleanup: BE-01.

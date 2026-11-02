@@ -11,17 +11,19 @@ namespace Lalamog.Api.Services
     {
         private readonly IProfileRepository _profileRepository;
         private readonly IFileStorage _fileStorage;
+        private readonly IAreaService _areas;
 
-        public ProfileService(IProfileRepository profileRepository, IFileStorage fileStorage)
+        public ProfileService(IProfileRepository profileRepository, IFileStorage fileStorage, IAreaService areas)
         {
             _profileRepository = profileRepository;
             _fileStorage = fileStorage;
+            _areas = areas;
         }
 
         public async Task<ProfileResponse> GetAsync(Guid userId, CancellationToken cancellationToken)
         {
             FighterProfile profile = await RequireProfileAsync(userId, cancellationToken);
-            return DtoMapper.ToProfileResponse(profile);
+            return DtoMapper.ToProfileResponse(profile, true);
         }
 
         public async Task<List<ProfileResponse>> DiscoverAsync(Guid userId, CancellationToken cancellationToken)
@@ -56,6 +58,22 @@ namespace Lalamog.Api.Services
             profile.ExperienceLevel = request.ExperienceLevel;
             profile.Location = (request.Location ?? string.Empty).Trim();
             profile.Availability = (request.Availability ?? string.Empty).Trim();
+            if (request.MapLocation != null)
+            {
+                _areas.Validate(request.MapLocation);
+                profile.RegionCode = request.MapLocation.RegionCode;
+                profile.ProvinceCode = request.MapLocation.ProvinceCode;
+                profile.CityCode = request.MapLocation.CityCode;
+                profile.BarangayCode = request.MapLocation.BarangayCode;
+                profile.Latitude = request.MapLocation.Latitude;
+                profile.Longitude = request.MapLocation.Longitude;
+                profile.PsgcVersion = profile.RegionCode == null ? null : _areas.Version;
+                if (profile.CityCode != null)
+                {
+                    profile.Location = _areas.CityName(profile.CityCode);
+                }
+            }
+
 
             try
             {
@@ -69,7 +87,7 @@ namespace Lalamog.Api.Services
                 }
                 throw;
             }
-            return DtoMapper.ToProfileResponse(profile);
+            return DtoMapper.ToProfileResponse(profile, true);
         }
 
         public async Task<ProfileResponse> AvatarAsync(Guid userId, IFormFile file, CancellationToken cancellationToken)
@@ -90,7 +108,7 @@ namespace Lalamog.Api.Services
                 throw;
             }
 
-            return DtoMapper.ToProfileResponse(profile);
+            return DtoMapper.ToProfileResponse(profile, true);
         }
 
         private async Task<FighterProfile> RequireProfileAsync(Guid userId, CancellationToken cancellationToken)

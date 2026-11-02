@@ -1,5 +1,21 @@
 # Knowledge and architecture change log
 
+2026-11-02 — Fixed recurring SQL 4060 after data-volume recreation: Development startup now calls MigrateAsync directly inline in Program.cs, applying existing migrations and inline six-user seed before requests. User explicitly confirmed fresh Compose reset/refill goal. Added isolated startup/restart edit-preservation test; build and three targeted SQL cases passed; actual missing-DB startup passed health/cookie login and all-model counts. No schema/helper/config-layer change.
+
+2026-11-02 — Repaired local SQL startup after reported error 18456: verified existing sa credential, found current Lalamog DB absent, applied existing migrations/inline seeds, configured owner-approved ignored standard Development JSON and restarted API. Normal health/native-cookie login/session/profile passed without temporary connection override. Confirmed no active OAuth integration. See LOCAL_DEVELOPMENT and current handoff.
+
+2026-11-02 — Owner explicitly requested free Nominatim suggested addresses. Added protected POST lookup, shared single-process pacing/dedup/cache and explicit review/edit venue UI while preserving private pins/official PSGC selections. Settings remain inline in Program.cs; no migration/key/package. Both builds, all 55 backend tests (sequential collections), all six map browser cases and one live public-place lookup passed; EF unchanged. Verification/recovery: current handoff and MAPS_AND_AREAS.
+
+2026-11-02 — Basic maps delivered: read-only legacy audit identified Leaflet/OSM/Nominatim with no keyed provider; owner chose manual addresses. Bundled PSA Q3 2026 catalog/local lookups, optional GPS/private pins, nullable additive migration and participant fight map. Backend 43-case suite/build, EF drift check and web build/fixture checks passed. SQL backup verified and map migration applied. Basic-inline startup/seeding rule preserved. See MAPS_AND_AREAS and current handoff.
+
+## 2026-11-02 — strict basic-inline setup; working CSRF/concurrency and six-user seed
+
+Prominent future-session rules prohibit abstracted options/seed helpers and require minimum built-in settings inline in Program.cs. Restored MVC CSRF validation, default SQL retries and Development-compatible cookies. Added mirrored EF seed callbacks covering all seven models with parent-first saves and no fixed IDs; reruns preserve edits/passwords. Build and all 34 backend tests passed. Backed up/verified local database before explicit migration/seed; final operation evidence in handoff/local-development guide.
+
+## 2026-11-02 — native AppUser and separate model files
+
+Removed Identity inheritance/context/managers/roles/token providers/package; split Entities.cs into seven models. Added native account repository/password/lockout/cookie flow and a reviewed migration preserving existing IDs/hashes/relations plus retired metadata archives. Fifteen new checks passed, populated upgrade/login/rollback verified, full suite 29/33 with current startup CSRF/concurrency gaps. Migration not applied to normal database. Sources/results: authentication guide and handoff.
+
 ## 2026-11-02 — minimal startup and REST-only messaging
 
 Removed requested header/origin/hub-antiforgery callbacks, custom key persistence and partial Program class. Removed SignalR hub/service dependencies/browser package/proxies. Conversation now sends and refreshes via REST every three seconds; tests locate the host through existing AppDbContext. Existing database/media/key files preserved. Current verification in handoff/chat guide.

@@ -5,9 +5,10 @@ import { errorText, post, api, refreshCsrf } from './api';
 import type { Session } from './types';
 import { Matches } from './Matches';
 import { Fights } from './Fights';
+import { FightMap } from './FightMap';
 import { ProfileEditor } from './ProfileEditor';
 import { Discover } from './Discover';
-import { Icon, PageHeading } from './ui';
+import { Icon } from './ui';
 import type { IconName } from './ui';
 
 function Brand() { return <Link className="brand" to="/">LALAMOG<span>People. Fights. Stories.</span></Link>; }
@@ -46,9 +47,6 @@ function AppShell({ children, logout, preview = false }: { children: ReactNode; 
       <div className="header-actions"><button className="texture-toggle" aria-pressed={texture} onClick={() => setTexture(!texture)} title="Toggle paper texture"><span className="texture-swatch"/><span className="sr-only">Paper texture</span></button>{preview ? <Link className="header-link" to="/">Sign in <Icon name="arrow"/></Link> : <button className="header-link" onClick={logout}>Sign out <Icon name="logout"/></button>}</div></header>
     <main id="main" className="app-main" tabIndex={-1}>{children}</main><footer className="site-footer"><span>LALAMOG / Made for the next story.</span><Link to="/sessions">Your fights <Icon name="arrow"/></Link></footer>
   </div>;
-}
-function FightMap() {
-  return <section><PageHeading eyebrow="Places hold stories" title="Fight map"/><div className="panel empty map-unavailable"><Icon name="map"/><span className="corner-label">The next chapter</span><h2>The map is still being drawn.</h2><p>Published fight locations and videos will live here. Your private arrangements stay in your conversations and fight history.</p><div className="actions"><Link className="button-link" to="/">Back to Discover</Link><Link className="button-link secondary" to="/sessions">Your fights</Link></div></div></section>;
 }
 function Application() {
   const [session, setSession] = useState<Session | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState('');

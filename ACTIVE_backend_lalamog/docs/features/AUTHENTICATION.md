@@ -1,48 +1,52 @@
-# Authentication and browser session
+# Native account authentication and browser session
 
-Status: implemented. Audited 2026-10-28.
+2026-11-02 SQL recovery clarification: active authentication is native AppUser email/password plus HttpOnly cookies. No active OAuth/OIDC/Google/Facebook setup/package was found; none needed removal. Fake seed emails remain inline in Program.cs and need no real mailbox. Reported SQL error 18456 was a separate database connection issue: missing Lalamog database plus a placeholder normal-run connection. Existing migrations/seeds and owner-approved local Development JSON restored normal health/cookie login/session/profile. Auth business code unchanged; see [local development](LOCAL_DEVELOPMENT.md).
 
-## Purpose and source map
+Status: implemented with plain AppUser, native password hashing and cookie authentication. Updated/verified 2026-11-02; full-suite limits below. ASP.NET Identity is removed from active application code and package references.
 
-Register, sign in, restore the current browser session, and sign out without exposing bearer credentials to browser JavaScript.
+## Source map
 
-- Backend: `Program.cs`, `Controllers/AuthController.cs`, `Controllers/ApiController.cs`, `Services/AuthService.cs`, Identity user in `Models/Entities.cs`.
-- Frontend: `ACTIVE_frontend_lalamog/src/App.tsx` auth/restore/logout, `ACTIVE_frontend_lalamog/src/api.ts` token preparation and error handling.
-- Infrastructure: Vite same-origin HTTP proxy and framework-default DataProtection behavior. Custom DataProtection:Path/key persistence was removed at owner request; existing key files/volumes are preserved.
-- Verification: `Accounts_RequireCsrf_RestoreSession_AndLogout` in `CoreFlowTests.cs`; browser core flow and restart persistence tests.
+- `Models/AppUser.cs`: plain account with ID, email/normalized email, password hash, failed-attempt count, lockout expiry, rowversion and profile navigation. No Identity base class.
+- `Data/AppDbContext.cs`: ordinary DbContext, Users DbSet mapped to AppUsers, unique filtered normalized-email index and native relationships.
+- `Interfaces/IUserRepository.cs`, `Repositories/UserRepository.cs`: account lookup/persistence, optimistic rowversion update and tracking reset after conflicts.
+- `Services/AuthService.cs`, `Infrastructure/PasswordHashing.cs`: registration validation, native salted PBKDF2 password verification, lockout and claim-based cookie sign-in/out.
+- `Program.cs`: inline AddAuthentication/AddCookie and HttpContextAccessor registration; no AddIdentity, UserManager, SignInManager, roles/token providers, custom key persistence, configuration helper or partial Program class.
+- `Controllers/AuthController.cs`, `Controllers/ApiController.cs`: existing routes and actor claims; frontend `src/api.ts` continues cookie-based calls and token refresh.
+- `Migrations/20261102063804_NativeAppUsers.cs` plus generated designer/snapshot: account-data-preserving native schema upgrade. Prior migration files are retained as history and contain historical framework type names.
 
-## Behavior that must survive
+## Current behavior and contracts
 
-Identity validates email/password and hashes credentials. Registration creates user and profile and signs in. Cookie `lalamog.auth` is HttpOnly, SameSite Strict, and uses framework lifetime defaults with nonpersistent browser sign-in. The owner currently sets auth/CSRF cookie SecurePolicy to Always inline in Program.cs; HTTPS is required for browser authentication. The old Cookies:Secure switch is removed.
+Registration keeps the existing email/password/nickname/optional fighterName API. Passwords require 10–128 characters including uppercase, lowercase, a digit and a symbol. Email is normalized with invariant uppercase and protected by a SQL unique index; concurrent duplicate email attempts produce one account and a 400 for the duplicate. Fighter-name conflicts remain 409. Account and profile save together before sign-in.
 
-CSRF cookie `lalamog.csrf` plus request header `X-CSRF-TOKEN` protects mutations, including anonymous register/login. Fetch a new token after each identity transition. Frontend CSRF token lives in module memory and concurrent requests share one pending fetch. `/auth/me` returns `{ userId }`; no token is returned or stored in web storage.
+Passwords use built-in .NET PBKDF2-HMAC-SHA512 with 220,000 iterations, a random 16-byte salt and 32-byte derived key; verification compares bytes with FixedTimeEquals. The versioned binary representation remains compatible with existing saved password hashes (older version/PRF variants verified with independent test vectors). There is no Identity password hasher dependency and no plaintext password storage.
 
-Private controllers derive `ActorId` from authenticated NameIdentifier claims. Unauthenticated calls return 401 without HTML redirects; denied access returns 403. The frontend emits `session-expired` on protected API 401 and clears session state. Auth endpoints use the rate limiter; failed logins trigger Identity lockout.
+Login is case-insensitive by email and returns a generic 401 for unknown users, wrong passwords and locked accounts. Five failed attempts lock the account for five minutes. Rowversion checks prevent concurrent updates from silently losing counters; conflicting updates reload/retry up to three times, then fail closed. Correct login after expiry clears the counter/lockout. TimeProvider remains injectable for tests.
 
-## Recovery sequence
+The auth cookie remains lalamog.auth, HttpOnly, SameSite Strict, a Development SameAsRequest / otherwise Always secure-cookie policy and a nonpersistent browser sign-in. Authentication uses the standard Cookies scheme and NameIdentifier/Name/Email claims. Changing away from the old scheme means existing browser sessions may need to sign in again; saved account passwords remain usable. Framework-default key handling applies; old .cache/keys files are untouched.
 
-1. Compare AuthController, AuthService, Program cookie/CSRF middleware, and `api.ts` as one contract. Restore the appropriate Git version if available.
-2. Inspect network status for initial csrf request, cookies, registration/login, fresh csrf request, and me. A 400 after login often means an old identity-bound token; fix token refresh rather than removing protection.
-3. Custom key persistence/application-name configuration is removed. DataProtection uses framework defaults; do not assume old .cache/keys are loaded or claim restart-session persistence without verification. Preserve existing key files for recovery.
-4. For browser failures but working direct API calls, check scheme, origin, cookie policy, and proxy Host. Do not add permissive CORS or a localStorage JWT workaround.
-5. Rerun account and browser flow tests. Check a missing CSRF header fails and old session data cannot survive sign-out in React.
+The built-in MVC AutoValidateAntiforgeryToken filter is now registered inline with AddControllersWithViews. Missing mutation tokens are rejected; React retains X-CSRF-TOKEN preparation/refresh after sign-in/out. No custom middleware/filter class was added. Default inline SQL retries fixed the existing matching/scheduling concurrency failures.
 
-## Acceptance and gaps
+## Migration, compatibility and recovery
 
-New account → profile → reload restored session → logout → protected API 401. Invalid credentials remain generic, repeat failures lock out, no password/token appears in logs or web storage, and restart-session behavior is verified against the framework-default key handling when persistence work resumes. Existing tests cover a subset; do not infer that every lockout/rate-limit scenario is automated.
+Apply the new migration explicitly with `dotnet ef database update` from the backend before running this version against an existing database. It was tested in isolated databases. The inline-seeding task applied it to the backed-up local Lalamog database and verified a repeat update without duplicates or changed original passwords; operational results are in handoff/local development. Both seed callbacks remain in Program.cs; Development startup now invokes MigrateAsync inline so fresh local SQL volumes receive the schema and six fake cookie-login accounts; other environments use explicit migration commands.
 
-Email verification, reset-password/account recovery, and Google login remain pending (BE-05, FE-07 and deferred OAuth). These need real token/email workflows and cannot be implemented as success-only screens.
+The migration creates AppUsers, copies existing account IDs/emails/hashes/lockout values, and redirects profile/swipe/match/message/confirmation foreign keys. Old framework account/role/claim/login/token tables are renamed RetiredAuth* as unmapped recovery archives rather than discarded. No active model or service maps those tables. Null email/hash values in historical placeholder rows are preserved; normal registration supplies validated values. A conflicting old normalized email stops the unique-index upgrade transaction rather than silently merging accounts.
 
-## Latest work record
+Rollback copies new/updated native accounts back into the archived old user table, restores old table names/foreign keys and only then removes AppUsers. Upgrade/rollback/re-upgrade was verified, including new accounts and old claim metadata. This is not a substitute for production backups; preserve the existing migration history and review actual database state before applying.
 
-- 2026-11-02 / owner-requested minimal startup: removed custom persisted-key/application-name setup, generic security-header middleware and hub-specific origin/antiforgery middleware; SignalR itself is removed. Kept Identity and the MVC mutation antiforgery filter. Framework key defaults now apply; old key files were not deleted. Tests locate the host through existing AppDbContext rather than a public partial Program. Eight composition/config/CSRF checks and two actual-SQL chat/authentication cases passed after retaining the MVC registration required by the antiforgery filter; restart behavior was not tested. Verification details in handoff.
+Recover AppUser, DbContext mapping, repository, password verification, cookie setup and migration/snapshot together. Do not restore Identity services or the combined Entities.cs file. Keep each model in its own named .cs file. Account email/hash/lockout metadata must stay out of public profile/message DTOs and logs.
 
-- 2026-11-02 / appsettings simplification: all demo account seeding and initializer code removed; accounts are created through registration. App settings use DefaultConnection in appsettings.json. Preserved owner edits to Always-secure cookies/default lifetime; regression clients now use HTTPS. Verification is in the current handoff.
+## Verification and latest work record
 
-- 2026-11-02 / public fighter-name registration: optional backward-compatible RegisterRequest.FighterName, shared FighterNames validation/normalization and unique-conflict copy. New web signup requires unique name plus non-unique alias, while legacy registrations receive generated public names. Identity email/UserName/cookie/CSRF behavior remains unchanged; email is never exposed as fighter name. SQL tests include duplicate-name rejection, alias reuse and registration persistence. Final evidence in handoff.
+2026-11-02 current follow-up: restored CSRF validation through the built-in MVC filter and default SQL retry handling, both inline in Program.cs. Cookie settings use the simple Development HTTP/other-environments HTTPS policy. Six fictional sample accounts and related rows are seeded by mirrored Program.cs EF callbacks, using native PasswordHashing and save-parent-first steps. Strict basic-inline rules are prominent in the future-session entry instructions.
 
-- 2026-11-02 / UI redesign: paper auth forms/new product copy, input-preserving failures, local `/preview` link and shared authenticated shell. Logout now explicitly refreshes CSRF after the identity transition. Cookie/session/private-state separation remains. Build and nine fixture cases passed, including login/register error fields and CSRF header; actual Identity/SQL workflows not rerun. Details: [frontend design](FRONTEND_DESIGN.md).
+- Build zero warnings/errors; all 34 backend tests passed. Earlier four missing-CSRF/concurrency failures are resolved. The native account/hash/migration and new all-model seeding/repeatability tests passed.
+- The new seeding test invokes both callbacks, checks participant/canonical relationships, all model counts and sample password verification, and proves reruns retain existing hashes/profile edits/canceled fight state.
+- Normal-database backup/verified migration/seed/repeat and Development HTTP auth/CSRF/REST smoke passed; no original passwords were changed. Knowledge links/context/privacy/whitespace checks passed. Details: current handoff/local development. No Identity framework, hidden options/seed helper, SignalR or custom key persistence was reintroduced.
+- Full browser/restart/backup-restore drill was not rerun; the pre-migration SQL backup was verified. Earlier native migration/password compatibility evidence remains valid and is covered by the passing suite.
 
-- 2026-10-29 / behavior-preserving readability/DI refactor: AuthController now injects IAuthService; AuthService uses explicit constructors/methods. Register/Login/Auth/Csrf DTOs are individual property-based classes under DTOs with existing validation and wire fields.
-- Named startup callbacks and split ApiExceptionHandler retain cookie/claims/CSRF/rate-limit and safe shared error behavior. New tests prove service substitution without SQL while CSRF and HTTP input validation remain enforced.
-- Verification: zero-warning build, unchanged EF model/migration hashes, 15 passing tests including real SQL, and one passing isolated mobile/desktop browser core flow. No legacy source changed. Restart persistence/backup restore were not rerun. Details/recovery: [backend structure](BACKEND_STRUCTURE.md).
+## Implementation sources
+
+Checked 2026-11-02: [Microsoft cookie authentication without Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-10.0), [.NET PBKDF2 API](https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rfc2898derivebytes.pbkdf2?view=net-10.0), [existing saved-hash format](https://github.com/dotnet/aspnetcore/blob/main/src/Identity/Extensions.Core/src/PasswordHasher.cs), and [OWASP password storage work factors](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). Format compatibility uses built-in cryptography rather than a dependency on the removed account framework.
+
+Email verification/recovery, moderation, account revocation across existing sessions and public deployment remain separate backlog work.

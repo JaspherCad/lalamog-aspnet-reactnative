@@ -1,3 +1,5 @@
+import { LocationPicker } from './LocationPicker';
+import type { MapLocation } from './types';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -25,6 +27,7 @@ function SessionCard({ fight, match, session, update }: { fight: Fight; match?: 
   return <article className="panel session-card"><div className="section-heading"><h2>With {match ? fighterName(match.opponent) : 'your match'}</h2><span className="pill">{fight.status}</span></div>
     <p><time dateTime={fight.scheduledAt}>{new Date(fight.scheduledAt).toLocaleString()}</time></p>
     <p><strong>{fight.location}</strong><br /><span className="muted">{fight.address}</span></p>
+    {fight.mapLocation?.latitude != null && <Link className="text-action" to={`/map?fightId=${fight.id}`}>View venue map</Link>}
     {error && <p role="alert" className="error">{error}</p>}
     {upcoming && <><p className="small">You: {confirmed ? 'waiver submitted' : 'not confirmed'} · Partner: {(fight.user1Id === session.userId ? fight.user2Confirmed : fight.user1Confirmed) ? 'waiver submitted' : 'not confirmed'}</p>
       {!confirmed && new Date(fight.scheduledAt).getTime() > Date.now() && <form className="confirm-box" onSubmit={confirm}><fieldset disabled={busy}>
@@ -50,6 +53,8 @@ function SessionCard({ fight, match, session, update }: { fight: Fight; match?: 
 }
 export function Fights({ session }: { session: Session }) {
   const [params] = useSearchParams();
+  const [mapLocation, setMapLocation] = useState<MapLocation>({});
+  const [venueAddress, setVenueAddress] = useState('');
   const contextualMatchId = Number(params.get('matchId')) || null;
   const [fights, setFights] = useState<Fight[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -69,9 +74,9 @@ export function Fights({ session }: { session: Session }) {
     const data = Object.fromEntries(new FormData(form));
     setBusy(true); setError(''); setNotice('');
     try {
-      const fight = await post<Fight>('/fights', { matchId: Number(data.matchId), location: data.location, address: data.address,
+      const fight = await post<Fight>('/fights', { matchId: Number(data.matchId), mapLocation, location: data.location, address: data.address,
         scheduledAt: new Date(data.scheduledAt as string).toISOString() });
-      setFights(current => [fight, ...current]); form.reset(); setNotice('Fight arranged. Both participants need to submit their confirmations.');
+      setFights(current => [fight, ...current]); form.reset(); setMapLocation({}); setVenueAddress(''); setNotice('Fight arranged. Both participants need to submit their confirmations.');
     } catch (err) { setError(errorText(err)); } finally { setBusy(false); }
   }
   function update(value: Fight) { setFights(current => current.map(f => f.id === value.id ? value : f)); }
@@ -85,7 +90,8 @@ export function Fights({ session }: { session: Session }) {
         <label>Partner<select name="matchId" aria-label="Partner" required>{availableMatches.map(m => <option key={m.id} value={m.id}>{fighterName(m.opponent)}{m.opponent.fighterName ? ` · ${m.opponent.nickname}` : ''}</option>)}</select></label>
         <label>Date & time<input name="scheduledAt" aria-label="Date & time" aria-describedby="session-time-hint" type="datetime-local" required /><small id="session-time-hint" className="muted">Your local time ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</small></label>
         <label>Venue name<input name="location" maxLength={200} placeholder="Choose a meeting place" required /></label>
-        <label>Venue address<input name="address" maxLength={300} placeholder="Street, city" required /></label>
+        <label>Venue address<input name="address" value={venueAddress} onChange={event => setVenueAddress(event.target.value)} maxLength={300} placeholder="Street, city" required /></label>
+        <LocationPicker value={mapLocation} onChange={setMapLocation} purpose="venue" onAddressSelected={setVenueAddress}/>
         <button>{busy ? 'Arranging...' : 'Arrange fight'}<Icon name="arrow"/></button>
       </fieldset></form>}
       <div className="session-list">{visibleFights.map(f => <SessionCard key={f.id} fight={f} match={matches.find(m => m.id === f.matchId)} session={session} update={update} />)}</div>

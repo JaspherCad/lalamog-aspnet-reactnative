@@ -25,5 +25,6 @@ namespace Lalamog.Api.DTOs
         public string? CancellationReason { get; set; }
 
         public List<ConfirmationResponse> Confirmations { get; set; } = new List<ConfirmationResponse>();
+        public MapLocation? MapLocation { get; set; }
     }
 }

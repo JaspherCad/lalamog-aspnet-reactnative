@@ -1,10 +1,14 @@
 # Mobile-first fighter dossier design
 
-Status: implemented UI redesign against existing APIs; future map/result/video services remain planned. Updated/verified 2026-11-02. Related: FE-01/06, [design](../DESIGN.md), [brief](../DESIGN_BRIEF.md).
+2026-11-02 address suggestions: LocationPicker adds explicit public-place Nominatim lookup, loading/error/review states, visible attribution/policy/privacy notice, and optional copy-to-editable venue address. Profile public city/official barangay selection stay untouched. Pin changes abort stale lookups. No automatic geocoding; provider/schema/recovery evidence in [maps guide](MAPS_AND_AREAS.md).
+
+2026-11-02 latest work: LocationPicker/LocationMap/FightMap extend the paper UI with private profile/venue pins, local cascading PSA selectors, explicit optional GPS, manual fallback, status-filtered participant map and attribution. App /map placeholder replaced; public publication/results remain deferred. Production build and map/profile/chat fixture regressions passed; mobile 375 px and desktop 1440 px map screenshots inspected. Automated tiles are intercepted. Backend persistence/privacy verified in SQL tests; see [maps guide](MAPS_AND_AREAS.md).
+
+Status: implemented UI redesign against existing APIs; public map/result/video services remain planned; basic private maps are implemented. Updated/verified 2026-11-02. Related: FE-01/06, [design](../DESIGN.md), [brief](../DESIGN_BRIEF.md).
 
 ## Purpose and implementation plan
 
-Existing React DOM/Vite app now uses shared paper surfaces, clean controls/icons, dossier discovery gestures and consistent auth/profile/inbox/fight screens. Cookie/CSRF, message recovery and scheduling APIs are retained. `/preview` is an unauthenticated, explicitly fictional interactive design preview; no API mutation is made there. `/map` is an honest unavailable state until public map services exist. No deployment or database reset.
+Existing React DOM/Vite app now uses shared paper surfaces, clean controls/icons, dossier discovery gestures and consistent auth/profile/inbox/fight screens. Cookie/CSRF, message recovery and scheduling APIs are retained. `/preview` is an unauthenticated, explicitly fictional interactive design preview; no API mutation is made there. `/map` now shows private participant venues; public map publication remains deferred. No deployment or database reset.
 
 ## Source map and contracts
 
@@ -12,7 +16,7 @@ Active frontend: `src/App.tsx`, `Discover.tsx`, `ui.tsx`, `fightingStyles.ts`, `
 
 `fightingStyles.ts` is the sole compatibility adapter: supported keys `streetfighting|kickboxing|bjj|wrestling|martial` total 47 characters, fitting the existing 50-character `fightingStyle` wire/SQL field. UI selects 1–5 distinct styles; supported legacy labels are recognized, unfamiliar text survives until deliberately replaced. Empty recognized selections fail before save. This is string serialization, not a new server collection DTO or schema migration. Future collection APIs must migrate this encoding/legacy values together.
 
-Current APIs remain authoritative. Live profiles show unavailable record meters and no invented verification/rank. Fictional sample records/titles/portrait exist only in `/preview`. Chat links `/sessions?matchId=<id>` to that pair's filtered arrangements/history; server remains responsible for membership and one unfinished Fight. Existing acknowledgement/contact fields remain private and required. Map/results/video/public tags are not new active contracts.
+Current APIs remain authoritative. Live profiles show unavailable record meters and no invented verification/rank. Fictional sample records/titles/portrait exist only in `/preview`. Chat links `/sessions?matchId=<id>` to that pair's filtered arrangements/history; server remains responsible for membership and one unfinished Fight. Existing acknowledgement/contact fields remain private and required. Results/video/public tags remain deferred; the later basic private map extension is documented in the maps guide.
 
 ## Invariants and recovery
 

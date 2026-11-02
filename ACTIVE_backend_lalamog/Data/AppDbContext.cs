@@ -1,15 +1,18 @@
 using Lalamog.Api.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lalamog.Api.Data
 {
-    public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
+        }
+
+        public DbSet<AppUser> Users
+        {
+            get { return Set<AppUser>(); }
         }
 
         public DbSet<FighterProfile> Profiles
@@ -46,10 +49,18 @@ namespace Lalamog.Api.Data
         {
             base.OnModelCreating(model);
 
+            var user = model.Entity<AppUser>();
+            user.ToTable("AppUsers");
+            user.HasKey(nameof(AppUser.Id));
+            user.Property(nameof(AppUser.Email)).HasMaxLength(256);
+            user.Property(nameof(AppUser.NormalizedEmail)).HasMaxLength(256);
+            user.HasIndex(nameof(AppUser.NormalizedEmail)).IsUnique();
+            user.Property(nameof(AppUser.Version)).IsRowVersion();
+
             var profile = model.Entity<FighterProfile>();
             profile.HasKey(nameof(FighterProfile.UserId));
-            profile.HasOne<ApplicationUser>(nameof(FighterProfile.User))
-                .WithOne(nameof(ApplicationUser.Profile))
+            profile.HasOne<AppUser>(nameof(FighterProfile.User))
+                .WithOne(nameof(AppUser.Profile))
                 .HasForeignKey<FighterProfile>(nameof(FighterProfile.UserId));
             profile.Property(nameof(FighterProfile.Nickname)).HasMaxLength(50);
             profile.Property(nameof(FighterProfile.FighterName)).HasMaxLength(50);
@@ -60,22 +71,27 @@ namespace Lalamog.Api.Data
             profile.Property(nameof(FighterProfile.Location)).HasMaxLength(200);
             profile.Property(nameof(FighterProfile.Availability)).HasMaxLength(200);
             profile.Property(nameof(FighterProfile.AvatarKey)).HasMaxLength(100);
+            profile.Property(nameof(FighterProfile.RegionCode)).HasMaxLength(10);
+            profile.Property(nameof(FighterProfile.ProvinceCode)).HasMaxLength(10);
+            profile.Property(nameof(FighterProfile.CityCode)).HasMaxLength(10);
+            profile.Property(nameof(FighterProfile.BarangayCode)).HasMaxLength(10);
+            profile.Property(nameof(FighterProfile.PsgcVersion)).HasMaxLength(16);
             profile.ToTable(ConfigureProfileTable);
 
             var swipe = model.Entity<Swipe>();
             swipe.HasIndex(nameof(Swipe.SwiperId), nameof(Swipe.TargetId)).IsUnique();
             swipe.Property(nameof(Swipe.Direction)).HasMaxLength(8);
-            swipe.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(Swipe.SwiperId))
+            swipe.HasOne<AppUser>().WithMany().HasForeignKey(nameof(Swipe.SwiperId))
                 .OnDelete(DeleteBehavior.Restrict);
-            swipe.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(Swipe.TargetId))
+            swipe.HasOne<AppUser>().WithMany().HasForeignKey(nameof(Swipe.TargetId))
                 .OnDelete(DeleteBehavior.Restrict);
             swipe.ToTable(ConfigureSwipeTable);
 
             var match = model.Entity<FighterMatch>();
             match.HasIndex(nameof(FighterMatch.User1Id), nameof(FighterMatch.User2Id)).IsUnique();
-            match.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(FighterMatch.User1Id))
+            match.HasOne<AppUser>().WithMany().HasForeignKey(nameof(FighterMatch.User1Id))
                 .OnDelete(DeleteBehavior.Restrict);
-            match.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(FighterMatch.User2Id))
+            match.HasOne<AppUser>().WithMany().HasForeignKey(nameof(FighterMatch.User2Id))
                 .OnDelete(DeleteBehavior.Restrict);
             match.ToTable(ConfigureMatchTable);
 
@@ -84,7 +100,7 @@ namespace Lalamog.Api.Data
             message.HasIndex(nameof(ChatMessage.MatchId), nameof(ChatMessage.Id));
             message.HasOne<FighterMatch>().WithMany().HasForeignKey(nameof(ChatMessage.MatchId))
                 .OnDelete(DeleteBehavior.Restrict);
-            message.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(ChatMessage.SenderId))
+            message.HasOne<AppUser>().WithMany().HasForeignKey(nameof(ChatMessage.SenderId))
                 .OnDelete(DeleteBehavior.Restrict);
 
             var fight = model.Entity<Fight>();
@@ -96,13 +112,18 @@ namespace Lalamog.Api.Data
             fight.Property(nameof(Fight.Status)).HasMaxLength(20);
             fight.Property(nameof(Fight.CancellationReason)).HasMaxLength(500);
             fight.Property(nameof(Fight.Version)).IsRowVersion();
+            fight.Property(nameof(Fight.RegionCode)).HasMaxLength(10);
+            fight.Property(nameof(Fight.ProvinceCode)).HasMaxLength(10);
+            fight.Property(nameof(Fight.CityCode)).HasMaxLength(10);
+            fight.Property(nameof(Fight.BarangayCode)).HasMaxLength(10);
+            fight.Property(nameof(Fight.PsgcVersion)).HasMaxLength(16);
             fight.ToTable(ConfigureFightTable);
 
             var confirmation = model.Entity<FightConfirmation>();
             confirmation.HasKey(nameof(FightConfirmation.FightId), nameof(FightConfirmation.UserId));
             confirmation.HasOne<Fight>(nameof(FightConfirmation.Fight))
                 .WithMany(nameof(Fight.Confirmations)).HasForeignKey(nameof(FightConfirmation.FightId));
-            confirmation.HasOne<ApplicationUser>().WithMany().HasForeignKey(nameof(FightConfirmation.UserId))
+            confirmation.HasOne<AppUser>().WithMany().HasForeignKey(nameof(FightConfirmation.UserId))
                 .OnDelete(DeleteBehavior.Restrict);
             confirmation.Property(nameof(FightConfirmation.EmergencyContactName)).HasMaxLength(100);
             confirmation.Property(nameof(FightConfirmation.EmergencyContactPhone)).HasMaxLength(40);
@@ -110,6 +131,7 @@ namespace Lalamog.Api.Data
 
         private static void ConfigureProfileTable(TableBuilder<FighterProfile> table)
         {
+            table.HasCheckConstraint("CK_Profile_Coordinates", "([Latitude] IS NULL AND [Longitude] IS NULL) OR ([Latitude] IS NOT NULL AND [Longitude] IS NOT NULL AND [Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180)");
             table.HasCheckConstraint("CK_Profile_Experience", "[ExperienceLevel] BETWEEN 1 AND 3");
         }
 
@@ -126,6 +148,7 @@ namespace Lalamog.Api.Data
 
         private static void ConfigureFightTable(TableBuilder<Fight> table)
         {
+            table.HasCheckConstraint("CK_Fight_Coordinates", "([Latitude] IS NULL AND [Longitude] IS NULL) OR ([Latitude] IS NOT NULL AND [Longitude] IS NOT NULL AND [Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180)");
             table.HasCheckConstraint("CK_Fight_Status", "[Status] IN ('scheduled', 'confirmed', 'canceled', 'completed')");
         }
     }

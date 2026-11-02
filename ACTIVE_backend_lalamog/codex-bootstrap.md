@@ -1,5 +1,9 @@
 # Bootstrap a new coding session
 
+## Read before changing startup
+
+The owner requires **basic configuration inline in Program.cs, including UseSeeding/UseAsyncSeeding**. No setup functions, configuration-only C# files/classes, extension wrappers, seed helpers or initializer services. Standard Git-ignored appsettings.Development.json is explicitly approved for local SQL connection values; it uses built-in loading. Use appsettings.json and built-in defaults; add only necessary options for working features. Read and obey the [mandatory owner rule](AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs) before implementation in every session. Keep plain AppUser, REST-only chat and one model per file. Development startup must recreate/migrate/seed a fresh local SQL database after an intentional Compose down -v, via the small MigrateAsync block directly in Program.cs. Other environments retain explicit migration commands.
+
 Use this with Codex, DeepSeek, Gemini, or another coding assistant. The project facts are provider-neutral. This document is a prompt and reading guide, not a promise of automatic memory.
 
 ## Mandatory navigation after AGENTS.md
@@ -63,6 +67,6 @@ Upload/paste the packet and relevant source files into the chat, then provide yo
 
 ## Check that the context loaded
 
-The agent should identify `ACTIVE_backend_lalamog/` + `ACTIVE_frontend_lalamog/`, mobile-first web, SQL Server, cookie/CSRF auth, current local photo storage, RabbitMQ infrastructure only, and planned Blob/Azurite/maps. If it proposes editing the Expo app or uses JWT/MinIO/results as the active baseline, have it reread project state before proceeding.
+The agent should identify `ACTIVE_backend_lalamog/` + `ACTIVE_frontend_lalamog/`, mobile-first web, SQL Server, cookie/CSRF auth, current local photo storage, RabbitMQ infrastructure only, planned Blob/Azurite, and implemented basic private maps/local Philippine selectors (distance/public maps remain planned). If it proposes editing the Expo app or uses JWT/MinIO/results as the active baseline, have it reread project state before proceeding.
 
 At session end, factual feature memory and handoff updates are mandatory under PROTOCOL.md, without a separate reminder. Include files touched, behavior/decisions, checks actually run, unresolved issues, and next action. Provider chat memory is supplementary; the repository is the shared record.

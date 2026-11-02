@@ -1,5 +1,9 @@
 # Training sessions, waivers, and emergency contacts
 
+2026-11-02 address-lookup follow-up: choose a public-place pin → Find address → review → Use this address. Suggestion copies into editable venue address (300-character existing limit), saved by existing schedule endpoint. Provider failures do not block manual scheduling or overwrite drafts; changing pin discards stale suggestions. New POST /api/maps/reverse is cookie/CSRF protected; no schema change. See [maps guide](MAPS_AND_AREAS.md).
+
+2026-11-02 latest work: optional MapLocation added to schedule/fight DTOs and Fight with nullable additive migration. Manual venue/address still required; structured area/pin optional and validated. Fights UI embeds LocationPicker; /map shows only the current participant-authorized fight list, with status filtering and arrangement links. Map UI does not render emergency contacts. Participant SQL roundtrip/outsider 404 passed within all 43 backend tests; map fixture coverage passed. Existing time/waiver/contact/concurrency rules unchanged. See [maps guide](MAPS_AND_AREAS.md).
+
 Status: implemented baseline audited 2026-10-28; UI redesigned 2026-11-02. User-facing name is now Fights; existing `/sessions` browser path and Fight/fights entities/API remain compatible.
 
 ## Source map
@@ -43,6 +47,8 @@ UI currently uses refresh for partner/session state changes. Durable notificatio
 
 
 ## Latest work record
+
+- 2026-11-02 / simple setup/test data: default SQL retries are inline in Program.cs and both scheduling concurrency tests pass in the full 34-case backend run. Inline seeding adds scheduled/confirmed/completed/canceled examples, past confirmed completion and participant-only fictional waiver/contact records; one unfinished fight per match is preserved. No FightService options layer or business-rule changes. Scenarios/results: [local development](LOCAL_DEVELOPMENT.md).
 
 - 2026-11-02 / UI redesign: consistent paper forms, Fight terminology, private confirmations/contacts retained, exact-pair `/sessions?matchId=` flow from chat, no second partner choice outside that pair, prior Fight list filter and open-conversation links. Form excludes pairs with an already-loaded unfinished Fight; backend uniqueness remains authoritative. Completed shows result unrecorded, not a fabricated winner. Build/nine fixture cases passed, including exact-pair arrangement/UTC conversion path; real SQL/waiver/cancel/persistence tests not rerun. See [frontend design](FRONTEND_DESIGN.md).
 
