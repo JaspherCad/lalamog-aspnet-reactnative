@@ -22,7 +22,7 @@ $settings = @{}
 Get-Content -LiteralPath $envPath | ForEach-Object {
     if ($_ -match '^([A-Z_]+)=(.*)$') { $settings[$matches[1]] = $matches[2] }
 }
-$env:ConnectionStrings__Default = "Server=localhost,14333;Database=Lalamog;User Id=sa;Password=$($settings.MSSQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+$env:ConnectionStrings__Default = "Server=tcp:127.0.0.1,14333;Database=Lalamog;User Id=sa;Password=$($settings.MSSQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 $env:Storage__Path = Join-Path $projectRoot '.cache/uploads'
 $env:DataProtection__Path = Join-Path $projectRoot '.cache/keys'

@@ -11,7 +11,7 @@ First GET `/api/auth/csrf` with the browser's cookies. Send its `{ token }` as `
 | Method/path | Request | Response |
 | --- | --- | --- |
 | GET `/api/auth/csrf` | none | `{ token }`, no-store |
-| POST `/api/auth/register` | email, password, nickname | `{ userId }` and sign-in cookie |
+| POST `/api/auth/register` | email, password, nickname (alias), optional fighterName | `{ userId }` and sign-in cookie |
 | POST `/api/auth/login` | email, password | `{ userId }` and sign-in cookie |
 | GET `/api/auth/me` | authenticated | `{ userId }` |
 | POST `/api/auth/logout` | authenticated + CSRF | 204, clears sign-in cookie |
@@ -25,13 +25,17 @@ Typical errors: 400 validation/CSRF, 401 unauthenticated, 404 missing or inacces
 | Method/path | Request | Response |
 | --- | --- | --- |
 | GET `/api/profiles/me` | authenticated | Profile |
-| PUT `/api/profiles/me` | nickname, bio, fightingStyle, experienceLevel, location, availability | Profile |
+| PUT `/api/profiles/me` | nickname (alias), optional fighterName, bio, fightingStyle, experienceLevel, location, availability | Profile |
 | POST `/api/profiles/me/avatar` | multipart field `file` | updated Profile |
 | GET `/api/profiles/discover` | authenticated | up to 50 Profiles |
 | POST `/api/matches/swipes` | targetId (GUID), direction (`like` or `pass`) | `{ matched, matchId }`, matchId nullable |
 | GET `/api/matches` | authenticated | up to 100 `{ id, opponent: Profile, createdAt }` |
 
 Profile: `{ userId, nickname, bio, fightingStyle, experienceLevel, location, availability, avatarUrl }`. No email or private contacts. Experience is 1–3; bio max 500; fightingStyle max 50; location/availability max 200. Location is currently **free text**, with no coordinates or area code.
+
+2026-11-02 identity extension: Profile also returns `fighterName` (unique public name); `nickname` remains the non-unique alias. RegisterRequest/ProfileRequest accept optional `fighterName` for backward-compatible clients; the new web UI requires it. Names are 2–50 ASCII letters/numbers/dots/underscores/hyphens, first character alphanumeric; whitespace is trimmed in services. Uppercase-invariant normalization plus unique SQL index enforces case-insensitive uniqueness under concurrent requests. Duplicate names return 409 with actionable copy; duplicate aliases remain allowed. Omitted profile name preserves its existing value; omitted registration name receives a unique generated value. No account email is used as public name. Additive UniqueFighterNames migration is required before running the new backend.
+
+2026-11-02 UI compatibility: `fightingStyles.ts` parses recognized legacy labels and serializes 1–5 distinct selections as pipe-separated keys (`streetfighting|kickboxing|bjj|wrestling|martial`, maximum 47 chars) in the existing string. No endpoint/DTO/schema change or server enum validation is claimed. Other clients must use the adapter or equivalent mapping for display; future collection migration must preserve this encoding and legacy text.
 
 Discovery excludes self, already-swiped targets, and existing matches; sorts by nickname then ID. The API can change a previous choice, but no revisit UI currently exposes passed targets. Existing matches survive later passes.
 

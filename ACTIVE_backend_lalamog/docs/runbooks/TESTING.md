@@ -18,8 +18,8 @@ Do not attach secrets, real uploads, or customer data to context packets. Read a
 ## Backend build and real SQL tests
 
 ```powershell
-dotnet build ACTIVE_backend_lalamog/Lalamog.slnx
-dotnet test ACTIVE_backend_lalamog/Lalamog.slnx
+dotnet build ACTIVE_backend_lalamog/solution/Lalamog.slnx
+dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx
 ```
 
 `ApiFixture` uses a real SQL Server. On Windows its default server is `.` with integrated security. `LALAMOG_TEST_SQL` overrides the server connection; on non-Windows it is required. Supply it privately through the environment, not checked-in Markdown. The server login needs permission to create/drop test databases. Fixture overrides InitialCatalog with a unique `LalamogTests_<guid>`, applies active migrations, and drops only that generated database after the run. It creates a temporary uploads/key directory too.
@@ -37,14 +37,14 @@ Use a local development/test SQL server; never target a live customer server. No
 | Photos_ValidateDecodedContent_SizeAndPath_AndRemainReadableAcrossStorageInstances | formats, bad/oversized content, traversal; method name overstates independent-instance coverage |
 | DatabaseContainsNoUserDefinedTriggers | zero user-defined SQL triggers |
 
-For targeted work use `dotnet test ACTIVE_backend_lalamog/Lalamog.slnx --filter FullyQualifiedName~Matching` (adjust filter). Add meaningful behavior/failure tests when implementation changes require them.
+For targeted work use `dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx --filter FullyQualifiedName~Matching` (adjust filter). Add meaningful behavior/failure tests when implementation changes require them.
 
 ## Interface-replacement and DTO validation checks
 
 `ServiceCompositionTests.cs` uses the actual application with a replaceable IAuthService, no SQL calls, and isolated temporary keys. Seven cases cover interface replacement/graph resolution, CSRF rejection, and six invalid registration DTO payloads. Run without database infrastructure:
 
 ```powershell
-dotnet test ACTIVE_backend_lalamog/Lalamog.slnx --filter FullyQualifiedName~ServiceCompositionTests
+dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx --filter FullyQualifiedName~ServiceCompositionTests
 ```
 
 2026-10-29 real-SQL validation used the explicit IPv4 endpoint `tcp:127.0.0.1,14333` via private LALAMOG_TEST_SQL after an initial localhost timeout. All eight baseline and all fifteen final cases passed. Do not print connection passwords.

@@ -1,35 +1,48 @@
 # Run and troubleshoot the active web application
 
-Updated 2026-10-29. The repository root contains folders only. Run the commands below from that root; the scripts locate their files independently of your current directory. Full setup and backup procedures are in the [backend README](../../README.md).
+Updated 2026-11-01. The repository root contains folders only. Run each command from the indicated folder. Full setup and backup procedures are in the [backend README](../../README.md).
 
 ## First run and later starts
 
-Requirements: .NET SDK 10.0.100 or a later .NET 10 SDK, Node 22.12+, Docker Desktop with Linux containers/Compose v2. SDK selection lives in `ACTIVE_backend_lalamog/global.json`; the dev launcher enters that directory before calling dotnet.
+Requirements: .NET SDK 10.0.100 or a later .NET 10 SDK, Node 22.12+, Docker Desktop with Linux containers/Compose v2. No PowerShell launcher is required.
+
+In `infrastructure/`, preserve the existing private `.env`, then run:
 
 ```powershell
-./scripts/setup.ps1
-./scripts/services.ps1
-./scripts/dev.ps1 -Initialize
-# Another terminal:
-./scripts/dev.ps1 -Web
+docker compose up -d --wait
 ```
 
-Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). First initialization applies migrations and optional demo seeding, then starts API 5080; initialization failure prevents startup. Later runs omit `-Initialize`. Vite 5173 proxies API/health/SignalR to the native API. If already inside the backend, use `../scripts/` for these commands. A direct `dotnet run` needs connection/storage settings; the launcher supplies them.
+In `ACTIVE_backend_lalamog/`, in another terminal:
 
-If local scripts are blocked, `Set-ExecutionPolicy -Scope Process Bypass` applies only to that terminal. Frontend uses `npm.cmd` on Windows. Missing frontend dependencies are installed automatically; rerun `npm.cmd ci` in `ACTIVE_frontend_lalamog` after lockfile changes.
+```powershell
+dotnet build
+dotnet run
+```
+
+In `ACTIVE_frontend_lalamog/`, in another terminal:
+
+```powershell
+npm run dev
+```
+
+For a new checkout only, copy `infrastructure/.env.example` to `.env` and choose strong passwords before the first Compose start; do not replace credentials for existing volumes. Run `npm install` if dependencies are absent (`npm.cmd` if PowerShell blocks npm.ps1).
+
+First-time database initialization is explicit: in backend, run `dotnet run -- --initialize`, which migrates/seeds and exits; then `dotnet run`. Normal startup does not initialize SQL. Existing optional launchers remain compatible.
+
+Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). The API root `/` has no webpage. The `http` launch profile selects Development and port 5080. `appsettings.Development.json` opts into reading `infrastructure/.env` and keeps root `.cache/uploads` and `.cache/keys`. Standard environment/command-line overrides still work; details and .env syntax are in the [README](../../README.md#configuration-and-first-time-database-initialization).
 
 ## Configuration ownership
 
-- `ACTIVE_backend_lalamog/`: solution, SDK/tool manifests, API, all maintained Markdown, `docs/`, archived `plan/`.
+- `ACTIVE_backend_lalamog/`: API project, `solution/Lalamog.slnx`, SDK/tool manifests, API, all maintained Markdown, `docs/`, archived `plan/`.
 - `ACTIVE_frontend_lalamog/`: React/Vite source/package files; `axios.js` is an unchanged empty reference, not an API client.
 - `infrastructure/`: Compose and private `.env` plus public `.env.example`. No SQL/broker secrets go into Vite's directory.
 - `scripts/`: native app/service launchers, setup and context/link helpers, shared Git exclusion rules.
 - `tests/`: backend SQL tests; never run legacy migrations against the active DB.
 - `LEGACY_` source folders remain unchanged. Loose old solution/SQL references are in `LEGACY_reference/`.
 
-Setup configures this repository's `core.excludesFile` to `scripts/gitignore` before generating private settings. This is local Git metadata; run setup after cloning/moving the checkout. The root has no `.gitignore` file by owner request. Existing global Git configuration is not changed.
+Register versioned ignore rules once from the Git root with `git config --local core.excludesFile scripts/gitignore` (the optional setup helper does the same). Existing registration is retained. The root has no `.gitignore` file by owner request. Existing global Git configuration is not changed.
 
-Five generated settings: `MSSQL_SA_PASSWORD`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `SEED_DEMO`, `DEMO_PASSWORD`. Existing values are preserved; never print or commit `infrastructure/.env`. Changing this file does not reset persisted credentials. `WEB_PORT` is obsolete. Native database/ports/paths have launcher defaults. Demo emails: alex/sam/jordan at example.test, with the password used on first seed; seed does not duplicate accounts or reset passwords.
+Private settings: `MSSQL_SA_PASSWORD`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `SEED_DEMO`, `DEMO_PASSWORD`. Existing values are preserved; never print or commit `infrastructure/.env`. Changing this file does not reset persisted credentials. `WEB_PORT` is obsolete. Non-secret native defaults live in `appsettings.Development.json`. Demo emails: alex/sam/jordan at example.test, with the password used on first seed; seed does not duplicate accounts or reset passwords.
 
 ## Supporting services
 
@@ -57,14 +70,16 @@ Former `api`, `web`, and `initialize` containers, if any, are not removed automa
 
 | Symptom | Check |
 | --- | --- |
+| MSB1011 from plain dotnet build in backend | The solution now belongs in `solution/Lalamog.slnx`; keep only the API project at backend top level |
 | SDK mismatch | In backend, `dotnet --version`; `global.json` now permits installed 10.0.100 and later .NET 10 SDKs |
-| Missing Visual Studio fallback package folder after moves | Run `dotnet restore ACTIVE_backend_lalamog/Lalamog.slnx --force --locked-mode` from root to regenerate stale active-project assets; do not delete data or change dependency versions |
-| API says connection string missing | Use `scripts/dev.ps1`; it reads the private infrastructure file and sets native environment values |
+| Missing Visual Studio fallback package folder after moves | Run `dotnet restore ACTIVE_backend_lalamog/solution/Lalamog.slnx --force --locked-mode` from root to regenerate stale active-project assets; do not delete data or change dependency versions |
+| API says connection string missing | Use plain `dotnet run` with the `http` Development profile; check `infrastructure/.env` contains MSSQL_SA_PASSWORD and appsettings.Development.json exists. Deployment/no-launch-profile needs explicit connection configuration |
 | Compose says no configuration file | Use `scripts/services.ps1` or enter `infrastructure/` |
+| API health times out connecting to SQL | Development settings use `tcp:127.0.0.1,14333` to reach the loopback-bound container without localhost address ambiguity |
 | SQL login fails | Recover correct persisted credentials; do not erase volumes |
 | Login fails after mutation | CSRF cookie/header and identity-bound token refresh |
 | Cookie/photo missing after switching run mode | Root `.cache/` versus former container data; preserve keys/images and verify deliberate migration |
 | Live chat fails | Vite WebSocket proxy, SignalR negotiate CSRF and Host/origin |
-| Git shows credentials/build output | Run setup to register `scripts/gitignore`; verify exclusions before sharing/staging |
+| Git shows credentials/build output | Register `scripts/gitignore` through local core.excludesFile; verify exclusions before sharing/staging |
 
 Use [testing](TESTING.md) for checks and [recovery](RECOVERY.md) for data/code repair. The old JWT smoke script and legacy SQL references are not supported active workflows.

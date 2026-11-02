@@ -1,5 +1,29 @@
 # Knowledge and architecture change log
 
+## 2026-11-02 — newspaper highlights and persisted fighter identity
+
+Local Old Newspaper Types for highlighted names/headings/brand; clean Barlow aliases/body; removed dossier eyebrow and added five consistent style colors. Added unique public FighterName with normalized index and nondestructive existing-profile backfill, preserving Nickname as non-unique alias. Shared validation, compatible DTOs, signup/profile fields and real-SQL migration/uniqueness tests; source/notice and outcomes in feature guides/handoff.
+
+## 2026-11-02 — combined public record and opponent-stat presentation
+
+Replaced three outcome meters with a single proportional W/L/D bar in shared RecordPanel. Added below-bar height/weight plus opponent-rating stars, average/count and green/red score scale. Updated Discover/intel, mobile styling, fixture assertions, design/brief and feature memory. Measurements/review values are explicitly preview-only; live API fields and review submission are not implemented.
+
+## 2026-11-02 — mobile-first React paper/dossier implementation
+
+Implemented shared material/token/icon primitives and consistent auth/profile/inbox/chat/fight surfaces; genuine dossier gestures/error recovery/match dialog; 1–5 style persistence via the existing string contract; contextual exact-pair arrangements. One original paper backdrop, fictional preview-only portrait, original SVG icons and locally licensed fonts; no runtime package addition or schema change. `/preview` demonstrates fictional records/titles; live fields stay honest and map services remain planned. Build and nine fixture browser tests passed; real SQL/live delivery/avatar/waiver/persistence suites not rerun. Source/recovery/evidence: [frontend design](../features/FRONTEND_DESIGN.md).
+
+## 2026-11-02 — maintainable texture implementation agreement
+
+Saved the owner's preferred React/CSS approach in DESIGN/brief: reusable crumpled-paper background and optional panel grain; clean SVG icons/text and ordinary CSS buttons/meters. Shared tokens/primitives, functional solid-color fallback and explicit precedence over exaggerated generated wear keep coding scope concrete. Custom distressed controls/torn-edge/filter effects are optional, not v1 requirements. Updated workflow memory/handoff; no application or asset implementation performed.
+
+## 2026-11-02 — textured dossiers, multiple styles and public record design
+
+Owner found the initial generated UI flat and sparse. Revised DESIGN/brief toward visible crumpled-paper surfaces, portrait/intel layout, 1–5 distinct style selections, matching emblems, public W/L/D bars, criteria/provenance-based titles, optional scoped demo locality rank and hover/focus/tap inspection. Added two generated concept previews and prompts, with incidental image details explicitly nonauthoritative. Official React/icon/license sources cited. No app/schema/infrastructure changes; implementation and runtime checks remain separate.
+
+## 2026-11-02 — Def Jam-inspired design proposal
+
+Created [DESIGN.md](../DESIGN.md) from the corrected Fight Club/Tinder portfolio brief and six owner-provided PS2/PSP menu examples. Defines consistent paper panels, dark environment, red selections, gesture/pending/match behavior, five style choices, responsive layouts, fight/results/video/map flows and phased delivery. Preserved reference screenshots under docs/assets/def-jam; original app artwork remains required. Indexed the proposal and updated workflow memory/handoff. No application/schema/runtime behavior changed; proposal defaults and future acceptance checks remain explicitly unimplemented.
+
 ## 2026-10-29 - explicit horizontal N-tier backend, interfaces and DTOs
 
 - Owner requested readable active controllers/services, explicit methods/constructors, service abstractions/DI, separate interface/DTO files and horizontal N-tier organization. Added BACKEND_STRUCTURE guide and durable style rules.
@@ -64,3 +88,7 @@ No fresh application build, SQL test, browser test or dependency audit is claime
 ## Historical baseline
 
 The pre-existing root README records eight SQL integration tests, two browser tests, builds and dependency audits passing on 2026-10-28. The knowledge audit did not rerun those application checks. Preserve this distinction when reporting future verification.
+
+## 2026-11-01 — direct local startup
+
+Owner-requested script-free startup: backend Development profile reads private infrastructure/.env plus appsettings, uses persistent root cache paths, and honors explicit environment/command-line overrides. Solution moved into backend solution/ to allow plain build/run. Existing helper scripts remain optional; no data/credential/schema reset. Build, 12 focused tests, direct and proxied SQL health passed. Owning details: [local development](../features/LOCAL_DEVELOPMENT.md).

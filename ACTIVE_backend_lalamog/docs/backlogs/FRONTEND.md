@@ -16,6 +16,10 @@ Updated 2026-10-28. Active code: `ACTIVE_frontend_lalamog/` only. Every implemen
 
 ## FE-01 — mobile/accessibility polish
 
+2026-11-02 follow-up: local newspaper display font, compact red-name/black-alias header, five consistent style colors, signup/profile name+alias controls and combined record/stat panel implemented. Final frontend build/nine fixture cases passed; unique-name persistence additionally passed real-SQL/backend tests. Core live browser suite remains updated but not rerun in this follow-up. See [frontend design](../features/FRONTEND_DESIGN.md).
+
+2026-11-02 UI redesign delivered: shared material asset/tokens/icons, responsive dossier gestures, mutual-match dialog, multi-style selector, auth/profile/inbox/chat/fight visual consistency and contextual arrangements. Build and nine deterministic fixture browser cases passed at 360/375/390/1440 px. Updated core-flow selectors, but real SQL/SignalR/avatar/confirmation/persistence checks and comprehensive accessibility/zoom/device coverage were not rerun; FE-01 remains partial at the broader integration level. See [frontend design](../features/FRONTEND_DESIGN.md).
+
 Inspect App/ProfileEditor/Matches/Fights/styles. Refine narrow-first layout at 360/375/390 px and desktop. Preserve labels, visible focus, zoom, touch targets, reduced motion; prevent horizontal overflow with long content. Check navigation, upload/date controls, keyboard-open composer, scroll and duplicate submits.
 
 Acceptance: register → profile → discovery → match → chat → schedule/confirm/cancel usable with touch/keyboard; input retained on errors; loading/empty/error/retry/submitting states; focused browser regression checks plus recorded manual viewport evidence. Current Playwright does not prove comprehensive accessibility.
@@ -45,6 +49,8 @@ Participant-only list/badge/read actions over BE-04 contract; open related sessi
 Acceptance: worker-processed session event appears once, unread state persists, broker outage/reconnect eventually catches up, outsider access fails. No external email/SMS service in this slice.
 
 ## FE-06 — failure/session resilience
+
+2026-11-02 UI improvements: synchronous swipe duplicate guard, failed-choice restoration/retry, native modal focus/Escape, profile draft preservation, conditional chat-draft clearing and CSRF refresh on logout. Nine fixture browser tests passed; large live history/persistence/device verification remains pending. See [frontend design](../features/FRONTEND_DESIGN.md).
 
 Review CSRF refresh/expiry, safe retries/slow saves, chat cleanup/cursors/large recovery gaps, partner session refresh, ambiguous successful mutations and sign-out navigation. Preserve drafts where safe; prevent duplicate clicks. Server idempotency work belongs in BE-08.
 

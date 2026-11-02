@@ -45,6 +45,7 @@ ACTIVE_frontend_lalamog/*.tsbuildinfo
 artifacts/
 !infrastructure/.env.example
 !ACTIVE_backend_lalamog/appsettings.json
+!ACTIVE_backend_lalamog/appsettings.Development.json
 !ACTIVE_frontend_lalamog/package-lock.json
 # Ignore runtime leaves, not Data/ source (case-insensitive on Windows).
 ACTIVE_backend_lalamog/data/uploads/

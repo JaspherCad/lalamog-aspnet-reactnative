@@ -4,8 +4,9 @@ Each guide records inspected behavior, source ownership, invariants, recovery st
 
 | Feature | Status | Guide | Context export name |
 | --- | --- | --- | --- |
+| Shared paper design and mobile dossier interaction | Implemented UI; build and nine fixture browser checks passed; live SQL workflows not rerun | [Frontend design](FRONTEND_DESIGN.md) | `-FeatureFile docs/features/FRONTEND_DESIGN.md` |
 | Backend readability, service interfaces and horizontal tiers | Implemented; build, 15 tests and isolated browser core passed | [Backend structure](BACKEND_STRUCTURE.md) | `-FeatureFile docs/features/BACKEND_STRUCTURE.md` |
-| Local app startup and supporting containers | Implemented; configuration/launcher checks passed, full runtime unverified | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile docs/features/LOCAL_DEVELOPMENT.md` |
+| Local app startup and supporting containers | Implemented; direct build/run, 12 configuration/composition tests and SQL health passed; full workflows not rerun | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile docs/features/LOCAL_DEVELOPMENT.md` |
 | Accounts/session/CSRF | Implemented | [Authentication](AUTHENTICATION.md) | auth |
 | Profile edit/discovery | Implemented | [Profiles](PROFILES_AND_DISCOVERY.md) | profiles |
 | Likes and mutual matching | Implemented | [Matching](MATCHING.md) | matching |

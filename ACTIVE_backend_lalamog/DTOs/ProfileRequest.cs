@@ -22,6 +22,10 @@ namespace Lalamog.Api.DTOs
         [StringLength(50, MinimumLength = 2)]
         public string Nickname { get; set; } = null!;
 
+        [StringLength(50, MinimumLength = 2)]
+        [RegularExpression(@"[A-Za-z0-9][A-Za-z0-9._-]*", ErrorMessage = "Use letters, numbers, dots, underscores or hyphens for your fighter name.")]
+        public string? FighterName { get; set; }
+
         [MaxLength(500)]
         public string Bio { get; set; } = null!;
 

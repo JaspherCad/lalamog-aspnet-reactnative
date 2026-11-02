@@ -1,6 +1,7 @@
 export interface Session { userId: string }
 export interface Profile {
   userId: string; nickname: string; bio: string; fightingStyle: string;
+  fighterName?: string;
   experienceLevel: number; location: string; availability: string; avatarUrl: string | null;
 }
 export interface Match { id: number; opponent: Profile; createdAt: string }

@@ -17,12 +17,12 @@ Referenced files must actually be read, not inferred from their names. If reposi
 
 - Product: finding sparring partners, mutual matching, private chat, and scheduling training sessions.
 - Build a **mobile-first browser web app** using React DOM/TypeScript/Vite. The active frontend is `ACTIVE_frontend_lalamog/`; do not implement new work in Expo/React Native.
-- Active backend: `ACTIVE_backend_lalamog/`, ASP.NET Core/.NET 10, EF Core **Microsoft SQL Server**, ASP.NET Identity. Solution and SDK pin are in this folder; SDK 10.0.100 is supported. Use `ACTIVE_backend_lalamog/Lalamog.slnx` from the repository root.
+- Active backend: `ACTIVE_backend_lalamog/`, ASP.NET Core/.NET 10, EF Core **Microsoft SQL Server**, ASP.NET Identity. Solution and SDK pin are in this folder; SDK 10.0.100 is supported. Use `ACTIVE_backend_lalamog/solution/Lalamog.slnx` from the repository root.
 - `LEGACY_backend_lalamog/`, `LEGACY_frontend_lalamog/`, and `LEGACY_reference/` are legacy references. Preserve them and pre-existing user changes. Do not run their migrations against the active database.
 - The `ACTIVE_` and `LEGACY_` prefixes are deliberate. Do not edit files inside either `LEGACY_` directory during active development; their folder renames did not authorize source changes.
 - Required direction: SQL Server, RabbitMQ for real background workflows, Azure Blob Storage with **Azurite for local testing**, and no-payment maps/Philippine area lookup. RabbitMQ is currently infrastructure only; Blob/Azurite/maps are planned, not implemented.
 - Redis is provisioned but unused. Do not introduce it without a concrete need. Do not reintroduce MinIO or browser-stored JWTs from obsolete examples.
-- Supporting services and private credentials live in `infrastructure/`; use `scripts/services.ps1` from the repository root. Native app launchers remain in `scripts/` and preserve root `.cache/` data. Setup registers `scripts/gitignore` in repository-local Git configuration; keep credentials out of frontend files.
+- Supporting services and private credentials live in `infrastructure/`; run `docker compose` inside that folder. Backend uses plain `dotnet build` / `dotnet run`; frontend uses `npm run dev`. Appsettings Development plus the private .env supply native settings; PowerShell helpers are optional. Native app launchers remain in `scripts/` and preserve root `.cache/` data. Setup registers `scripts/gitignore` in repository-local Git configuration; keep credentials out of frontend files.
 
 ## Rules that must survive changes
 

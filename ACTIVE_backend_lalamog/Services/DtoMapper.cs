@@ -17,6 +17,7 @@ namespace Lalamog.Api.Services
             {
                 UserId = profile.UserId,
                 Nickname = profile.Nickname,
+                FighterName = profile.FighterName,
                 Bio = profile.Bio,
                 FightingStyle = profile.FightingStyle,
                 ExperienceLevel = profile.ExperienceLevel,

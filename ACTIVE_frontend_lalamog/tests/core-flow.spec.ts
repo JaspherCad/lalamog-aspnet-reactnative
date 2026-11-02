@@ -13,15 +13,16 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
   async function register(page: Page, name: string, email: string) {
     await page.goto('/');
     await page.getByRole('button', { name: 'New here? Create an account' }).click();
-    await page.getByLabel('Nickname', { exact: true }).fill(name);
+    await page.getByLabel('Fighter name (unique)').fill(name.replace(/\s+/g, '-'));
+    await page.getByLabel('Alias', { exact: true }).fill(name);
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Create account', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'In your corner' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Discover', exact: true })).toBeVisible();
   }
   await register(a, nameA, `alex-${suffix}@example.test`);
   await register(b, nameB, `sam-${suffix}@example.test`);
-  await a.getByRole('link', { name: 'My profile' }).click();
+  await a.getByRole('link', { name: 'Profile', exact: true }).click();
   await a.getByLabel('About you').fill('Looking for technical sparring.');
   await a.getByLabel('City / area').fill('Quezon City');
   await a.getByRole('button', { name: 'Save profile' }).click();
@@ -41,27 +42,28 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
     await page.getByRole('link', { name: 'Discover', exact: true }).click();
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     for (let i = 0; i < 40; i++) {
-      const heading = page.locator('.fighter-details h2');
+      const heading = page.locator('.fighter-details .fighter-alias');
       await expect(heading).toBeVisible();
-      const currentName = await heading.innerText();
+      const currentName = (await heading.innerText()).replace(/^“|”$/g, '');
       if (currentName === nickname) break;
       await Promise.all([
         page.waitForResponse(r => r.url().endsWith('/api/matches/swipes') && r.request().method() === 'POST'),
         page.getByRole('button', { name: 'Pass', exact: true }).click()
       ]);
-      await expect(heading).not.toHaveText(currentName);
+      await expect(heading).not.toHaveText(`“${currentName}”`);
     }
-    await expect(page.getByRole('heading', { name: nickname, exact: true })).toBeVisible();
+    await expect(page.locator('.fighter-alias')).toHaveText(`“${nickname}”`);
     await Promise.all([
       page.waitForResponse(r => r.url().endsWith('/api/matches/swipes') && r.request().method() === 'POST'),
-      page.getByRole('button', { name: 'Like & connect' }).click()
+      page.getByRole('button', { name: 'Like', exact: true }).click()
     ]);
-    await expect(page.locator('.fighter-details h2')).not.toHaveText(nickname);
+    await expect(page.locator('.fighter-details .fighter-alias').filter({ hasText: nickname })).toHaveCount(0);
   }
   await like(a, nameB); await like(b, nameA);
   await expect(b.getByRole('status')).toContainText('matched');
+  await b.getByRole('button', { name: 'Keep swiping' }).click();
   for (const [page, nickname] of [[a, nameB], [b, nameA]] as const) {
-    await page.getByRole('link', { name: 'Matches', exact: true }).click();
+    await page.getByRole('link', { name: 'Inbox', exact: true }).click();
     await page.getByRole('button').filter({ hasText: nickname }).click();
     await expect(page.getByRole('status')).toContainText('Live', { timeout: 20000 });
   }
@@ -75,17 +77,18 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
   await a.reload();
   await expect(a.getByRole('log')).toContainText('Ready for a technical round?');
 
-  await a.getByRole('link', { name: 'Sessions', exact: true }).click();
-  await a.getByRole('combobox', { name: 'Partner', exact: true }).selectOption({ label: nameB });
+  await a.getByRole('link', { name: 'Your fights', exact: true }).click();
+  const partnerId = await a.getByRole('combobox', { name: 'Partner', exact: true }).locator('option').filter({ hasText: nameB }).getAttribute('value');
+  await a.getByRole('combobox', { name: 'Partner', exact: true }).selectOption(partnerId!);
   const localTime = new Date(Date.now() + 86400000);
   const datetime = new Date(localTime.getTime() - localTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   await a.getByLabel('Date & time', { exact: true }).fill(datetime);
   await a.getByLabel('Venue name', { exact: true }).fill('Practice Gym');
   await a.getByLabel('Venue address', { exact: true }).fill('123 Practice Street, Manila');
-  await a.getByRole('button', { name: 'Propose session' }).click();
-  await expect(a.getByRole('status')).toContainText('Session proposed');
+  await a.getByRole('button', { name: 'Arrange fight' }).click();
+  await expect(a.getByRole('status')).toContainText('Fight arranged');
   for (const [page, contact] of [[a, 'Alex contact'], [b, 'Sam contact']] as const) {
-    if (page === b) await page.getByRole('link', { name: 'Sessions', exact: true }).click();
+    if (page === b) await page.getByRole('link', { name: 'Your fights', exact: true }).click();
     await page.getByLabel('Emergency contact name', { exact: true }).fill(contact);
     await page.getByLabel('Emergency contact phone', { exact: true }).fill('09170000000');
     await page.getByRole('checkbox').check();
@@ -95,7 +98,7 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
   await a.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(a.locator('.session-card .pill')).toHaveText('confirmed');
   await a.screenshot({ path: 'test-results/mobile-session.png', fullPage: true });
-  await a.getByRole('button', { name: 'Cancel session', exact: true }).click();
+  await a.getByRole('button', { name: 'Cancel fight', exact: true }).click();
   await a.getByLabel('Cancellation reason').fill('Testing the cancellation workflow.');
   await a.getByRole('button', { name: 'Save cancellation' }).click();
   await expect(a.locator('.session-card .pill')).toHaveText('canceled');

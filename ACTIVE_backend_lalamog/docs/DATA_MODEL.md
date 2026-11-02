@@ -5,7 +5,7 @@ Audited 2026-10-28. Source: `Models/Entities.cs`, `Data/AppDbContext.cs`, and ac
 | Entity | Key / relationships | Invariants |
 | --- | --- | --- |
 | ApplicationUser | Identity GUID ID, one FighterProfile | Identity manages credentials; unique email required by Identity configuration |
-| FighterProfile | UserId PK/FK | nickname 50, bio 500, style 50, location/availability 200, avatarKey 100; experience 1–3 |
+| FighterProfile | UserId PK/FK | unique normalized fighter name 50; non-unique nickname/alias 50, bio 500, style 50, location/availability 200, avatarKey 100; experience 1–3 |
 | Swipe | long ID; SwiperId/TargetId FKs | unique ordered actor/target pair; no self; direction like/pass |
 | FighterMatch | long ID; User1Id/User2Id FKs | unique pair; no self; service canonicalizes using ordinal GUID `D` strings |
 | ChatMessage | long ID; MatchId/SenderId FKs | content 2000; index `(MatchId, Id)` for cursor history |
@@ -24,6 +24,8 @@ Both directories are active and discovered for `AppDbContext`:
 2. `ACTIVE_backend_lalamog/Data/Migrations/20261027231736_InitialWebMvp.cs`: upgrades it to current cookie-era MVP entities/confirmation/session behavior.
 3. Current snapshot: `ACTIVE_backend_lalamog/Migrations/AppDbContextModelSnapshot.cs`.
 
+2026-11-02 addition: `Migrations/20261102030056_UniqueFighterNames.cs` and its generated designer/snapshot add `FighterName` and `NormalizedFighterName` (50 chars), unique index on normalized name. Up backfills every existing row to `fighter-` + lowercase full UserId GUID and uppercase normalization before indexing; existing Nickname (now alias), bio/style, account IDs and relationships remain unchanged, including duplicate aliases. New entities receive a unique generated name; registration/profile service validation supports user-selected names. Do not roll back by dropping columns on populated data without an explicit recovery plan; that would discard chosen names. Populated-baseline upgrade and uniqueness tests are in `ProfileIdentityTests.cs`.
+
 Do not delete either migration, regenerate a baseline over a populated DB, or run `LEGACY_backend_lalamog/Migrations/` against the active database. Inspect migration SQL for data loss. Normal API startup does **not** migrate; explicit initializer calls `Database.MigrateAsync` and optional idempotent demo seeding.
 
 From the Git root:
@@ -33,7 +35,7 @@ dotnet tool restore --tool-manifest ACTIVE_backend_lalamog/.config/dotnet-tools.
 dotnet ef migrations list --project ACTIVE_backend_lalamog
 dotnet ef migrations add DescribeChange --project ACTIVE_backend_lalamog
 dotnet ef migrations script --idempotent --project ACTIVE_backend_lalamog
-./scripts/dev.ps1 -Initialize
+dotnet run --project ACTIVE_backend_lalamog/Lalamog.Api.csproj -- --initialize
 ```
 
 Design-time factory configuration may need the local connection environment; review `Data/DesignTimeDbContextFactory.cs` before using migration commands. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.

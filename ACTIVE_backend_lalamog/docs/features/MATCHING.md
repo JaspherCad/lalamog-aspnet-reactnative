@@ -34,6 +34,8 @@ Run the matching SQL tests; in-memory substitutes do not prove SQL locking behav
 
 ## Latest work record
 
+- 2026-11-02 / UI redesign: `Discover.tsx` adds intent/threshold/cancel-aware pointer gestures, explicit actions/keyboard/reduced motion, synchronous duplicate guard, pending/error restoration and native mutual-match dialog using returned Match ID (match-list recovery if missing). Server transaction/matching behavior unchanged. Build and nine deterministic browser cases passed; real-SQL concurrency tests not rerun. Owning UI/recovery details: [frontend design](FRONTEND_DESIGN.md).
+
 - 2026-10-29 / behavior-preserving readability/DI refactor: IMatchingService and IMatchingRepository each have their own file. Explicit ApplySwipeAsync/ExecuteTransactionAsync functions preserve full-operation retries, canonical read order and serializable commit boundaries.
 - Controllers and dependent services use IMatchingService. Match/Swipe DTOs are property-based classes; opponent profiles are mapped by the pure DtoMapper helper. SQL unique indexes/relationships are unchanged.
 - Verification: zero-warning build, unchanged EF model/migration hashes, 15 passing tests including real SQL, and one passing isolated mobile/desktop browser core flow. No legacy source changed. Restart persistence/backup restore were not rerun. Details/recovery: [backend structure](BACKEND_STRUCTURE.md).

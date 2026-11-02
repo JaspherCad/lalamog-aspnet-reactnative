@@ -19,10 +19,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+LocalDevelopmentConfiguration.Apply(builder.Configuration, builder.Environment.ContentRootPath, args);
 string? connection = builder.Configuration.GetConnectionString("Default");
-if (connection == null)
+if (string.IsNullOrWhiteSpace(connection))
 {
-    throw new InvalidOperationException("Set ConnectionStrings__Default. See scripts/dev.ps1.");
+    throw new InvalidOperationException("Set ConnectionStrings__Default, or configure MSSQL_SA_PASSWORD in infrastructure/.env for local development. See README.md.");
 }
 
 builder.Services.AddDbContext<AppDbContext>(ConfigureDatabase);

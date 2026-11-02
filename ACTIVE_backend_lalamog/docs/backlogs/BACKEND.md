@@ -59,6 +59,8 @@ Acceptance: outsiders fail consistently; moderation actions persist/enforce serv
 
 ## BE-07 — verification/recovery/operations
 
+2026-11-01 startup simplification complete: no scripts required; direct dotnet build/run loads private .env and appsettings through Development profile, solution moved to backend solution/ to remove MSB1011. Twelve configuration/composition cases and direct/proxied SQL health passed. Broader operations work below remains pending. See [local development](../features/LOCAL_DEVELOPMENT.md).
+
 2026-10-29 local setup/layout slice implemented: folder-only root, centralized backend knowledge/solution/manifests, infrastructure-owned configuration, local Git exclusions and explicit ACTIVE/LEGACY boundaries. SDK 10.0.100 resolution, locked restore, zero-warning solution build, normal API startup/OpenAPI 200, frontend build, EF tool restore, moved Compose/helper/context checks passed. Legacy source integrity passed for all 149 tracked files. SQL/full browser/persistence/restore work remains Todo; see [local development](../features/LOCAL_DEVELOPMENT.md).
 
 Port or clearly retire incompatible JWT smoke script; label excluded scaffolds. Build reproducible checks for solution build, real SQL, web build and non-disruptive browser core, adding Azurite/RabbitMQ gates when implemented. Isolate test databases/queues/objects and cleanup safely; keep restart tests explicitly local/disruptive.

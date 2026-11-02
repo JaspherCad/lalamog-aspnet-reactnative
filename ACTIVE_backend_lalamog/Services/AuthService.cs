@@ -3,6 +3,8 @@ using Lalamog.Api.Infrastructure;
 using Lalamog.Api.Interfaces;
 using Lalamog.Api.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lalamog.Api.Services
 {
@@ -35,7 +37,26 @@ namespace Lalamog.Api.Services
                 }
             };
 
-            IdentityResult result = await _userManager.CreateAsync(user, request.Password);
+            if (request.FighterName != null)
+            {
+                string name = request.FighterName.Trim();
+                user.Profile.NormalizedFighterName = FighterNames.Normalize(name);
+                user.Profile.FighterName = name;
+            }
+
+            IdentityResult result;
+            try
+            {
+                result = await _userManager.CreateAsync(user, request.Password);
+            }
+            catch (DbUpdateException exception)
+            {
+                if (exception.InnerException is SqlException sqlException && (sqlException.Number == 2601 || sqlException.Number == 2627))
+                {
+                    throw new ApiException(409, FighterNames.TakenMessage);
+                }
+                throw;
+            }
             if (!result.Succeeded)
             {
                 var errors = new List<string>();

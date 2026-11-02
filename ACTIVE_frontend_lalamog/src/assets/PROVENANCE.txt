@@ -1,0 +1,19 @@
+LALAMOG frontend assets — 2026-11-02
+
+paper.jpg and demo-fighter.jpg: original images generated with the built-in image-generation tool for this project, then encoded as JPEG for local use. The portrait is fictional and used only by the explicitly labeled /preview route. No game screenshots/artwork were extracted. The live app uses each profile's real avatar URL or an initial fallback.
+
+Paper prompt:
+Create an original seamless-feeling neutral crumpled paper TEXTURE asset for a website background, landscape1536x1024. Only material, absolutely no text, no symbols, no UI, no people, no border frames. Warm grey ivory recycled paper, large natural compression creases, subtle folds, paper fibers and lightly dirty edges; a tactile old fight noticeboard paper. Low-medium contrast beige and grey, matte natural even lighting, empty broad calm center. Continuous paper fills entire image. Photorealistic scan, not illustration. Texture must provide depth but remain subtle enough behind cream UI panels. No logos or watermarks.
+
+Portrait prompt:
+Original fictional adult Filipino man around28, natural documentary waist-up gym portrait, relaxed neutral confident expression, short black hair, plain charcoal sleeveless athletic shirt. Concrete gym wall, softly blurred, natural side lighting, mildly desaturated photograph, authentic skin texture, ordinary approachable person. Portrait image3:4 high resolution. No text, no logos, no watermark, no weapon, no violence. This is a fictional avatar for a clearly labeled portfolio app design preview.
+
+Barlow-Regular.ttf and BarlowCondensed-Bold.ttf: The Barlow Project Authors, distributed through Google Fonts. SIL Open Font License 1.1, retained in Barlow-OFL.txt.
+Sources:
+https://raw.githubusercontent.com/google/fonts/main/ofl/barlow/Barlow-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/barlowcondensed/BarlowCondensed-Bold.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/barlow/OFL.txt
+
+Icons: original small inline SVG drawings in src/ui.tsx. No downloaded third-party icon collection or external icon runtime.
+
+OldNewspaperTypes.ttf: Manfred Klein, https://www.dafont.com/oldnewspapertypes.font ; DaFont lists "100% Free". Downloaded 2026-11-02 from https://dl.dafont.com/dl/?f=oldnewspapertypes . Archive contains the font only. See OldNewspaperTypes-NOTICE.txt for source/classification details. Used locally for brand, fighter names and highlighted headings through CSS @font-face, with clean Barlow retained for body and dense labels; no runtime distress filter.

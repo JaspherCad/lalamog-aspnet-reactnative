@@ -2,6 +2,8 @@ using Lalamog.Api.DTOs;
 using Lalamog.Api.Infrastructure;
 using Lalamog.Api.Interfaces;
 using Lalamog.Api.Models;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lalamog.Api.Services
 {
@@ -41,6 +43,13 @@ namespace Lalamog.Api.Services
             }
 
             FighterProfile profile = await RequireProfileAsync(userId, cancellationToken);
+            if (request.FighterName != null)
+            {
+                string fighterName = request.FighterName.Trim();
+                string normalizedName = FighterNames.Normalize(fighterName);
+                profile.FighterName = fighterName;
+                profile.NormalizedFighterName = normalizedName;
+            }
             profile.Nickname = request.Nickname.Trim();
             profile.Bio = (request.Bio ?? string.Empty).Trim();
             profile.FightingStyle = request.FightingStyle.Trim();
@@ -48,7 +57,18 @@ namespace Lalamog.Api.Services
             profile.Location = (request.Location ?? string.Empty).Trim();
             profile.Availability = (request.Availability ?? string.Empty).Trim();
 
-            await _profileRepository.SaveAsync(cancellationToken);
+            try
+            {
+                await _profileRepository.SaveAsync(cancellationToken);
+            }
+            catch (DbUpdateException exception)
+            {
+                if (exception.InnerException is SqlException sqlException && (sqlException.Number == 2601 || sqlException.Number == 2627))
+                {
+                    throw new ApiException(409, FighterNames.TakenMessage);
+                }
+                throw;
+            }
             return DtoMapper.ToProfileResponse(profile);
         }
 

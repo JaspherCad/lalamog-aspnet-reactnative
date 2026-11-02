@@ -35,6 +35,10 @@ Email verification, reset-password/account recovery, and Google login remain pen
 
 ## Latest work record
 
+- 2026-11-02 / public fighter-name registration: optional backward-compatible RegisterRequest.FighterName, shared FighterNames validation/normalization and unique-conflict copy. New web signup requires unique name plus non-unique alias, while legacy registrations receive generated public names. Identity email/UserName/cookie/CSRF behavior remains unchanged; email is never exposed as fighter name. SQL tests include duplicate-name rejection, alias reuse and registration persistence. Final evidence in handoff.
+
+- 2026-11-02 / UI redesign: paper auth forms/new product copy, input-preserving failures, local `/preview` link and shared authenticated shell. Logout now explicitly refreshes CSRF after the identity transition. Cookie/session/private-state separation remains. Build and nine fixture cases passed, including login/register error fields and CSRF header; actual Identity/SQL workflows not rerun. Details: [frontend design](FRONTEND_DESIGN.md).
+
 - 2026-10-29 / behavior-preserving readability/DI refactor: AuthController now injects IAuthService; AuthService uses explicit constructors/methods. Register/Login/Auth/Csrf DTOs are individual property-based classes under DTOs with existing validation and wire fields.
 - Named startup callbacks and split ApiExceptionHandler retain cookie/claims/CSRF/rate-limit and safe shared error behavior. New tests prove service substitution without SQL while CSRF and HTTP input validation remain enforced.
 - Verification: zero-warning build, unchanged EF model/migration hashes, 15 passing tests including real SQL, and one passing isolated mobile/desktop browser core flow. No legacy source changed. Restart persistence/backup restore were not rerun. Details/recovery: [backend structure](BACKEND_STRUCTURE.md).

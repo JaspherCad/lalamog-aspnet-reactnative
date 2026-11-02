@@ -4,6 +4,10 @@ Source audit: **2026-10-28, Asia/Manila**. This is the current baseline for fres
 
 ## Product and scope
 
+2026-11-02 identity follow-up: Old Newspaper Types highlights/red names, black aliases and grey/green/violet/blue/red style emblems are implemented. Separate FighterName/NormalizedFighterName fields and unique index preserve existing Nickname as non-unique alias; signup/profile support both with compatible legacy requests. Additive UniqueFighterNames migration/backfill and real-SQL uniqueness/concurrency/populated-upgrade tests were added. Final 22 backend tests, nine fixture browser cases and frontend production build passed; migration/runtime status is in handoff.
+
+2026-11-02 owner direction supersedes the old training-service positioning below: fun Tinder/Fight Club portfolio, as specified in [design brief](DESIGN_BRIEF.md). React UI now uses shared textured paper, dossier gestures/match reveal, multi-style compatibility, updated auth/profile/inbox/chat/fight screens and exact-pair arrangements. Build and nine deterministic fixture browser tests passed; live SQL/SignalR/avatar/waiver/persistence flows were not rerun. `/preview` is explicitly fictional; `/map` has an honest unavailable state. Public records/badges/map/video/Azurite remain future services. See [frontend design](features/FRONTEND_DESIGN.md).
+
 LALAMOG connects sparring partners through discovery, mutual matching, private chat, and training-session scheduling. The supported product is a **React browser web application with mobile-first design**, backed by ASP.NET Core and Microsoft SQL Server. Native mobile implementation is outside the current target.
 
 | Area | Status | Evidence / next step |
@@ -19,7 +23,7 @@ LALAMOG connects sparring partners through discovery, mutual matching, private c
 | Private REST chat + receive-only SignalR | Implemented | `ConversationService`, `MessageHub`, `Matches.tsx`, cursor recovery |
 | Schedule, two waivers/contacts, cancel, complete | Implemented | `FightService`; completion records no result/rating |
 | SQL/uploads/cookie keys persistence | Configured | SQL named volume; native uploads/keys in `.cache/`; opt-in SQL restart test; former app volumes retained |
-| Local application startup | Infrastructure-only Compose | Native API/Vite launchers; see `docs/features/LOCAL_DEVELOPMENT.md` |
+| Local application startup | Infrastructure-only Compose | Direct dotnet/npm startup with .env + appsettings; optional launchers; see `docs/features/LOCAL_DEVELOPMENT.md` |
 | RabbitMQ | Provisioned only | Compose service; no client package, outbox, producer, or consumer |
 | Redis | Provisioned only | Compose service; no cache/backplane integration |
 | Azure Blob Storage | Planned, required direction | Current DI uses `LocalFileStorage`; see BE-01 |
@@ -59,3 +63,5 @@ The photo test's method name mentions storage instances, but its body primarily 
 4. FE-01/06/07 + BE-05/06/07: mobile resilience, authentication/recovery, moderation/privacy, wider persistence/failure checks, and operational readiness.
 
 Task IDs and acceptance criteria live in the [backlog overview](../backlog-rewrite.md). Completing these requires code and verification; this documentation pass does not implement those integrations.
+
+2026-11-01 local startup: the backend now supports plain dotnet build/run through its Development launch profile, appsettings.Development.json and private infrastructure/.env. Solution moved to backend solution/Lalamog.slnx; full checks use that explicit path. Configuration tests and direct/proxied SQL health passed; no migrations/data reset. Details: [local development](features/LOCAL_DEVELOPMENT.md).

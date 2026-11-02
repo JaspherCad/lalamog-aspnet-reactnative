@@ -256,6 +256,11 @@ namespace Lalamog.Api.Migrations
                     b.Property<int>("ExperienceLevel")
                         .HasColumnType("int");
 
+                    b.Property<string>("FighterName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("FightingStyle")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -271,7 +276,15 @@ namespace Lalamog.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("NormalizedFighterName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("NormalizedFighterName")
+                        .IsUnique();
 
                     b.ToTable("Profiles", t =>
                         {

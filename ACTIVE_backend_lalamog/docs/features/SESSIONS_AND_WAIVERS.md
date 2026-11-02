@@ -1,6 +1,6 @@
 # Training sessions, waivers, and emergency contacts
 
-Status: implemented. Audited 2026-10-28. User-facing name is Sessions; entity/routes retain Fight/fights.
+Status: implemented baseline audited 2026-10-28; UI redesigned 2026-11-02. User-facing name is now Fights; existing `/sessions` browser path and Fight/fights entities/API remain compatible.
 
 ## Source map
 
@@ -43,6 +43,8 @@ UI currently uses refresh for partner/session state changes. Durable notificatio
 
 
 ## Latest work record
+
+- 2026-11-02 / UI redesign: consistent paper forms, Fight terminology, private confirmations/contacts retained, exact-pair `/sessions?matchId=` flow from chat, no second partner choice outside that pair, prior Fight list filter and open-conversation links. Form excludes pairs with an already-loaded unfinished Fight; backend uniqueness remains authoritative. Completed shows result unrecorded, not a fabricated winner. Build/nine fixture cases passed, including exact-pair arrangement/UTC conversion path; real SQL/waiver/cancel/persistence tests not rerun. See [frontend design](FRONTEND_DESIGN.md).
 
 - 2026-10-29 / behavior-preserving readability/DI refactor: IFightService/IMatchingService are injected; request/response/confirmation DTOs are split under DTOs. DtoMapper maps authorized contacts explicitly.
 - Named transaction functions preserve membership, time checks, state transitions, both confirmation rows, rowversion, filtered uniqueness and retry semantics. Repository/schema configuration use explicit query/nameof syntax; no migration was needed.

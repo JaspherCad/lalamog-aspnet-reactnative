@@ -6,6 +6,8 @@ namespace Lalamog.Api.DTOs
 
         public string Nickname { get; set; } = string.Empty;
 
+        public string FighterName { get; set; } = string.Empty;
+
         public string Bio { get; set; } = string.Empty;
 
         public string FightingStyle { get; set; } = string.Empty;

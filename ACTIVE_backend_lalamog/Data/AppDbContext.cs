@@ -52,6 +52,9 @@ namespace Lalamog.Api.Data
                 .WithOne(nameof(ApplicationUser.Profile))
                 .HasForeignKey<FighterProfile>(nameof(FighterProfile.UserId));
             profile.Property(nameof(FighterProfile.Nickname)).HasMaxLength(50);
+            profile.Property(nameof(FighterProfile.FighterName)).HasMaxLength(50);
+            profile.Property(nameof(FighterProfile.NormalizedFighterName)).HasMaxLength(50);
+            profile.HasIndex(nameof(FighterProfile.NormalizedFighterName)).IsUnique();
             profile.Property(nameof(FighterProfile.Bio)).HasMaxLength(500);
             profile.Property(nameof(FighterProfile.FightingStyle)).HasMaxLength(50);
             profile.Property(nameof(FighterProfile.Location)).HasMaxLength(200);

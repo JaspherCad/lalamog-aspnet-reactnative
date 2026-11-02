@@ -7,9 +7,16 @@ public class ApplicationUser : IdentityUser<Guid>
 }
 public class FighterProfile
 {
+    public FighterProfile()
+    {
+        FighterName = "fighter-" + Guid.NewGuid().ToString("N");
+        NormalizedFighterName = FighterName.ToUpperInvariant();
+    }
     public Guid UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
     public string Nickname { get; set; } = "";
+    public string FighterName { get; set; } = "";
+    public string NormalizedFighterName { get; set; } = "";
     public string Bio { get; set; } = "";
     public string FightingStyle { get; set; } = "Boxing";
     public int ExperienceLevel { get; set; } = 1;

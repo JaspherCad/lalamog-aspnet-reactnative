@@ -5,6 +5,8 @@ Last audited: 2026-10-28 against active source. Entry sequence: [AGENTS.md](../A
 | Need | Read |
 | --- | --- |
 | New chat or provider | [Bootstrap](../codex-bootstrap.md) |
+| Share product/architecture context for a proposed DESIGN.md | [AI design brief](DESIGN_BRIEF.md) |
+| Textured fighter dossiers, swipe flow, style stacks, record bars and tags | [Design proposal](DESIGN.md) |
 | What exists and what is missing | [Project state](PROJECT_STATE.md) |
 | Application structure and source map | [Architecture](ARCHITECTURE.md) |
 | Explicit backend style, service interfaces, DTOs and horizontal tiers | [Backend structure](features/BACKEND_STRUCTURE.md) |

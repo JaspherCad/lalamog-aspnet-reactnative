@@ -34,6 +34,8 @@ RabbitMQ is not currently part of chat delivery. A future durable notification w
 
 ## Latest work record
 
+- 2026-11-02 / UI redesign: shared paper rows/message surfaces, readable style labels, private connection status, current/previous Fight context and exact-pair Start the Match link. Existing REST/SignalR cursor recovery remains. Send completion only clears the draft if it still equals the submitted text. Build and nine fixture browser cases passed, including message UI/contextual arrangement; actual SignalR/SQL delivery not rerun. See [frontend design](FRONTEND_DESIGN.md).
+
 - 2026-10-29 / behavior-preserving readability/DI refactor: MatchesController injects IConversationService; ConversationService injects IMatchingService and IConversationRepository. All interface files and method bodies are explicit.
 - MessageResponse DTO now supplies REST and SignalR transport fields formerly exposed through ChatMessage, with identical JSON. Query syntax preserves before/after order/limits; persistence still precedes best-effort live delivery. Browser core verified live bidirectional delivery and history reload.
 - Verification: zero-warning build, unchanged EF model/migration hashes, 15 passing tests including real SQL, and one passing isolated mobile/desktop browser core flow. No legacy source changed. Restart persistence/backup restore were not rerun. Details/recovery: [backend structure](BACKEND_STRUCTURE.md).

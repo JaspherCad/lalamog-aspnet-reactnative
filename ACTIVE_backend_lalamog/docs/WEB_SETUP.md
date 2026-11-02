@@ -2,7 +2,7 @@
 
 Use [DEVELOPMENT.md](runbooks/DEVELOPMENT.md) to run the active app, [TESTING.md](runbooks/TESTING.md) for supported checks and side effects, and [PROJECT_STATE.md](PROJECT_STATE.md) for implemented versus planned capabilities.
 
-As of 2026-10-29, Compose runs only SQL Server, Redis and RabbitMQ; API/Vite run natively using `scripts/dev.ps1` and `scripts/dev.ps1 -Web`. The archived Docker-app commands below are not the current setup.
+As of 2026-10-29, Compose runs only SQL Server, Redis and RabbitMQ; API/Vite run natively; the current workflow is plain `dotnet build` / `dotnet run` in backend and `npm run dev` in frontend, with .env/appsettings loading (updated 2026-11-01). The archived Docker-app commands below are not the current setup.
 
 > The original setup notes below are retained as historical context only. Do not follow their MinIO, JWT, SQLite test, API-exposure, startup-migration, or result-recording instructions for the active app. Current behavior is cookie/CSRF, real SQL tests, explicit initialization, local photo storage, receive-only SignalR, loopback web port, and session completion without results. Blob/Azurite/maps/RabbitMQ application integration are planned.
 
@@ -82,7 +82,7 @@ For a narrow phone layout on your PC, use browser developer tools' responsive mo
 Automated checks:
 
 ```powershell
-dotnet test ACTIVE_backend_lalamog/Lalamog.slnx -c Release
+dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx -c Release
 cd ACTIVE_frontend_lalamog
 npm run build
 cd ..

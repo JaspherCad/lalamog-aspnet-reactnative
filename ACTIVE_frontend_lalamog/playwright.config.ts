@@ -5,6 +5,6 @@ export default defineConfig({
   expect: { timeout: 20000 },
   fullyParallel: false,
   workers: 1,
-  use: { baseURL: process.env.LALAMOG_WEB_URL ?? 'http://localhost:5173', trace: 'retain-on-failure', actionTimeout: 20000 },
+  use: { baseURL: process.env.LALAMOG_WEB_URL ?? 'http://localhost:5173', channel: process.env.LALAMOG_BROWSER_CHANNEL, trace: 'retain-on-failure', actionTimeout: 20000 },
   reporter: 'list'
 });

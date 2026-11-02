@@ -37,7 +37,7 @@ Planned: SQL outbox -> RabbitMQ -> idempotent notification consumer
 | `ACTIVE_frontend_lalamog/vite.config.ts` | Native same-origin HTTP + WebSocket proxy; `ACTIVE_frontend_lalamog/nginx.conf` remains an optional packaging reference |
 | `infrastructure/compose.yaml`, `scripts/` | Local reproducibility and persistent infrastructure |
 
-All maintained Markdown and the solution/SDK/tool manifests reside in `ACTIVE_backend_lalamog/`. The repository root contains only directories. `scripts/services.ps1` runs Compose with explicit infrastructure paths, and `scripts/dev.ps1` reads `infrastructure/.env` before entering the backend for SDK resolution. Shared ignore rules live at `scripts/gitignore`, registered locally by setup. See [local development](features/LOCAL_DEVELOPMENT.md) for the complete move map; legacy source directories are unchanged.
+All maintained Markdown and the solution/SDK/tool manifests reside in `ACTIVE_backend_lalamog/`. The repository root contains only directories. `scripts/services.ps1` runs Compose with explicit infrastructure paths, and the backend Development launch profile loads appsettings plus private `infrastructure/.env` directly; launchers are optional. The solution resides in `ACTIVE_backend_lalamog/solution/` to permit plain backend build. Shared ignore rules live at `scripts/gitignore`, registered locally by setup. See [local development](features/LOCAL_DEVELOPMENT.md) for the complete move map; legacy source directories are unchanged.
 
 ## Architectural invariants
 

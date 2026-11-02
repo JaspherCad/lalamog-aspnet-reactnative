@@ -1,0 +1,5 @@
+Old Newspaper Types — Manfred Klein
+Downloaded 2026-11-02 from https://www.dafont.com/oldnewspapertypes.font
+Download: https://dl.dafont.com/dl/?f=oldnewspapertypes
+DaFont lists this font as "100% Free". The downloaded archive contains OldNewspaperTypes.ttf only, with no separate license text. This notice records source/author and the site's stated classification; it is not a substitute author license or a guarantee about every font in DaFont's Typewriter category.
+Bundled locally for the LALAMOG personal portfolio project, used in real HTML text via @font-face.
