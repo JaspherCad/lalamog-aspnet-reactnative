@@ -1,5 +1,9 @@
 # Backend backlog: complete the local full stack
 
+2026-11-02 further startup simplification complete in source: requested custom middleware, key persistence, partial Program and SignalR removed. Chat uses REST persistence/history only. Current checks in handoff/chat guide; prior concurrency failures remain separately recorded.
+
+2026-11-02 owner correction to startup slices below: appsettings.json/DefaultConnection replaces the custom API .env flow; demo seeding/initializer mode removed. Historical setup evidence below does not describe the current configuration contract. See [local development](../features/LOCAL_DEVELOPMENT.md).
+
 Updated 2026-10-28. BE-10 is **Done**; other implementation items remain **Todo** except recorded partial slices. Active API is `ACTIVE_backend_lalamog/`; guides distinguish current behavior from targets. See [overview](../../backlog-rewrite.md).
 
 | ID | Priority | Work | Depends on |
@@ -80,6 +84,8 @@ Acceptance: deterministic cursors/filter-before-limit, authorized every page, si
 Results/dual approval/disputes, stats/history/head-to-head, Elo/reviews/leaderboards, public events/maps, GIF/video/highlights, OAuth, gym/search/tournaments. Each needs feature memory/contracts/schema/privacy/end-to-end evidence. Retire either LEGACY source folder only with separate explicit approval and backups; don't delete uploads/migrations/databases while tidying. No legacy PostgreSQL migration is currently planned.
 
 ## BE-10 - explicit N-tier readability and service abstractions (Done)
+
+2026-11-02 owner follow-up: startup now uses inline callbacks in `Program.cs`, including private local configuration; configuration-only classes removed. This supersedes the named-startup-callback portion below, preserving service/repository structure and runtime contracts. Verification is in the current [local development](../features/LOCAL_DEVELOPMENT.md) work record.
 
 Completed 2026-10-29 at owner request. Five business service interfaces and four repository interfaces are in individual Interfaces files; DTOs are individual property-based classes under DTOs. Controllers/dependent services inject interfaces; named callbacks/transactions/query syntax replace authored arrows. One project remains horizontal N-tier; no new packages or schema.
 

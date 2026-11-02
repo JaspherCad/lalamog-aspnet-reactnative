@@ -14,7 +14,7 @@ public class CoreFlowTests(ApiFixture app) : IClassFixture<ApiFixture>
     private const string Password = "Practice123!Example";
     private async Task<(HttpClient Client, Guid Id, string Email)> Account()
     {
-        var client = app.CreateClient(new() { HandleCookies = true, AllowAutoRedirect = false });
+        var client = app.CreateClient(new() { BaseAddress = new Uri("https://localhost"), HandleCookies = true, AllowAutoRedirect = false });
         await Csrf(client);
         var email = Guid.NewGuid().ToString("N") + "@example.test";
         var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, Password, "Fighter"));
@@ -47,7 +47,7 @@ public class CoreFlowTests(ApiFixture app) : IClassFixture<ApiFixture>
     [Fact]
     public async Task Accounts_RequireCsrf_RestoreSession_AndLogout()
     {
-        var anonymous = app.CreateClient(new() { AllowAutoRedirect = false });
+        var anonymous = app.CreateClient(new() { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/api/auth/me")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest,
             (await anonymous.PostAsJsonAsync("/api/auth/login", new LoginRequest("nobody@example.test", Password))).StatusCode);

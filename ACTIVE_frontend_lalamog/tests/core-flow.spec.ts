@@ -65,7 +65,7 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
   for (const [page, nickname] of [[a, nameB], [b, nameA]] as const) {
     await page.getByRole('link', { name: 'Inbox', exact: true }).click();
     await page.getByRole('button').filter({ hasText: nickname }).click();
-    await expect(page.getByRole('status')).toContainText('Live', { timeout: 20000 });
+    await expect(page.getByRole('status')).toContainText('Updates every 3 seconds', { timeout: 20000 });
   }
   await a.getByLabel('Message', { exact: true }).fill('Ready for a technical round?');
   await a.getByRole('button', { name: 'Send', exact: true }).click();

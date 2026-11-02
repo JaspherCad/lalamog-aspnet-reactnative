@@ -1,5 +1,11 @@
 # Architecture decision log
 
+2026-11-02 owner direction: minimal startup with no custom header/hub middleware, explicit key-persistence block or partial Program class. Remove SignalR for now; messages use authorized REST send/history with simple browser refresh. Tests use existing AppDbContext to locate the application assembly.
+
+2026-11-02 latest owner configuration direction: use standard appsettings.json with GetConnectionString("DefaultConnection") and direct configuration key access. Remove API .env parsing, secret aliases/SQL construction, demo seeding and initializer mode. Docker Compose retains its own private credentials; application C# remains inline in Program.cs.
+
+2026-11-02 owner override to ADR-013 startup style: keep all startup settings and middleware directly in `Program.cs` with inline callbacks; no named setup methods or separate configuration-only C# classes. Explicit methods and named transaction operations remain preferred elsewhere. EF tooling uses the same application host.
+
 Recorded 2026-10-28. **Observed** means current source. **Required direction** comes from the project owner's request. **Proposed implementation** remains subject to normal implementation refinement; update the log when choices change.
 
 | ID | Decision | Status | Why / consequences |

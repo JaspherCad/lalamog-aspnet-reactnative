@@ -8,12 +8,12 @@ Register, sign in, restore the current browser session, and sign out without exp
 
 - Backend: `Program.cs`, `Controllers/AuthController.cs`, `Controllers/ApiController.cs`, `Services/AuthService.cs`, Identity user in `Models/Entities.cs`.
 - Frontend: `ACTIVE_frontend_lalamog/src/App.tsx` auth/restore/logout, `ACTIVE_frontend_lalamog/src/api.ts` token preparation and error handling.
-- Infrastructure: native `.cache/keys`, `DataProtection:Path`, Vite same-origin proxy; former cookie-key volume retained for recovery.
+- Infrastructure: Vite same-origin HTTP proxy and framework-default DataProtection behavior. Custom DataProtection:Path/key persistence was removed at owner request; existing key files/volumes are preserved.
 - Verification: `Accounts_RequireCsrf_RestoreSession_AndLogout` in `CoreFlowTests.cs`; browser core flow and restart persistence tests.
 
 ## Behavior that must survive
 
-Identity validates email/password and hashes credentials. Registration creates user and profile and signs in. Cookie `lalamog.auth` is HttpOnly, SameSite Strict, eight-hour sliding lifetime, nonpersistent browser sign-in. Local `Cookies:Secure=false` allows HTTP; production requires appropriate HTTPS configuration.
+Identity validates email/password and hashes credentials. Registration creates user and profile and signs in. Cookie `lalamog.auth` is HttpOnly, SameSite Strict, and uses framework lifetime defaults with nonpersistent browser sign-in. The owner currently sets auth/CSRF cookie SecurePolicy to Always inline in Program.cs; HTTPS is required for browser authentication. The old Cookies:Secure switch is removed.
 
 CSRF cookie `lalamog.csrf` plus request header `X-CSRF-TOKEN` protects mutations, including anonymous register/login. Fetch a new token after each identity transition. Frontend CSRF token lives in module memory and concurrent requests share one pending fetch. `/auth/me` returns `{ userId }`; no token is returned or stored in web storage.
 
@@ -23,17 +23,21 @@ Private controllers derive `ActorId` from authenticated NameIdentifier claims. U
 
 1. Compare AuthController, AuthService, Program cookie/CSRF middleware, and `api.ts` as one contract. Restore the appropriate Git version if available.
 2. Inspect network status for initial csrf request, cookies, registration/login, fresh csrf request, and me. A 400 after login often means an old identity-bound token; fix token refresh rather than removing protection.
-3. For restart logout, check that the API sees the same DataProtection application name and persisted `.cache/keys`. Preserve existing keys; replacing them invalidates cookies. Former container keys require deliberate migration and platform-protection checks; a new browser origin may also require sign-in.
+3. Custom key persistence/application-name configuration is removed. DataProtection uses framework defaults; do not assume old .cache/keys are loaded or claim restart-session persistence without verification. Preserve existing key files for recovery.
 4. For browser failures but working direct API calls, check scheme, origin, cookie policy, and proxy Host. Do not add permissive CORS or a localStorage JWT workaround.
 5. Rerun account and browser flow tests. Check a missing CSRF header fails and old session data cannot survive sign-out in React.
 
 ## Acceptance and gaps
 
-New account → profile → reload restored session → logout → protected API 401. Invalid credentials remain generic, repeat failures lock out, no password/token appears in logs or web storage, and cookies survive an API restart with persisted keys. Existing tests cover a subset; do not infer that every lockout/rate-limit scenario is automated.
+New account → profile → reload restored session → logout → protected API 401. Invalid credentials remain generic, repeat failures lock out, no password/token appears in logs or web storage, and restart-session behavior is verified against the framework-default key handling when persistence work resumes. Existing tests cover a subset; do not infer that every lockout/rate-limit scenario is automated.
 
 Email verification, reset-password/account recovery, and Google login remain pending (BE-05, FE-07 and deferred OAuth). These need real token/email workflows and cannot be implemented as success-only screens.
 
 ## Latest work record
+
+- 2026-11-02 / owner-requested minimal startup: removed custom persisted-key/application-name setup, generic security-header middleware and hub-specific origin/antiforgery middleware; SignalR itself is removed. Kept Identity and the MVC mutation antiforgery filter. Framework key defaults now apply; old key files were not deleted. Tests locate the host through existing AppDbContext rather than a public partial Program. Eight composition/config/CSRF checks and two actual-SQL chat/authentication cases passed after retaining the MVC registration required by the antiforgery filter; restart behavior was not tested. Verification details in handoff.
+
+- 2026-11-02 / appsettings simplification: all demo account seeding and initializer code removed; accounts are created through registration. App settings use DefaultConnection in appsettings.json. Preserved owner edits to Always-secure cookies/default lifetime; regression clients now use HTTPS. Verification is in the current handoff.
 
 - 2026-11-02 / public fighter-name registration: optional backward-compatible RegisterRequest.FighterName, shared FighterNames validation/normalization and unique-conflict copy. New web signup requires unique name plus non-unique alias, while legacy registrations receive generated public names. Identity email/UserName/cookie/CSRF behavior remains unchanged; email is never exposed as fighter name. SQL tests include duplicate-name rejection, alias reuse and registration persistence. Final evidence in handoff.
 

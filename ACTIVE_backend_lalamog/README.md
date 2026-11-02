@@ -49,23 +49,22 @@ npm run dev
 
 If frontend dependencies are absent, run `npm install` first. On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`.
 
-Open **http://localhost:5173**. API: http://localhost:5080; database readiness: http://localhost:5080/health. The API root `/` has no webpage. Vite proxies `/api`, `/health`, and `/hubs` to the API with existing cookie/CSRF protections.
+Open **http://localhost:5173**. API: http://localhost:5080; database readiness: http://localhost:5080/health. The API root `/` has no webpage. Vite proxies `/api` and `/health` to the API with existing cookie/CSRF protections.
 
 ### Configuration and first-time database initialization
 
-Plain `dotnet run` selects the checked-in `http` launch profile (Development, port 5080). ASP.NET loads `appsettings.json` plus `appsettings.Development.json`. The Development settings opt in to reading `../infrastructure/.env`, point SQL at `tcp:127.0.0.1,14333`, and preserve root `.cache/uploads` and `.cache/keys`. No passwords belong in either JSON file or the frontend.
+Configure the connection string directly in `appsettings.json` under `ConnectionStrings:DefaultConnection`. Replace `YOUR_SQL_SERVER_PASSWORD` with the existing SQL Server password locally. `Program.cs` reads it with `builder.Configuration.GetConnectionString("DefaultConnection")`; custom settings use `builder.Configuration["Section:Key"]`. Keep real credentials private when sharing changes.
 
-The API maps `MSSQL_SA_PASSWORD` to a safely escaped SQL connection string and `SEED_DEMO`/`DEMO_PASSWORD` to initializer settings. The file accepts literal `KEY=value` lines, optional matching single/double outer quotes, blank lines and full-line `#` comments. Values retain internal `=`, `#` and semicolons; variable expansion and inline comments are not supported. Standard configuration keys may use `__` (for example `ConnectionStrings__Default`). Precedence: JSON defaults, then `.env`, then process environment variables, then command-line settings. A supplied `ConnectionStrings:Default` wins over password-based connection construction.
+The same file contains Storage:Path, preserving root .cache/uploads. Custom DataProtection persistence was removed; framework defaults apply. Existing .cache/keys files are preserved. There is no API .env loading, demo seeding, separate Development settings file, or initializer mode. Docker Compose still uses `infrastructure/.env` for its own SQL/broker credentials.
 
-On the first database setup only, run this in the backend before starting the API:
+Apply migrations explicitly from the backend when needed:
 
 ```powershell
-dotnet run -- --initialize
+dotnet tool restore
+dotnet ef database update
 ```
 
-Initialization applies migrations and optional idempotent demo seeding, then exits. Normal `dotnet run` does not migrate or seed. Demo emails are alex/sam/jordan at example.test, using `DEMO_PASSWORD` on first creation; existing accounts are not password-reset. `SEED_DEMO=false` disables seeding.
-
-The solution lives at `solution/Lalamog.slnx`, so the backend folder has one build project and plain `dotnet build` works. Build/test the full solution explicitly when needed. Existing PowerShell helpers remain optional compatibility tools. Outside the Development launch profile, provide normal deployment configuration; the private local file is not loaded unless `LocalDevelopment:EnvFile` is explicitly configured.
+Normal `dotnet run` starts the API without migrating or seeding. Create accounts through registration. The `http` launch profile selects port 5080; existing Always-secure cookie settings require HTTPS for browser authentication. Full-solution checks use `solution/Lalamog.slnx`; plain backend build selects the sole API project. Optional PowerShell launchers simply run the applications.
 
 The versioned ignore rules are in `scripts/gitignore`. On a new checkout, register them once from the repository root before working with secrets: `git config --local core.excludesFile scripts/gitignore`. Existing checkouts retain their current registration. No script is needed for this.
 
@@ -85,7 +84,7 @@ docker compose down
 | `lalamog-redis` | 127.0.0.1:16379 | `lalamog_redis-data` |
 | `lalamog-rabbitmq` | 127.0.0.1:5672 / management 15672 | `lalamog_rabbitmq-data` |
 
-Compose contains no API, frontend, initializer, or app build. Redis/RabbitMQ remain infrastructure only. Image digests, project `lalamog`, ports and volumes are preserved. Native photos and cookie keys stay in root `.cache/uploads` and `.cache/keys`; old app-container volumes remain declared for recovery. Moving configuration does not migrate or reset any data. Stop native processes with Ctrl+C; normal Compose `down` retains volumes.
+Compose contains no API, frontend, initializer, or app build. Redis/RabbitMQ remain infrastructure only. Image digests, project `lalamog`, ports and volumes are preserved. Native photos stay in root .cache/uploads; old .cache/keys files are preserved but are no longer selected by custom startup settings; old app-container volumes remain declared for recovery. Moving configuration does not migrate or reset any data. Stop native processes with Ctrl+C; normal Compose `down` retains volumes.
 
 ## Build and checks
 

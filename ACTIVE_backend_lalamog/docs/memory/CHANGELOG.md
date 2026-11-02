@@ -1,5 +1,17 @@
 # Knowledge and architecture change log
 
+## 2026-11-02 — minimal startup and REST-only messaging
+
+Removed requested header/origin/hub-antiforgery callbacks, custom key persistence and partial Program class. Removed SignalR hub/service dependencies/browser package/proxies. Conversation now sends and refreshes via REST every three seconds; tests locate the host through existing AppDbContext. Existing database/media/key files preserved. Current verification in handoff/chat guide.
+
+## 2026-11-02 — ordinary appsettings configuration; demo seeding removed
+
+Removed API .env loader/aliases/fallbacks, demo seed/initializer classes/mode and helper seed options. DefaultConnection plus storage/key settings live in appsettings.json; EF migrations remain explicit. Infrastructure credentials and existing SQL records are preserved. Latest owner cookie/direct-SQL edits preserved; test clients use HTTPS. Verification is in handoff/local-development guide.
+
+## 2026-11-02 — inline startup configuration
+
+Owner requested all startup configuration directly in Program.cs. Inlined options/middleware/private local-file loading; removed configuration helper and design-time factory. EF now uses the application host; explicit initialization and security/data behavior retained. Startup-only inline-callback exception recorded in entry/engineering/scoped guidance. Existing configuration tests now exercise the real host. See backend-structure/local-development guides and handoff for validation.
+
 ## 2026-11-02 — newspaper highlights and persisted fighter identity
 
 Local Old Newspaper Types for highlighted names/headings/brand; clean Barlow aliases/body; removed dossier eyebrow and added five consistent style colors. Added unique public FighterName with normalized index and nondestructive existing-profile backfill, preserving Nickname as non-unique alias. Shared validation, compatible DTOs, signup/profile fields and real-SQL migration/uniqueness tests; source/notice and outcomes in feature guides/handoff.

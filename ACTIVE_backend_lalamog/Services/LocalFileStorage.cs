@@ -13,7 +13,7 @@ namespace Lalamog.Api.Services
         public LocalFileStorage(IConfiguration configuration, IWebHostEnvironment environment)
         {
             string root = configuration["Storage:Path"] ?? Path.Combine(environment.ContentRootPath, "data", "uploads");
-            _root = Path.GetFullPath(root);
+            _root = Path.GetFullPath(root, environment.ContentRootPath);
             Directory.CreateDirectory(_root);
         }
 

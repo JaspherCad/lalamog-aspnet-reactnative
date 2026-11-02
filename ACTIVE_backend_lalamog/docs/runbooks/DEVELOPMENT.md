@@ -1,6 +1,6 @@
 # Run and troubleshoot the active web application
 
-Updated 2026-11-01. The repository root contains folders only. Run each command from the indicated folder. Full setup and backup procedures are in the [backend README](../../README.md).
+Updated 2026-11-02. The repository root contains folders only. Run each command from the indicated folder. Full setup and backup procedures are in the [backend README](../../README.md).
 
 ## First run and later starts
 
@@ -27,9 +27,9 @@ npm run dev
 
 For a new checkout only, copy `infrastructure/.env.example` to `.env` and choose strong passwords before the first Compose start; do not replace credentials for existing volumes. Run `npm install` if dependencies are absent (`npm.cmd` if PowerShell blocks npm.ps1).
 
-First-time database initialization is explicit: in backend, run `dotnet run -- --initialize`, which migrates/seeds and exits; then `dotnet run`. Normal startup does not initialize SQL. Existing optional launchers remain compatible.
+Configure `ConnectionStrings:DefaultConnection` in backend `appsettings.json`, replacing the SQL password placeholder locally. Apply migrations explicitly with `dotnet ef database update` from the backend. There is no demo seeding or initializer mode; normal startup does not migrate SQL.
 
-Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). The API root `/` has no webpage. The `http` launch profile selects Development and port 5080. `appsettings.Development.json` opts into reading `infrastructure/.env` and keeps root `.cache/uploads` and `.cache/keys`. Standard environment/command-line overrides still work; details and .env syntax are in the [README](../../README.md#configuration-and-first-time-database-initialization).
+Open [the app](http://localhost:5173), [health](http://localhost:5173/health), or [OpenAPI](http://localhost:5173/api/openapi/v1.json). The API root `/` has no webpage. The `http` launch profile selects Development and port 5080. `appsettings.json` supplies the connection and root .cache/uploads path directly. The API never reads infrastructure/.env. Standard ASP.NET configuration still applies; details are in the [README](../../README.md#configuration-and-first-time-database-initialization). Existing Always-secure cookie settings require HTTPS for browser authentication; an HTTP development browser flow was not verified here.
 
 ## Configuration ownership
 
@@ -42,7 +42,7 @@ Open [the app](http://localhost:5173), [health](http://localhost:5173/health), o
 
 Register versioned ignore rules once from the Git root with `git config --local core.excludesFile scripts/gitignore` (the optional setup helper does the same). Existing registration is retained. The root has no `.gitignore` file by owner request. Existing global Git configuration is not changed.
 
-Private settings: `MSSQL_SA_PASSWORD`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `SEED_DEMO`, `DEMO_PASSWORD`. Existing values are preserved; never print or commit `infrastructure/.env`. Changing this file does not reset persisted credentials. `WEB_PORT` is obsolete. Non-secret native defaults live in `appsettings.Development.json`. Demo emails: alex/sam/jordan at example.test, with the password used on first seed; seed does not duplicate accounts or reset passwords.
+Docker Compose private settings remain `MSSQL_SA_PASSWORD`, `RABBITMQ_USER` and `RABBITMQ_PASSWORD`. Preserve existing values and volumes; the API reads its own connection from appsettings.json. No demo account credentials are required.
 
 ## Supporting services
 
@@ -73,13 +73,13 @@ Former `api`, `web`, and `initialize` containers, if any, are not removed automa
 | MSB1011 from plain dotnet build in backend | The solution now belongs in `solution/Lalamog.slnx`; keep only the API project at backend top level |
 | SDK mismatch | In backend, `dotnet --version`; `global.json` now permits installed 10.0.100 and later .NET 10 SDKs |
 | Missing Visual Studio fallback package folder after moves | Run `dotnet restore ACTIVE_backend_lalamog/solution/Lalamog.slnx --force --locked-mode` from root to regenerate stale active-project assets; do not delete data or change dependency versions |
-| API says connection string missing | Use plain `dotnet run` with the `http` Development profile; check `infrastructure/.env` contains MSSQL_SA_PASSWORD and appsettings.Development.json exists. Deployment/no-launch-profile needs explicit connection configuration |
+| API says connection string missing | Set ConnectionStrings:DefaultConnection in appsettings.json to a valid SQL Server connection string |
 | Compose says no configuration file | Use `scripts/services.ps1` or enter `infrastructure/` |
-| API health times out connecting to SQL | Development settings use `tcp:127.0.0.1,14333` to reach the loopback-bound container without localhost address ambiguity |
+| API health times out connecting to SQL | The appsettings.json example uses `tcp:127.0.0.1,14333` to reach the loopback-bound container without localhost address ambiguity |
 | SQL login fails | Recover correct persisted credentials; do not erase volumes |
 | Login fails after mutation | CSRF cookie/header and identity-bound token refresh |
 | Cookie/photo missing after switching run mode | Root `.cache/` versus former container data; preserve keys/images and verify deliberate migration |
-| Live chat fails | Vite WebSocket proxy, SignalR negotiate CSRF and Host/origin |
+| Chat does not refresh | Authorized REST history request, three-second refresh, tab visibility, cursor and browser errors; SignalR is removed |
 | Git shows credentials/build output | Register `scripts/gitignore` through local core.excludesFile; verify exclusions before sharing/staging |
 
 Use [testing](TESTING.md) for checks and [recovery](RECOVERY.md) for data/code repair. The old JWT smoke script and legacy SQL references are not supported active workflows.

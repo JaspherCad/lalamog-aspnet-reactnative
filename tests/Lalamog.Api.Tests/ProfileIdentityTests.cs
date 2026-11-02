@@ -21,7 +21,7 @@ public class ProfileIdentityTests : IClassFixture<ApiFixture>
 
     private async Task<HttpClient> AccountAsync()
     {
-        HttpClient client = _app.CreateClient(new() { HandleCookies = true });
+        HttpClient client = _app.CreateClient(new() { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
         await CsrfAsync(client);
         HttpResponseMessage response = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(Guid.NewGuid().ToString("N") + "@example.test", "Practice123!Example", "Crow"));
@@ -50,7 +50,7 @@ public class ProfileIdentityTests : IClassFixture<ApiFixture>
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
         Assert.Contains("already taken", await duplicate.Content.ReadAsStringAsync());
 
-        using HttpClient newcomer = _app.CreateClient(new() { HandleCookies = true });
+        using HttpClient newcomer = _app.CreateClient(new() { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
         await CsrfAsync(newcomer);
         var duplicateRegistration = new RegisterRequest(Guid.NewGuid().ToString("N") + "@example.test", "Practice123!Example", "Crow") { FighterName = name.ToUpperInvariant() };
         Assert.Equal(HttpStatusCode.Conflict, (await newcomer.PostAsJsonAsync("/api/auth/register", duplicateRegistration)).StatusCode);

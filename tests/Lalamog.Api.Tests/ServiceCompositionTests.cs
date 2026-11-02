@@ -1,3 +1,4 @@
+using Lalamog.Api.Data;
 using System.Net;
 using System.Net.Http.Json;
 using Lalamog.Api.DTOs;
@@ -18,6 +19,7 @@ public class ServiceCompositionTests
         using var app = new ServiceOverrideFactory();
         using var client = app.CreateClient(new WebApplicationFactoryClientOptions
         {
+            BaseAddress = new Uri("https://localhost"),
             HandleCookies = true,
             AllowAutoRedirect = false
         });
@@ -53,7 +55,7 @@ public class ServiceCompositionTests
     public async Task RegistrationDtoValidationRejectsInvalidInputBeforeCallingService(string invalidField)
     {
         using var app = new ServiceOverrideFactory();
-        using var client = app.CreateClient();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         await PrepareCsrfAsync(client);
 
         var request = new Dictionary<string, string>
@@ -97,7 +99,7 @@ public class ServiceCompositionTests
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", response!.Token);
     }
 
-    private sealed class ServiceOverrideFactory : WebApplicationFactory<Program>
+    private sealed class ServiceOverrideFactory : WebApplicationFactory<AppDbContext>
     {
         private readonly string _directory = Path.Combine(
             Path.GetTempPath(), "LalamogInterfaceTests_" + Guid.NewGuid().ToString("N"));
@@ -107,9 +109,8 @@ public class ServiceCompositionTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
-            builder.UseSetting("ConnectionStrings:Default", "Server=127.0.0.1,1;Database=NotUsed;Integrated Security=True;Connect Timeout=1");
+            builder.UseSetting("ConnectionStrings:DefaultConnection", "Server=127.0.0.1,1;Database=NotUsed;Integrated Security=True;Connect Timeout=1");
             builder.UseSetting("Storage:Path", Path.Combine(_directory, "uploads"));
-            builder.UseSetting("DataProtection:Path", Path.Combine(_directory, "keys"));
             builder.ConfigureServices(ReplaceAuthService);
         }
 

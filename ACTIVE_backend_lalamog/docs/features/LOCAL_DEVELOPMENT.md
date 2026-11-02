@@ -1,71 +1,45 @@
 # Local development, SDK selection and repository layout
 
-Status: implemented; SDK/build/startup/configuration checks passed. Last updated/verified: 2026-11-01 (local startup only). Broader SQL/browser/persistence workflows were not rerun. Related backlog: BE-07 local setup slice.
+Status: implemented. Updated 2026-11-02: owner requested ordinary appsettings.json configuration and complete removal of API .env loading/demo seeding. Verification below.
 
-## Purpose and current layout
+## Startup and configuration
 
-The repository root contains folders only. Current API and frontend are `ACTIVE_backend_lalamog` and `ACTIVE_frontend_lalamog`. Both `LEGACY_` source directories are preserved and must not be edited during active development.
+1. Configure `ConnectionStrings:DefaultConnection` in `ACTIVE_backend_lalamog/appsettings.json`. The checked-in SQL Server connection targets the existing loopback container and contains `YOUR_SQL_SERVER_PASSWORD`; replace that placeholder locally with the existing SQL password. Do not publish real credentials.
+2. In `infrastructure/`, run `docker compose up -d --wait` when using the supporting containers. Docker Compose still owns its private `.env`; the API does not read it.
+3. In `ACTIVE_backend_lalamog/`, run `dotnet build`, then `dotnet run`.
+4. In `ACTIVE_frontend_lalamog/`, run `npm run dev` after installing dependencies if necessary.
 
-| Location (from repository root) | Ownership |
-| --- | --- |
-| `ACTIVE_backend_lalamog/` | .NET API, `solution/Lalamog.slnx`, `global.json`, `.config/dotnet-tools.json`, maintained Markdown, `docs/`, archived `plan/` |
-| `ACTIVE_frontend_lalamog/` | React/Vite, package files, unchanged empty `axios.js` reference |
-| `infrastructure/` | Supporting-service `compose.yaml`, private `.env`, public `.env.example` |
-| `scripts/` | Setup/dev/services/context/link helpers and versioned `gitignore` rules |
-| `tests/` | Real-SQL backend tests |
-| `LEGACY_reference/` | Moved old root solution and SQL reference script |
-| `.cache/` | Preserved native uploads, cookie keys and private local artifacts |
+`Program.cs` uses `builder.Configuration.GetConnectionString("DefaultConnection")` directly and reads custom settings through `builder.Configuration["Section:Key"]`. `WebApplication.CreateBuilder(args)` supplies the standard configuration system; there is no custom .env parser, alias mapping, SQL password fallback, configuration-only C# class, or separate Development settings file.
 
-Legacy source folders retain their own original documents/dependencies; they are not part of documentation cleanup. Agent entry is inside the backend. Scoped rules moved to `docs/scopes/BACKEND.md`, `FRONTEND.md`, and `TESTS.md`. Sessions started outside the backend must explicitly load its AGENTS entry. No root files should be recreated.
+`appsettings.json` also owns Storage:Path, retaining root .cache/uploads. Relative storage paths resolve against the backend content root. Custom DataProtection path/application-name persistence was removed; framework defaults apply, while existing .cache/keys files remain untouched. Credentials and database contents are preserved.
 
-## Startup and configuration contract
+All service options and middleware remain inline in `Program.cs`. Existing owner edits to direct `UseSqlServer(connectionString)` and Always-secure cookies are preserved. Authentication tests use HTTPS clients accordingly; browser behavior with the existing HTTP development proxy was not verified in this task.
 
-The default workflow needs no PowerShell scripts:
+There is no demo seeding, seed flag/password, initializer class or `--initialize` mode. Apply schema migrations explicitly from the backend using `dotnet ef database update` (restore the local EF tool first if necessary). Existing demo accounts are not deleted; register accounts normally. Normal API startup does not migrate or seed.
 
-1. In `infrastructure/`: `docker compose up -d --wait` using the existing private `.env`.
-2. In `ACTIVE_backend_lalamog/`: `dotnet build`, then `dotnet run`.
-3. In `ACTIVE_frontend_lalamog/`: `npm run dev` (install dependencies first if absent).
+## Source map
 
-For a new checkout only, copy `.env.example` to `.env` and choose strong passwords before starting Compose. Keep existing credentials for persisted containers. The backend solution moved into `solution/Lalamog.slnx`, with corrected relative project references and editor setting, so plain build selects the sole API project. Full-solution checks use its explicit path. `global.json` still permits SDK 10.0.100 and later .NET 10 feature bands.
+- `Program.cs`, `appsettings.json`, `Properties/launchSettings.json`: application settings, inline startup and launch profile.
+- `Services/LocalFileStorage.cs`: storage path resolved relative to the backend content root.
+- `tests/Lalamog.Api.Tests/StartupConfigurationTests.cs`: real application host reads connection/custom keys from a temporary appsettings.json; no database connection needed.
+- `tests/Lalamog.Api.Tests/ApiFixture.cs`, `ServiceCompositionTests.cs`: updated `DefaultConnection` test overrides; SQL tests use isolated generated databases.
+- `scripts/dev.ps1`: optional plain API/frontend launcher; no API environment loading or seed switch.
+- `scripts/setup.ps1`, `infrastructure/.env.example`: infrastructure credentials only; no demo account settings.
+- `solution/Lalamog.slnx`, `global.json`, `.config/dotnet-tools.json`: full solution, supported SDK 10.0.100+ and EF tools.
 
-`Properties/launchSettings.json` selects the `http` profile, Development environment, and API 5080. `appsettings.Development.json` opts into `../infrastructure/.env`, defines SQL endpoint `tcp:127.0.0.1,14333` / database Lalamog, and preserves root `.cache/uploads` / `.cache/keys`. The app combines normal JSON settings with the private file; explicit process environment variables and command-line settings win. LocalDevelopment:EnvFile is absent from base/production settings, so local-file loading is opt-in outside the Development profile.
+## Repository and recovery
 
-`Infrastructure/LocalDevelopmentConfiguration.cs` reads literal KEY=value lines, optional matching outer quotes, blank lines and full-line comments. It preserves internal equals/hash/semicolon characters, maps double underscores to configuration separators, and does not interpolate variables/inline comments. It maps SEED_DEMO/DEMO_PASSWORD and safely constructs SQL credentials using SqlConnectionStringBuilder only if ConnectionStrings:Default is absent. Relative storage/key paths resolve against backend content root. Invalid entries report line number without echoing private contents. Missing files do not interfere with an explicitly supplied connection; missing credentials produce an actionable startup error.
+Root contains folders only. Active API/frontend are `ACTIVE_backend_lalamog` and `ACTIVE_frontend_lalamog`; preserve both LEGACY directories. All maintained Markdown, tool manifests and solution remain under the backend. `infrastructure/` owns Compose and its private credentials; `scripts/` owns optional launchers and versioned ignore rules. Register `scripts/gitignore` through repository-local Git configuration on new checkouts. Never include private credentials or persisted data in context exports.
 
-Normal startup does not migrate/seed. First-time initialization is `dotnet run -- --initialize`, which exits afterward; then start normally. Existing helpers remain optional. No SQL data, credentials, migration files, media or keys are moved/reset by this change.
+Compose keeps project/container names, loopback ports, image digests and persistent volumes. Redis/RabbitMQ remain infrastructure only; Blob/Azurite/maps remain planned. Native `.cache/` does not automatically inherit former app-container uploads/key volumes; keep originals and migrate deliberately with backups. No reset or data movement accompanies this configuration change.
 
-Compose still contains only SQL/Redis/RabbitMQ, retaining names, loopback ports, volumes and image digests. RabbitMQ/Redis remain infrastructure only. Existing `.env` keys remain MSSQL_SA_PASSWORD, RABBITMQ_USER, RABBITMQ_PASSWORD, SEED_DEMO and DEMO_PASSWORD; WEB_PORT is obsolete.
-
-Root stays folder-only. Versioned ignore rules remain `scripts/gitignore`; register once on a new checkout with `git config --local core.excludesFile scripts/gitignore` from root. Existing registration is preserved. Only non-secret `appsettings.json`, `appsettings.Development.json` and `.env.example` are exceptions; private `.env`, root cache and build/dependency outputs remain excluded.
-
-## Source map and recovery
-
-- `Program.cs`, `Infrastructure/LocalDevelopmentConfiguration.cs`, `appsettings.Development.json`, `Properties/launchSettings.json`: direct configuration/startup. `scripts/setup.ps1`, `dev.ps1`, `services.ps1` remain optional compatibility helpers. Tests: `tests/Lalamog.Api.Tests/LocalDevelopmentConfigurationTests.cs`.
-- Backend solution/SDK/tool manifests; `.vscode/settings.json` selects the moved solution; tests ProjectReference resolves to backend.
-- Backend Dockerfile now uses backend-only build context and its moved `.dockerignore`; this optional packaging reference is outside Compose.
-- Frontend Playwright persistence test computes the infrastructure file path from its module URL; SQL restart remains explicit opt-in (`LALAMOG_RESTART_SQL=1`, no URL override), and never restarts an API container.
-- Context/link helpers resolve all maintained knowledge under backend; `FeatureFile docs/features/NAME.md` is backend-relative, constrained to ordinary feature Markdown files. Export section labels include the backend prefix.
-
-[Development](../runbooks/DEVELOPMENT.md), [testing](../runbooks/TESTING.md), and [backend README](../../README.md) own detailed commands/backup steps.
-
-Prior rename mapping: `src/Lalamog.Api` -> `ACTIVE_backend_lalamog`; React `web` (briefly `frontend_lalamog`) -> `ACTIVE_frontend_lalamog`; `MyApi` -> `LEGACY_backend_lalamog`; Expo `lalamog` -> `LEGACY_frontend_lalamog`.
-
-Root cleanup mapping: root Markdown/docs/plan/solution/global/tool files -> backend; root Compose/environment -> infrastructure; root ignore rules -> scripts; root axios -> frontend; root old solution/SQL -> LEGACY_reference. Existing backend scoped AGENTS moved aside before the main entry was moved in, so no instructions were overwritten. Relative Markdown links were rebased; two pre-existing archived README links were repaired.
-
-After moves, stale active-project `obj` assets referenced a nonexistent Visual Studio fallback package directory. `dotnet restore ACTIVE_backend_lalamog/solution/Lalamog.slnx --force --locked-mode` regenerated those assets; then build succeeded. Do not change package versions or delete runtime data to repair this metadata problem.
-
-Preserve credentials and all SQL/media/key data. Native `.cache/` does not automatically inherit former app-container media/key volumes. Back up matching SQL/photos/keys, copy deliberately with API stopped, verify reads/platform-key/origin behavior, retain originals. Old app containers are not removed automatically. No resets, orphan cleanup, legacy migrations or legacy source edits are part of setup.
+To recover startup, restore Program.cs and appsettings.json together, keep `DefaultConnection` aligned in test overrides, and preserve the storage path. Do not restore removed custom middleware/key-persistence blocks or partial Program class; tests use AppDbContext as their application-assembly type. Do not restore removed .env/seed helpers. For migrations use the same application host and JSON settings. See [development](../runbooks/DEVELOPMENT.md), [testing](../runbooks/TESTING.md), [data model](../DATA_MODEL.md), and [backend README](../../README.md).
 
 ## Latest work record
 
-- 2026-11-01 / BE-07, owner-requested simplification: implemented direct `dotnet build` / `dotnet run` with .env plus appsettings; script-based startup is optional. Original MSB1011 came from solution/project coexistence; moved the solution into backend `solution/`, preserving both projects and the root folder-only rule.
-- Source/config paths and precedence are documented above. No new package, auth/API/schema change, migration/reset, credential modification or frontend source change. Kept IPv4 SQL endpoint after prior localhost health timeouts.
-- Verification: plain backend `dotnet build` passed with zero warnings/errors; plain `dotnet run` with no launcher-supplied connection/storage/environment settings started Development API on 5080. Direct API and existing Vite proxied `/health` both returned 200 with status ok. Five configuration cases plus seven ServiceCompositionTests passed (12 total): password characters/path stability, explicit command-line connection override, environment precedence, local-file opt-in, and missing/malformed file handling without secret disclosure.
-- Relocated full-solution build passed with zero warnings/errors; knowledge links (41 files / 185 local targets), private/public ignore rules and diff whitespace checks passed. The verification API was stopped; the existing frontend was left running. Details are recorded in handoff. Not rerun: real-SQL integration suite, browser account workflows, persistence/restart or backup restore. No remaining startup implementation work; owner uses the three-folder workflow above.
+- 2026-11-02 / further startup simplification: removed both requested app.Use callbacks, explicit DataProtection folder/application-name persistence, SignalR registration/endpoint and the public partial Program declaration. Removed DataProtection config and test overrides/assertions. Tests use WebApplicationFactory<AppDbContext>, with no replacement marker/config class in application source. REST chat and framework-default key behavior documented. Verification: backend/frontend builds passed; ten targeted backend checks passed, including real-SQL REST chat/session cases. REST polling browser case passed; broader suite has intermittent mobile Fight intel stability timeouts. Knowledge/static/whitespace checks passed. Full-suite/restart/restore limits and earlier SQL concurrency failures are recorded in current handoff.
 
-## Publication verification (2026-10-30)
-
-- Fixed `scripts/gitignore`: the former `ACTIVE_backend_lalamog/data/` rule also ignored the required `Data/` source on case-insensitive Windows Git. Ignore only the runtime `data/uploads/` and `data/keys/` leaves; include AppDbContext, design-time factory and both Data migrations in Git.
-- Verified private environment files, root cache, dependencies and build output stay excluded. Compared all 149 tracked legacy source files against the original local commit: unchanged. Credential-pattern checks and comparison against current private environment values found no private credentials in staged content or the unpublished commit; heuristic matches were example placeholders and a configuration-variable assignment.
-- Current checks: .NET solution build passed with zero warnings/errors; frontend TypeScript/Vite build passed (dependency annotation warnings only); seven ServiceCompositionTests passed. The local SQL container was stopped, so the eight real-SQL tests and browser/restart tests were not rerun.
-- Three fetched remote README commits are retained in history; their final README is preserved byte-for-byte in `plan/github-readme.md` under the backend. The current backend README links to it and labels its legacy scope. Preserve the folder-only root when resolving the README merge conflict; do not force-push.
+- 2026-11-02 / owner correction: removed the entire custom .env block and missing-connection guard; direct DefaultConnection lookup now matches the requested standard ASP.NET pattern. Consolidated application settings in appsettings.json and removed appsettings.Development.json.
+- Deleted Infrastructure/DatabaseInitializer.cs and the empty Data/DatabaseSeeder.cs; removed initialization mode/registration and all demo-seeding options from application/launcher/setup/example settings. Existing SQL records and private infrastructure credentials are untouched.
+- Replaced obsolete .env tests with one actual-host JSON configuration check. Updated SQL/composition overrides to DefaultConnection and test clients to HTTPS to preserve the owner's existing Always-secure cookie edits. Adjusted LocalFileStorage path resolution so direct JSON relative paths still use the backend content root.
+- Verification: Build passed with zero warnings/errors; all eight focused JSON configuration/composition tests passed. Full real-SQL backend suite: 16 passed, two failed (SimultaneousReciprocalLikes_ProduceExactlyOneMatch and CompetingSchedules_AllowOne_AndCancellationReleasesTheSlot returned HTTP 500 under contention). Current direct UseSqlServer registration has no retry-on-failure option, removed in the owner edits present before this correction; no transaction/retry code was changed here. Missing retries are a suspected cause, not confirmed from exception logs. Preserved the requested simple SQL setup and recorded these failures for follow-up. EF host/model check passed with no pending changes; knowledge links passed (44 files / 239 local targets), diff whitespace and helper syntax passed. Browser/restart/restore checks not run. Requested configuration/seeding removal is complete; next action is to enter the SQL password locally and resolve the separately observed concurrency failures. No new package, schema, migration, frontend or legacy change. Recovery is documented above.

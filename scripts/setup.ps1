@@ -17,8 +17,6 @@ $defaults = [ordered]@{
     MSSQL_SA_PASSWORD = "Aa1!$(New-Secret)"
     RABBITMQ_USER = 'lalamog'
     RABBITMQ_PASSWORD = New-Secret
-    SEED_DEMO = 'true'
-    DEMO_PASSWORD = "Aa1!$(New-Secret)"
 }
 $existing = @()
 if (Test-Path -LiteralPath $envPath) { $existing = @(Get-Content -LiteralPath $envPath) }
@@ -30,8 +28,6 @@ if ($missing.Count -gt 0) {
 }
 Write-Host 'infrastructure/.env is ready; existing credentials were preserved.'
 Write-Host '1. Supporting services: ./scripts/services.ps1'
-Write-Host '2. API (first run): ./scripts/dev.ps1 -Initialize'
-Write-Host '   API (later runs): ./scripts/dev.ps1'
+Write-Host '2. Configure ConnectionStrings:DefaultConnection in ACTIVE_backend_lalamog/appsettings.json, then run ./scripts/dev.ps1'
 Write-Host '3. Frontend (another terminal): ./scripts/dev.ps1 -Web'
 Write-Host 'Open http://localhost:5173. The API runs at http://localhost:5080.'
-Write-Host 'Demo emails: alex@example.test, sam@example.test, jordan@example.test. Password: DEMO_PASSWORD in infrastructure/.env.'

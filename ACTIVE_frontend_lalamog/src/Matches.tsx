@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api, csrf, errorText, post } from './api';
+import { api, errorText, post } from './api';
 import { Avatar, fighterName, Icon, PageHeading } from './ui';
 import { styleLabels } from './fightingStyles';
 import type { Fight, Match, Message, Session } from './types';
@@ -12,7 +11,7 @@ function Conversation({ match, session }: { match: Match; session: Session }) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...');
+  const [syncStatus, setSyncStatus] = useState('Loading messages...');
   const [loading, setLoading] = useState(true);
   const [olderAvailable, setOlderAvailable] = useState(false);
   const [olderBusy, setOlderBusy] = useState(false);
@@ -30,64 +29,39 @@ function Conversation({ match, session }: { match: Match; session: Session }) {
   useEffect(() => {
     const controller = new AbortController();
     let newest = 0;
-    let retryTimer: ReturnType<typeof setTimeout>;
     let stopped = false;
-    let recovering = false;
-    let recoveryRequested = false;
-    let connection: ReturnType<HubConnectionBuilder['build']> | undefined;
-    async function recover() {
-      if (recovering) { recoveryRequested = true; return; }
-      recovering = true;
+    let refreshing = false;
+    async function refresh() {
+      if (refreshing || stopped) return;
+      refreshing = true;
       try {
+        const initial = newest === 0;
+        let page: Message[];
         do {
-          recoveryRequested = false;
-          const initial = newest === 0;
-          let page: Message[];
-          do {
-            page = await api<Message[]>(`/matches/${match.id}/messages${newest ? `?after=${newest}` : ''}`, { signal: controller.signal });
-            if (stopped) return;
-            merge(page);
-            newest = Math.max(newest, ...page.map(m => m.id), 0);
-            if (initial) setOlderAvailable(page.length === 100);
-          } while (!initial && page.length === 100);
-        } while (recoveryRequested);
+          page = await api<Message[]>(`/matches/${match.id}/messages${newest ? `?after=${newest}` : ''}`, { signal: controller.signal });
+          if (stopped) return;
+          merge(page);
+          newest = Math.max(newest, ...page.map(m => m.id), 0);
+          if (initial) setOlderAvailable(page.length === 100);
+        } while (!initial && page.length === 100);
+        setSyncStatus('Updates every 3 seconds');
         setError('');
-      } catch (err) { if (!stopped) setError(errorText(err)); }
-      finally { recovering = false; if (!stopped) setLoading(false); }
-    }
-    async function connect() {
-      try {
-        connection = new HubConnectionBuilder().withUrl('/hubs/messages', {
-          headers: { 'X-CSRF-TOKEN': await csrf() }, withCredentials: true
-        }).withAutomaticReconnect().configureLogging(LogLevel.Warning).build();
-        // Use events as a wake-up signal. History supplies a gap-free, ordered cursor.
-        connection.on('MessageReceived', (message: Message) => {
-          if (message.matchId === match.id) void recover();
-        });
-        connection.onreconnecting(() => { if (!stopped) setConnectionStatus('Reconnecting...'); });
-        connection.onreconnected(() => { if (!stopped) { setConnectionStatus('Live'); void recover(); } });
-        connection.onclose(() => {
-          if (!stopped) { setConnectionStatus('Offline - retrying'); retryTimer = setTimeout(() => void start(), 3000); }
-        });
-        await start();
       } catch (err) {
-        if (!stopped) { setError(errorText(err)); retryTimer = setTimeout(() => void connect(), 3000); }
+        if (!stopped) { setSyncStatus('Could not refresh messages'); setError(errorText(err)); }
+      } finally {
+        refreshing = false;
+        if (!stopped) setLoading(false);
       }
     }
-    async function start() {
-      if (stopped || !connection) return;
-      try { await connection.start(); if (!stopped) { setConnectionStatus('Live'); await recover(); } }
-      catch {
-        if (!stopped) { setConnectionStatus('Offline - retrying'); retryTimer = setTimeout(() => void start(), 3000); }
-      }
-    }
-    function visible() { if (!document.hidden) void recover(); }
+    function visible() { if (!document.hidden) void refresh(); }
     document.addEventListener('visibilitychange', visible);
-    void recover(); void connect();
+    void refresh();
+    const timer = setInterval(visible, 3000);
     return () => {
-      stopped = true; controller.abort(); clearTimeout(retryTimer);
+      stopped = true;
+      controller.abort();
+      clearInterval(timer);
       document.removeEventListener('visibilitychange', visible);
-      void connection?.stop();
     };
   }, [match.id]);
   async function older() {
@@ -105,7 +79,7 @@ function Conversation({ match, session }: { match: Match; session: Session }) {
     catch (err) { setError(errorText(err)); } finally { setBusy(false); }
   }
   return <section className="panel conversation"><div className="conversation-heading"><Link className="secondary button-link" to="/matches" aria-label="Back to Inbox">←</Link><Avatar profile={match.opponent} /><div><h2 className="fighter-name">{fighterName(match.opponent)}</h2>{match.opponent.fighterName && <p className="fighter-alias">“{match.opponent.nickname}”</p>}<small className="muted">{styleLabels(match.opponent.fightingStyle)}</small></div></div>
-    <p className="connection-status" role="status"><span className={`connection-dot ${connectionStatus === 'Live' ? 'is-live' : ''}`}/>{connectionStatus} · Private conversation</p>
+    <p className="connection-status" role="status"><span className={`connection-dot ${syncStatus === 'Updates every 3 seconds' ? 'is-live' : ''}`}/>{syncStatus} · Private conversation</p>
     <div className="conversation-fight"><div><p className="eyebrow">{currentFight ? 'Your next round' : 'Another story to tell'}</p><h3>{currentFight ? currentFight.location : 'Make it a match.'}</h3><p className="small">{currentFight ? `${new Date(currentFight.scheduledAt).toLocaleString()} · ${currentFight.status}` : fightError ? 'Could not check your arrangements. Open your fights to retry.' : 'Choose a place and time together.'}</p></div>
       <Link className="button-link" to={`/sessions?matchId=${match.id}`}>{currentFight || fightError || fights === null ? 'View your fights' : 'Start the Match'}<Icon name="arrow"/></Link>
       {!!fights?.filter(f => !['scheduled', 'confirmed'].includes(f.status)).length && <Link className="text-action" to={`/sessions?matchId=${match.id}`}>Previous fights <Icon name="arrow"/></Link>}</div>

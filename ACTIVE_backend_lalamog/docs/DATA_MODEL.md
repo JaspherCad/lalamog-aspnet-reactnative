@@ -26,7 +26,7 @@ Both directories are active and discovered for `AppDbContext`:
 
 2026-11-02 addition: `Migrations/20261102030056_UniqueFighterNames.cs` and its generated designer/snapshot add `FighterName` and `NormalizedFighterName` (50 chars), unique index on normalized name. Up backfills every existing row to `fighter-` + lowercase full UserId GUID and uppercase normalization before indexing; existing Nickname (now alias), bio/style, account IDs and relationships remain unchanged, including duplicate aliases. New entities receive a unique generated name; registration/profile service validation supports user-selected names. Do not roll back by dropping columns on populated data without an explicit recovery plan; that would discard chosen names. Populated-baseline upgrade and uniqueness tests are in `ProfileIdentityTests.cs`.
 
-Do not delete either migration, regenerate a baseline over a populated DB, or run `LEGACY_backend_lalamog/Migrations/` against the active database. Inspect migration SQL for data loss. Normal API startup does **not** migrate; explicit initializer calls `Database.MigrateAsync` and optional idempotent demo seeding.
+Do not delete either migration, regenerate a baseline over a populated DB, or run `LEGACY_backend_lalamog/Migrations/` against the active database. Inspect migration SQL for data loss. Normal API startup does **not** migrate or seed; demo seeding and the initializer mode are removed. Apply migrations explicitly with EF tools.
 
 From the Git root:
 
@@ -35,14 +35,14 @@ dotnet tool restore --tool-manifest ACTIVE_backend_lalamog/.config/dotnet-tools.
 dotnet ef migrations list --project ACTIVE_backend_lalamog
 dotnet ef migrations add DescribeChange --project ACTIVE_backend_lalamog
 dotnet ef migrations script --idempotent --project ACTIVE_backend_lalamog
-dotnet run --project ACTIVE_backend_lalamog/Lalamog.Api.csproj -- --initialize
+dotnet ef database update --project ACTIVE_backend_lalamog
 ```
 
-Design-time factory configuration may need the local connection environment; review `Data/DesignTimeDbContextFactory.cs` before using migration commands. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
+EF tooling uses the inline configuration in `Program.cs`; the separate design-time factory was removed on 2026-11-02. Configure ConnectionStrings:DefaultConnection directly in appsettings.json. There is no API .env loader or demo seeding. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
 
 ## Concurrency memory
 
-`MatchingRepository.InTransactionAsync` wraps the whole action in the SQL execution strategy, clears EF tracking, starts Serializable isolation, saves, and commits. SQL configuration retries transient failures including deadlock 1205. Unique violations 2601/2627 and EF concurrency exceptions map to 409.
+`MatchingRepository.InTransactionAsync` wraps the whole action in the SQL execution strategy, clears EF tracking, starts Serializable isolation, saves, and commits. The owner currently uses direct UseSqlServer(connectionString) without an explicit retry-on-failure option; repository execution-strategy/transaction boundaries remain in place. Unique violations 2601/2627 and EF concurrency exceptions map to 409.
 
 Swipes use deterministic pair/direction reads; matching uniqueness is structural. Sessions use a filtered unique index to prevent competing unfinished sessions and rowversion to detect conflicting updates. Confirmation rows retain both contacts under concurrent acceptance. Preserve all these layers when refactoring.
 

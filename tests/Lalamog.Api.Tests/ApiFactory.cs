@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Lalamog.Api.Tests;
 
-public class ApiFactory : WebApplicationFactory<Program>
+public class ApiFactory : WebApplicationFactory<AppDbContext>
 {
     private readonly SqliteConnection connection = new("Data Source=:memory:");
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -19,16 +19,13 @@ public class ApiFactory : WebApplicationFactory<Program>
         connection.Open();
         builder.UseEnvironment("Testing");
         builder.UseSetting("Jwt:Key", "test-only-random-signing-key-at-least-32-bytes-long");
-        builder.UseSetting("ConnectionStrings:Default", "unused-in-tests");
+        builder.UseSetting("ConnectionStrings:DefaultConnection", "unused-in-tests");
         builder.UseSetting("Logging:LogLevel:Default", "Warning");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(connection));
-            var initializer = services.Single(x => x.ServiceType == typeof(IHostedService)
-                && x.ImplementationType == typeof(DatabaseInitializer));
-            services.Remove(initializer);
             using var scope = services.BuildServiceProvider().CreateScope();
             scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreated();
         });

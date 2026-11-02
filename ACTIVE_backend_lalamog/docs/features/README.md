@@ -5,12 +5,12 @@ Each guide records inspected behavior, source ownership, invariants, recovery st
 | Feature | Status | Guide | Context export name |
 | --- | --- | --- | --- |
 | Shared paper design and mobile dossier interaction | Implemented UI; build and nine fixture browser checks passed; live SQL workflows not rerun | [Frontend design](FRONTEND_DESIGN.md) | `-FeatureFile docs/features/FRONTEND_DESIGN.md` |
-| Backend readability, service interfaces and horizontal tiers | Implemented; build, 15 tests and isolated browser core passed | [Backend structure](BACKEND_STRUCTURE.md) | `-FeatureFile docs/features/BACKEND_STRUCTURE.md` |
-| Local app startup and supporting containers | Implemented; direct build/run, 12 configuration/composition tests and SQL health passed; full workflows not rerun | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile docs/features/LOCAL_DEVELOPMENT.md` |
+| Backend readability, service interfaces and horizontal tiers | Implemented; appsettings follow-up: build/eight focused checks/EF model passed; full suite 16 passed/two concurrency failures; see guide | [Backend structure](BACKEND_STRUCTURE.md) | `-FeatureFile docs/features/BACKEND_STRUCTURE.md` |
+| Local app startup and supporting containers | Implemented; appsettings.json and no demo seeding; build/eight focused checks/EF passed; full suite 16 passed/two concurrency failures; browser/restart not rerun | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile docs/features/LOCAL_DEVELOPMENT.md` |
 | Accounts/session/CSRF | Implemented | [Authentication](AUTHENTICATION.md) | auth |
 | Profile edit/discovery | Implemented | [Profiles](PROFILES_AND_DISCOVERY.md) | profiles |
 | Likes and mutual matching | Implemented | [Matching](MATCHING.md) | matching |
-| Private chat and live recovery | Implemented | [Chat](CHAT.md) | chat |
+| Private REST chat and cursor refresh | Implemented; REST-only with three-second polling, targeted checks passed; broader layout timing gap recorded | [Chat](CHAT.md) | chat |
 | Scheduling/waivers/contacts | Implemented | [Sessions](SESSIONS_AND_WAIVERS.md) | sessions |
 | Avatar decoding/local persistence | Implemented; Blob/Azurite planned | [Media/storage](MEDIA_STORAGE.md) | media |
 | Map/GPS/Philippine areas/distance | Legacy reference; web implementation planned | [Maps/areas](MAPS_AND_AREAS.md) | maps |

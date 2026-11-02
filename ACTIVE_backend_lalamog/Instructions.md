@@ -19,14 +19,14 @@ When code and docs disagree, inspect the active code and tests, report the discr
 
 ## Backend
 
-- Readability preference: explicit constructors, readonly injected fields, brace-delimited methods/control flow, individual property-based DTOs and individual interfaces. Use named callbacks/transaction operations and LINQ query syntax instead of arrow/lambda syntax in authored backend code. Keep generated migration/snapshot files unchanged and confirm no EF model drift. The structure remains one horizontal N-tier project; see [backend structure](docs/features/BACKEND_STRUCTURE.md).
+- Readability preference: explicit constructors, readonly injected fields, brace-delimited methods/control flow, individual property-based DTOs and individual interfaces. Keep startup settings and middleware inline in `Program.cs` with inline callbacks (owner direction, 2026-11-02); do not extract named setup methods or configuration-only C# files. Elsewhere, use named callbacks/transaction operations and LINQ query syntax instead of arrow/lambda syntax. Keep generated migration/snapshot files unchanged and confirm no EF model drift. The structure remains one horizontal N-tier project; see [backend structure](docs/features/BACKEND_STRUCTURE.md).
 
 - Use the active .NET 10 solution and SQL Server provider. Keep controllers focused on HTTP; services enforce validation, membership, and transitions; repositories own EF queries/transactions. Use constructor injection and cancellation tokens.
 - Identity owns password hashing/accounts. Derive actor IDs from claims. Return 404 for inaccessible participant resources as current services do. Do not trust user IDs in mutation bodies.
 - Keep existing HttpOnly/SameSite cookie and antiforgery behavior. Use relative URLs through the same-origin web proxy. Do not solve cookie issues by disabling CSRF or adding permissive CORS.
-- Preserve SQL transaction execution strategies, whole-operation retries, deterministic pair ordering, filtered uniqueness, and concurrency tokens. Avoid an external network call inside a retriable SQL transaction.
+- Preserve SQL transaction execution strategies, deterministic pair ordering, filtered uniqueness, and concurrency tokens; the current owner-requested direct SQL registration omits explicit retries (known concurrency failures are recorded in handoff). Avoid an external network call inside a retriable SQL transaction.
 - Schema changes require EF migrations and an updated snapshot, a data-preservation strategy, and real SQL validation. Both active migration directories matter; see [data model](docs/DATA_MODEL.md).
-- Initializing/seeding is an explicit operation, separate from normal API startup. Do not connect to the legacy PostgreSQL database.
+- Apply migrations explicitly with EF tools, separate from normal API startup. Demo seeding and the custom initializer mode are removed; application settings come directly from appsettings.json (ConnectionStrings:DefaultConnection). Do not connect to the legacy PostgreSQL database.
 - Errors should be safe HTTP ProblemDetails; logs may include correlation IDs but must not expose passwords, tokens, message contents, emergency contacts, or precise private coordinates.
 
 ## Frontend and mobile-first design
@@ -35,7 +35,7 @@ When code and docs disagree, inspect the active code and tests, report the discr
 - Verify at 360/375/390 px and desktop. Prevent horizontal overflow, keep forms readable with the keyboard open, maintain visible focus and approximately 44 px or larger action targets, and allow zoom/reduced motion.
 - Provide loading, empty, error, retry, and submitting states. Disable duplicate submissions; retain user input after recoverable failures. Do not show a successful save before server acknowledgment.
 - Use `ACTIVE_frontend_lalamog/src/api.ts` for HTTP and CSRF handling. Keep `ACTIVE_frontend_lalamog/src/types.ts` aligned with server DTOs and actual JSON. No credentials or auth tokens in localStorage/sessionStorage.
-- Treat SignalR as a wake-up notification; REST/SQL message history remains authoritative. Keep cursor recovery and deduplication.
+- Messaging is REST-only at owner request. Refresh the active conversation through REST every three seconds; preserve cursor recovery and deduplication. Do not add SignalR or custom hub middleware.
 - Maps must have editable text/area fallback, accessible controls, denied-GPS handling, attribution, and explicit permission before requesting location. Never infer exact home locations from public profile data.
 
 ## Infrastructure and integrations

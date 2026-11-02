@@ -4,7 +4,7 @@ Audited 2026-10-28 from controllers, `DTOs/`, `Models/Entities.cs`, and `ACTIVE_
 
 ## Authentication and errors
 
-Readability refactor, 2026-10-29: transport types now live in `Lalamog.Api.DTOs` as individual classes with property validation attributes. Controllers inject service interfaces and retain these HTTP/JSON contracts. Message REST/SignalR payloads use `MessageResponse` with the same five fields formerly serialized from ChatMessage; CSRF/health now have explicit response classes. The combined `Contracts/Requests.cs` is removed. See [backend structure](features/BACKEND_STRUCTURE.md) for compatibility and verification.
+Readability refactor, 2026-10-29: transport types now live in `Lalamog.Api.DTOs` as individual classes with property validation attributes. Controllers inject service interfaces and retain these HTTP/JSON contracts. Message REST payloads use `MessageResponse` with the same five fields formerly serialized from ChatMessage; CSRF/health now have explicit response classes. The combined `Contracts/Requests.cs` is removed. See [backend structure](features/BACKEND_STRUCTURE.md) for compatibility and verification.
 
 First GET `/api/auth/csrf` with the browser's cookies. Send its `{ token }` as `X-CSRF-TOKEN` for POST/PUT/other mutations. Refresh it after register/login/logout. Authentication is an HttpOnly cookie, not a token returned in the response. Use same-origin credentials; no Authorization bearer header is needed.
 
@@ -48,7 +48,7 @@ Discovery excludes self, already-swiped targets, and existing matches; sorts by 
 
 Message: `{ id, matchId, senderId, content, createdAt }`. Trimmed content length 1–2000. Only match members. Without a cursor, returns latest 100; `before` loads older; `after` loads the next 100 newer entries. `after` takes precedence if both are supplied; clients should use one. Fetch repeatedly after reconnect until fewer than 100 arrive.
 
-SignalR `/hubs/messages` is authenticated and receive-only. Event `MessageReceived` carries a Message. The server targets the two authenticated user IDs; the client filters the active match and recovers through REST. Preserve CSRF on negotiate and same-origin WebSocket checks.
+Messaging is REST-only as of 2026-11-02. The browser refreshes the active conversation through the history endpoint every three seconds and on visibility changes. SignalR and `/hubs/messages` are removed. Existing mutation CSRF and participant authorization remain; there is no hub negotiation or push delivery.
 
 ## Sessions (route name remains fights)
 

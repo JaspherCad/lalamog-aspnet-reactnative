@@ -1,5 +1,7 @@
 # Frontend backlog: mobile-first browser experience
 
+2026-11-02 chat transport follow-up: owner requested SignalR removal. Conversation now refreshes via REST every three seconds; no push/WebSocket client/proxy. Current contract and checks: [chat](../features/CHAT.md). Historical live-delivery evidence below remains historical.
+
 Updated 2026-10-28. Active code: `ACTIVE_frontend_lalamog/` only. Every implementation item below is **Todo** until evidence is recorded. Existing core screens already exist in source. See [overview](../../backlog-rewrite.md).
 
 | ID | Priority | Work | Depends on |

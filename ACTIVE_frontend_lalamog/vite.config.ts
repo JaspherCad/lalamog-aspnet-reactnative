@@ -6,7 +6,6 @@ export default defineConfig({
     port: 5173, strictPort: true,
     proxy: {
       '/api': 'http://localhost:5080',
-      '/hubs': { target: 'http://localhost:5080', ws: true },
       '/health': 'http://localhost:5080'
     }
   }

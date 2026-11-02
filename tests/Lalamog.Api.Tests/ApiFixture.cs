@@ -14,7 +14,7 @@ public class TestClock : TimeProvider
     public DateTimeOffset Now { get; set; } = DateTimeOffset.UtcNow;
     public override DateTimeOffset GetUtcNow() => Now;
 }
-public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
+public class ApiFixture : WebApplicationFactory<AppDbContext>, IAsyncLifetime
 {
     public TestClock Clock { get; } = new();
     private readonly string database = "LalamogTests_" + Guid.NewGuid().ToString("N");
@@ -26,9 +26,8 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:Default", Connection);
+        builder.UseSetting("ConnectionStrings:DefaultConnection", Connection);
         builder.UseSetting("Storage:Path", Path.Combine(directory, "uploads"));
-        builder.UseSetting("DataProtection:Path", Path.Combine(directory, "keys"));
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();

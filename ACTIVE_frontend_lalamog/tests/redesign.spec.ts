@@ -6,7 +6,6 @@ async function fixture(page: Page, options: { failSwipe?: boolean; delaySwipe?: 
   let swipes = 0; let fail = !!options.failSwipe;
   const saved: Record<string, unknown>[] = [];
   const messages = [{ id: 1, matchId: 7, senderId: 'opponent', content: 'Another round this weekend?', createdAt: '2026-11-02T10:00:00Z' }];
-  await page.route('**/hubs/**', route => route.fulfill({ status: 503, body: 'Offline fixture' }));
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url()); const path = url.pathname.replace('/api', '');
     const body = route.request().postDataJSON();
@@ -27,11 +26,11 @@ async function fixture(page: Page, options: { failSwipe?: boolean; delaySwipe?: 
       else value = [];
     } else if (path === '/matches/7/messages') {
       if (route.request().method() === 'POST') { const message = { id: messages.length + 1, matchId: 7, senderId: 'me', content: body.content, createdAt: new Date().toISOString() }; messages.push(message); value = message; }
-      else value = messages;
+      else value = messages.filter(message => (!url.searchParams.has('after') || message.id > Number(url.searchParams.get('after'))) && (!url.searchParams.has('before') || message.id < Number(url.searchParams.get('before'))));
     } else { await route.fulfill({ status: 404, json: { title: `Missing fixture ${path}` } }); return; }
     await route.fulfill({ json: value });
   });
-  return { saved, swipes: () => swipes };
+  return { saved, messages, swipes: () => swipes };
 }
 
 for (const width of [360, 375, 390, 1440]) {
@@ -172,4 +171,19 @@ test('sign-in errors preserve fields; signup sends CSRF and the designed form st
   expect(registerBody).toEqual({ email: 'demo@example.test', password: 'Practice123!Example', nickname: 'Demo Jae', fighterName: 'Demo-Jae' }); expect(token).toBe('auth-fixture');
   await page.screenshot({ path: 'test-results/redesign-auth.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
+
+test('REST polling receives partner messages without a live connection', async ({ page }) => {
+  const state = await fixture(page);
+  const requests: string[] = [];
+  page.on('request', request => requests.push(request.url()));
+  await page.goto('/matches/7');
+  await expect(page.getByRole('log')).toContainText('Another round this weekend?');
+  await expect(page.locator('.connection-status')).toContainText('Updates every 3 seconds');
+  state.messages.push({ id: 2, matchId: 7, senderId: 'opponent', content: 'Yes, see you Saturday.', createdAt: '2026-11-02T10:01:00Z' });
+  await expect(page.getByRole('log')).toContainText('Yes, see you Saturday.', { timeout: 7000 });
+  await expect(page.getByRole('log').getByText('Yes, see you Saturday.', { exact: true })).toHaveCount(1);
+  expect(requests.some(url => url.includes('/hubs'))).toBeFalsy();
+  await page.reload();
+  await expect(page.getByRole('log')).toContainText('Yes, see you Saturday.');
 });
