@@ -1,4 +1,4 @@
-# Compose lives with its private environment file; the repository root stays folder-only.
+# Compose lives with its private environment file; shared knowledge lives in _DOCUMENTATION.
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $infrastructure = Join-Path $projectRoot 'infrastructure'
