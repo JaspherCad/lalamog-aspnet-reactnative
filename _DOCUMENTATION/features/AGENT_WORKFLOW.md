@@ -1,5 +1,7 @@
 # AI entry, question routing, and automatic feature memory
 
+2026-11-04 instruction update: owner explicitly moved sample data into static Data/DatabaseSeeder.cs called from the short Development startup scope. Root/backend/bootstrap/engineering guidance now permits this while retaining inline configuration. It supersedes older no-seeder/inline-callback rules below. No helper-script implementation changed.
+
 Status: implemented repository workflow. Updated: 2026-11-03 (Asia/Manila).
 Scope: project instructions, knowledge navigation, and context helpers.
 Application behavior is unchanged. Verification for this task is recorded below.
@@ -84,6 +86,10 @@ registration do not prove that guidance matches source or was read by a host.
    not app tests or proof of agent compliance.
 
 ## Latest work record
+
+- 2026-11-04 / seeder rule revision: synchronized root/backend/bootstrap/engineering and feature/startup guidance with the owner's static DatabaseSeeder request. Configuration remains inline; older seeding rules are explicitly superseded. Application tests: all 61 passed. Knowledge/context-export checks recorded in the current handoff; exporter/checker source unchanged.
+
+## Earlier root-entry work record
 
 - 2026-11-03 / root entry and shared knowledge / implemented. Root AGENTS now
   covers active frontend/backend, legacy references, tests, infrastructure,

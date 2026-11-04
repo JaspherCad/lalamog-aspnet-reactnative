@@ -39,11 +39,16 @@ results accurately; never turn a design document into an implemented claim.
 
 Keep startup/configuration beginner-readable and directly inline in
 `ACTIVE_backend_lalamog/Program.cs`: database, authentication/cookies, CSRF,
-rate limits, middleware, registrations, `UseSeeding` and `UseAsyncSeeding`.
+rate limits, middleware and registrations.
 
-- Do not extract setup into named callbacks, local setup functions, extension
-  wrappers, options/configuration classes or projects, seeders, initializer
+- Do not extract configuration into named callbacks, local setup functions,
+  extension wrappers, options/configuration classes or projects, initializer
   services, or `DbContext.OnConfiguring`.
+- Seed data lives in the single static `Data/DatabaseSeeder.cs` class. After
+  `Build`, Development startup creates a short service scope, resolves
+  `AppDbContext`, awaits `MigrateAsync`, then calls `DatabaseSeeder.SeedAsync(db)`
+  before serving requests. No duplicated `UseSeeding`/`UseAsyncSeeding` callbacks,
+  seeder interface/DI registration, extra mode, or seed settings are needed.
 - Use built-in appsettings loading, `GetConnectionString("DefaultConnection")`,
   direct configuration keys, and only options needed for working behavior.
   Standard Git-ignored `appsettings.Development.json` may hold local SQL values
@@ -51,19 +56,23 @@ rate limits, middleware, registrations, `UseSeeding` and `UseAsyncSeeding`.
 - Preserve the small MVC antiforgery filter, default SQL
   `EnableRetryOnFailure()`, and Development HTTP / other environments HTTPS
   cookie policy. Do not disable protections to simplify startup.
-- Both inline seed callbacks must match: find parents by unique business keys,
-  add/save if absent, then add children using saved IDs. No fixed database IDs;
-  reruns preserve passwords, existing rows, and edits.
-- Development startup calls `MigrateAsync` directly inline after `Build` before
-  serving requests. After an explicitly authorized fresh Compose volume reset,
-  ordinary startup recreates/migrates/seeds the six fictional accounts. Normal
-  restarts preserve data. Other environments use explicit migrations.
+- The static seeder finds parents by unique business keys, adds/saves if absent,
+  then adds children using saved IDs. No fixed database IDs; reruns preserve
+  passwords, existing rows, edits, and changed role/feature grants.
+- After an explicitly authorized fresh Compose volume reset, Compose up followed
+  by normal Development API startup recreates/migrates/seeds all fictional test
+  data, roles and permissions. Compose hosts infrastructure only; a running API
+  must restart to rerun startup. Normal restarts preserve data. Other environments
+  use explicit migrations and do not automatically seed demo accounts. EF update
+  by itself migrates schema only.
 - Keep plain `AppUser`, REST-only messaging, and one model per `.cs` file. Do
   not restore `IdentityUser`, SignalR, combined `Entities.cs`, or partial Program.
 
-This owner direction supersedes older abstracted-setup/no-seeding records.
-The root entry and central knowledge layout requested on 2026-11-03 supersede
-the former folder-only-root/backend-only documentation rule.
+Owner revision 2026-11-04 explicitly replaces the earlier inline/mirrored seed
+callback rule with the static DatabaseSeeder startup call; configuration stays
+inline. This supersedes older no-seeder instructions. The root entry and central
+knowledge layout requested on 2026-11-03 supersede the former folder-only-root/
+backend-only documentation rule.
 
 ## Architecture, ownership, and working rules
 

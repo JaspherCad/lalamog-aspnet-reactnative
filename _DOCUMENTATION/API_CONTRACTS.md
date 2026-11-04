@@ -1,5 +1,7 @@
 # Active API contracts
 
+2026-11-04: controller/action feature policies now check SQL role grants. Authenticated accounts without a required grant receive 403. New admin-only /api/access catalog/role/assignment endpoints, canonical codes and combined controller/action requirements are specified in [role permissions](features/ROLE_PERMISSIONS.md). Existing User defaults preserve demo functionality; public media/areas and authentication routes retain their access contracts.
+
 2026-11-02 reverse-geocoding follow-up: POST /api/maps/reverse is implemented for explicit public-place suggestions, cookie + CSRF protected, no-store. No model migration. This supersedes the earlier manual-only restriction; official PSGC selection stays independent.
 
 

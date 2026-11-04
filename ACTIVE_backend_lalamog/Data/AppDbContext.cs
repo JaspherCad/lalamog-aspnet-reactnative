@@ -45,6 +45,26 @@ namespace Lalamog.Api.Data
             get { return Set<FightConfirmation>(); }
         }
 
+        public DbSet<Role> Roles
+        {
+            get { return Set<Role>(); }
+        }
+
+        public DbSet<SystemFeature> SystemFeatures
+        {
+            get { return Set<SystemFeature>(); }
+        }
+
+        public DbSet<UserRole> UserRoles
+        {
+            get { return Set<UserRole>(); }
+        }
+
+        public DbSet<RoleSystemFeature> RoleSystemFeatures
+        {
+            get { return Set<RoleSystemFeature>(); }
+        }
+
         protected override void OnModelCreating(ModelBuilder model)
         {
             base.OnModelCreating(model);
@@ -56,6 +76,34 @@ namespace Lalamog.Api.Data
             user.Property(nameof(AppUser.NormalizedEmail)).HasMaxLength(256);
             user.HasIndex(nameof(AppUser.NormalizedEmail)).IsUnique();
             user.Property(nameof(AppUser.Version)).IsRowVersion();
+
+            var role = model.Entity<Role>();
+            role.Property(nameof(Role.Name)).HasMaxLength(50);
+            role.HasIndex(nameof(Role.Name)).IsUnique();
+            role.Property(nameof(Role.Description)).HasMaxLength(200);
+
+            var feature = model.Entity<SystemFeature>();
+            feature.Property(nameof(SystemFeature.Code)).HasMaxLength(80);
+            feature.HasIndex(nameof(SystemFeature.Code)).IsUnique();
+            feature.Property(nameof(SystemFeature.Description)).HasMaxLength(200);
+
+            var userRole = model.Entity<UserRole>();
+            userRole.HasKey(nameof(UserRole.UserId), nameof(UserRole.RoleId));
+            userRole.HasOne<AppUser>(nameof(UserRole.User))
+                .WithMany(nameof(AppUser.UserRoles)).HasForeignKey(nameof(UserRole.UserId))
+                .OnDelete(DeleteBehavior.Restrict);
+            userRole.HasOne<Role>(nameof(UserRole.Role))
+                .WithMany(nameof(Role.UserRoles)).HasForeignKey(nameof(UserRole.RoleId))
+                .OnDelete(DeleteBehavior.Restrict);
+
+            var roleFeature = model.Entity<RoleSystemFeature>();
+            roleFeature.HasKey(nameof(RoleSystemFeature.RoleId), nameof(RoleSystemFeature.SystemFeatureId));
+            roleFeature.HasOne<Role>(nameof(RoleSystemFeature.Role))
+                .WithMany(nameof(Role.RoleSystemFeatures)).HasForeignKey(nameof(RoleSystemFeature.RoleId))
+                .OnDelete(DeleteBehavior.Restrict);
+            roleFeature.HasOne<SystemFeature>(nameof(RoleSystemFeature.SystemFeature))
+                .WithMany(nameof(SystemFeature.RoleSystemFeatures)).HasForeignKey(nameof(RoleSystemFeature.SystemFeatureId))
+                .OnDelete(DeleteBehavior.Restrict);
 
             var profile = model.Entity<FighterProfile>();
             profile.HasKey(nameof(FighterProfile.UserId));

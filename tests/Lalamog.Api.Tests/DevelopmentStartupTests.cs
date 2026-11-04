@@ -30,6 +30,7 @@ public class DevelopmentStartupTests
             {
                 Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health")).StatusCode);
                 originalId = await LoginAsync(client);
+                Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/access/system-features")).StatusCode);
                 ProfileResponse profile = (await client.GetFromJsonAsync<ProfileResponse>("/api/profiles/me"))!;
                 Assert.Equal("Seed-Alex", profile.FighterName);
                 var edit = new ProfileRequest(profile.Nickname, "Keep this profile edit across restart", profile.FightingStyle, profile.ExperienceLevel, profile.Location, profile.Availability);
@@ -40,11 +41,19 @@ public class DevelopmentStartupTests
                 Assert.Equal(6, await db.Profiles.CountAsync());
                 Assert.Equal(5, await db.Matches.CountAsync());
                 Assert.Equal(6, await db.Fights.CountAsync());
+                Assert.Equal(11, await db.Swipes.CountAsync());
+                Assert.Equal(10, await db.Messages.CountAsync());
+                Assert.Equal(9, await db.FightConfirmations.CountAsync());
+                Assert.Equal(2, await db.Roles.CountAsync());
+                Assert.Equal(8, await db.SystemFeatures.CountAsync());
+                Assert.Equal(7, await db.UserRoles.CountAsync());
+                Assert.Equal(8, await db.RoleSystemFeatures.CountAsync());
             }
             using (var restarted = new StartupFactory(connection.ConnectionString, directory))
             using (var client = restarted.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("http://localhost"), AllowAutoRedirect = false }))
             {
                 Assert.Equal(originalId, await LoginAsync(client));
+                Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/access/system-features")).StatusCode);
                 Assert.Equal("Keep this profile edit across restart", (await client.GetFromJsonAsync<ProfileResponse>("/api/profiles/me"))!.Bio);
                 using var scope = restarted.Services.CreateScope();
                 AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

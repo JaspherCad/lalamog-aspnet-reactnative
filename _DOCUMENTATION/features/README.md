@@ -5,8 +5,9 @@ Each guide records inspected behavior, source ownership, invariants, recovery st
 | Feature | Status | Guide | Context export name |
 | --- | --- | --- | --- |
 | Shared paper design and mobile dossier interaction | Implemented UI; build and nine fixture browser checks passed; live SQL workflows not rerun | [Frontend design](FRONTEND_DESIGN.md) | `-FeatureFile _DOCUMENTATION/features/FRONTEND_DESIGN.md` |
-| Backend readability, service interfaces and horizontal tiers | Implemented; basic inline options/seeding; build and all 34 backend tests passed | [Backend structure](BACKEND_STRUCTURE.md) | `-FeatureFile _DOCUMENTATION/features/BACKEND_STRUCTURE.md` |
-| Local app startup and supporting containers | Implemented; standard local JSON, automatic Development migration/seeding; fresh-DB/restart/inline-seed/cookie targeted tests and actual missing-DB startup passed | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile _DOCUMENTATION/features/LOCAL_DEVELOPMENT.md` |
+| Backend readability, service interfaces and horizontal tiers | Implemented; inline configuration/static seeder; build and all 34 backend tests passed | [Backend structure](BACKEND_STRUCTURE.md) | `-FeatureFile _DOCUMENTATION/features/BACKEND_STRUCTURE.md` |
+| Local app startup and supporting containers | Implemented; standard local JSON, automatic Development migration/seeding; fresh-DB/restart/static-seeder/cookie targeted tests and actual missing-DB startup passed | [Local development](LOCAL_DEVELOPMENT.md) | `-FeatureFile _DOCUMENTATION/features/LOCAL_DEVELOPMENT.md` |
+| Roles and feature permissions | Implemented; SQL grant/assignment/revocation and populated upgrade checks passed | [Role permissions](ROLE_PERMISSIONS.md) | `-FeatureFile _DOCUMENTATION/features/ROLE_PERMISSIONS.md` |
 | Native AppUser/accounts/session | Implemented; native auth/migration plus basic CSRF/concurrency fixes passed in the full 34-case run | [Authentication](AUTHENTICATION.md) | auth |
 | Profile edit/discovery | Implemented | [Profiles](PROFILES_AND_DISCOVERY.md) | profiles |
 | Likes and mutual matching | Implemented | [Matching](MATCHING.md) | matching |

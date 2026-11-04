@@ -1,5 +1,9 @@
 # Backend backlog: complete the local full stack
 
+2026-11-04 latest owner revision: extracted static Data/DatabaseSeeder.cs with a short post-Build Development migration/seed scope; no configuration abstraction. Four targeted SQL cases and all 61 backend tests passed, including all seeded-model counts on absent-database startup and preserved edits/grant removals on reruns. Existing volumes/processes are untouched. Earlier inline-seed statements below are historical; [current local-development flow](../features/LOCAL_DEVELOPMENT.md).
+
+2026-11-04 owner-requested role/feature authorization slice delivered: native many-role accounts, eight default feature policies and admin assignment API; existing signup/demo access preserved and removed grants survive seed reruns. This supports BE-06 authorization but does not implement reporting/blocking/retention. Verification and operational limits: [role permissions](../features/ROLE_PERMISSIONS.md).
+
 2026-11-03 knowledge relocation: root AGENTS.md covers all layers and _DOCUMENTATION owns shared knowledge; older folder-only-root/backend-only documentation statements below are historical. Solution/SDK/tool and app/data paths are retained. This is documentation/tooling completion, not a new backend integration or fresh application-test pass.
 
 2026-11-02 BE-07 fresh-volume fix: Development startup now migrates/seeds automatically, directly inline in Program.cs, matching owner-confirmed Compose down -v refill workflow. Current SQL volume was recreated after previous repair. Isolated missing-DB/startup/restart preservation plus inline-seed/cookie checks passed; no new schema or initializer class. Other environments remain explicit-migration workflows.

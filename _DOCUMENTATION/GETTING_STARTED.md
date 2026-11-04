@@ -1,6 +1,6 @@
 # LALAMOG
 
-Free maps are available in profile/session forms and the private Map screen: Leaflet + OpenStreetMap, local PSA region-to-barangay selectors, optional GPS, manual addresses and explicit public-place suggested-address lookup. No API key or registration required. Provider links, legacy audit, nullable migration and limits: [maps guide](features/MAPS_AND_AREAS.md). All startup options/seeding stay basic and inline in Program.cs under the [owner rule](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs).
+Free maps are available in profile/session forms and the private Map screen: Leaflet + OpenStreetMap, local PSA region-to-barangay selectors, optional GPS, manual addresses and explicit public-place suggested-address lookup. No API key or registration required. Provider links, legacy audit, nullable migration and limits: [maps guide](features/MAPS_AND_AREAS.md). Startup options stay inline in Program.cs; seed data lives in static Data/DatabaseSeeder.cs called after migration from its Development startup scope under the [owner rule](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs).
 
 Mobile-first React/Vite web app with a .NET 10 / SQL Server API. Only supporting services run in Docker.
 
@@ -58,7 +58,7 @@ Open **http://localhost:5173**. API: http://localhost:5080; database readiness: 
 
 Configure the local connection in standard `appsettings.Development.json` under `ConnectionStrings:DefaultConnection`, using the existing SQL Server password. This local file is Git-ignored; tracked `appsettings.json` keeps public defaults and its password placeholder. `Program.cs` reads it with `builder.Configuration.GetConnectionString("DefaultConnection")`; custom settings use `builder.Configuration["Section:Key"]`. Keep real credentials private when sharing changes.
 
-The same file contains Storage:Path, preserving root .cache/uploads. Custom DataProtection persistence was removed; framework defaults apply. Existing .cache/keys files are preserved. The built-in Development JSON override is owner-approved for local connection values. There is no custom API .env loader or initializer mode. Test data is seeded directly by the EF callbacks in Program.cs. Docker Compose still uses `infrastructure/.env` for its own SQL/broker credentials.
+The same file contains Storage:Path, preserving root .cache/uploads. Custom DataProtection persistence was removed; framework defaults apply. Existing .cache/keys files are preserved. The built-in Development JSON override is owner-approved for local connection values. There is no custom API .env loader or initializer mode. Test data is seeded by static Data/DatabaseSeeder.cs, called from the Development startup scope after migration. Docker Compose still uses `infrastructure/.env` for its own SQL/broker credentials.
 
 In Development, normal `dotnet run` creates/updates the database and runs the inline EF seed automatically before accepting requests. After an intentional `docker compose down -v`, run `docker compose up -d --wait` in infrastructure, then `dotnet run` in the backend to refill six fake users and related data. Explicit EF commands remain available:
 
@@ -67,7 +67,7 @@ dotnet tool restore
 dotnet ef database update
 ```
 
-The migration command also seeds six fictional users and related matching/chat/fight data through inline UseSeeding/UseAsyncSeeding callbacks. All six use Lalamog123!Test; start with alex.seed@example.test, or ana.seed@example.test for an unmatched discovery account. Full account/scenario list: [local development](features/LOCAL_DEVELOPMENT.md#inline-seeding-and-relationships). Rerunning migrations preserves existing data and edits. Development dotnet run migrates/seeds automatically; other environments require explicit migration commands. The http launch profile selects Development/port 5080 and HTTP-compatible cookies; other environments require HTTPS. Full-solution checks use `solution/Lalamog.slnx`; plain backend build selects the sole API project. Optional PowerShell launchers simply run the applications.
+The migration command updates schema only. Development API startup then calls static DatabaseSeeder.SeedAsync to add six fictional users, roles/features and matching/chat/fight data. All six use Lalamog123!Test; start with alex.seed@example.test, or ana.seed@example.test for an unmatched discovery account. Full account/scenario list: [local development](features/LOCAL_DEVELOPMENT.md#static-seeding-and-relationships). Rerunning migrations preserves existing data and edits. Development dotnet run migrates/seeds automatically; other environments require explicit migration commands. The http launch profile selects Development/port 5080 and HTTP-compatible cookies; other environments require HTTPS. Full-solution checks use `solution/Lalamog.slnx`; plain backend build selects the sole API project. Optional PowerShell launchers simply run the applications.
 
 The versioned ignore rules are in `scripts/gitignore`. On a new checkout, register them once from the repository root before working with secrets: `git config --local core.excludesFile scripts/gitignore`. Existing checkouts retain their current registration. No script is needed for this.
 
@@ -91,7 +91,7 @@ Compose contains no API, frontend, initializer, or app build. Redis/RabbitMQ rem
 
 ## Build and checks
 
-All startup settings and both seed callbacks must stay basic and inline in Program.cs—no setup functions, options files/classes or seed helpers. This is a [mandatory rule for future agents](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs). Backend code stays horizontal N-tier: `Controllers/`, `Services/`, `Repositories/`, `Interfaces/`, `DTOs/`. Controllers/services use explicit constructors and methods with interface-based dependencies. Request/response DTOs and service/repository interfaces each have their own file. Generated migrations remain intact. See [backend structure](features/BACKEND_STRUCTURE.md) for the source map, style rules and verified compatibility.
+Startup settings stay basic and inline in Program.cs; the owner-approved static Data/DatabaseSeeder.cs holds sample data and is called from the short Development startup scope. Do not add configuration wrappers, seeder DI interfaces, initializer modes or seed settings. This is a [mandatory rule for future agents](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs). Backend code stays horizontal N-tier: `Controllers/`, `Services/`, `Repositories/`, `Interfaces/`, `DTOs/`. Controllers/services use explicit constructors and methods with interface-based dependencies. Request/response DTOs and service/repository interfaces each have their own file. Generated migrations remain intact. See [backend structure](features/BACKEND_STRUCTURE.md) for the source map, style rules and verified compatibility.
 
 From the repository root:
 

@@ -1,5 +1,9 @@
 # Backend readability and horizontal N-tier structure
 
+2026-11-04 latest owner revision: keep configuration inline; sample data moves to static Data/DatabaseSeeder.cs called from the startup scope after MigrateAsync. This replaces all earlier inline-seed/no-seeder directions below. [Current flow and checks](LOCAL_DEVELOPMENT.md).
+
+2026-11-04: added the access service/repository and their individual interfaces/DTOs, four separate role/feature model files, generalized authorization requirement/handler, admin access controller and explicit controller policies. Policy registration remains directly inline in Program.cs; static Data/DatabaseSeeder.cs now owns default role/feature data. Additive RoleSystemFeatures migration preserves existing data. Current behavior and checks: [role permissions](ROLE_PERMISSIONS.md).
+
 2026-11-02 fresh-volume fix: a small Development guard directly in Program.cs after builder.Build scopes AppDbContext and awaits MigrateAsync. Existing seed callbacks remain inline; no configuration/seeder/initializer class. New SQL startup test checks absent DB creation, six-user relationships, cookie login and restart/edit preservation. Build zero warnings/errors and three targeted startup/seed/cookie cases passed; no EF model change. Owning runtime details: [local development](LOCAL_DEVELOPMENT.md).
 
 Status: implemented. Last updated/verified: 2026-11-02 (inline startup follow-up; earlier whole-backend evidence below). Owner-requested behavior-preserving refactor; one API project, no new application framework or packages.
@@ -60,6 +64,14 @@ On deletion, restore DTOs/interfaces and consumers/DI together; do not restore o
 Not rerun: SQL/native-API restart persistence test, backup/restore drill, public deployment or planned Blob/RabbitMQ/maps workflows. No work remains for this readability/interface/DTO refactor; broader persistence/operations/integration backlog remains separate.
 
 ## Latest work record
+
+2026-11-04 / static-seeder revision: sample data now lives once in Data/DatabaseSeeder.cs. A short Development startup scope resolves AppDbContext, awaits MigrateAsync and calls DatabaseSeeder.SeedAsync(db) before serving. Duplicated EF callbacks were removed; configuration and the owner's authorization comments remain in Program.cs. Existing data/order and preservation of passwords/edits/grant removals are unchanged. Build zero warnings/errors, four targeted SQL cases and all 61 backend tests passed. No EF model change; normal volumes/database/API process were preserved. See [local development](LOCAL_DEVELOPMENT.md) for startup, source/recovery and verification.
+
+## Earlier role-permission work record
+
+2026-11-04 / native role/feature authorization: added database-backed policies and admin assignment API with eight defaults. Signup saves User with the account/profile; both inline seed callbacks initialize roles/grants and preserve removals/edits on reruns. All startup configuration stays inline in Program.cs. Build zero warnings/errors; seven targeted SQL cases and all 61 backend tests passed; EF reports no model drift; knowledge and whitespace checks passed. Normal app database/restart and browser checks were not run. No required implementation work remains. Source, migration, access contracts and recovery: [role permissions](ROLE_PERMISSIONS.md).
+
+## Earlier work record (2026-11-02)
 
 - 2026-11-02 / strict beginner-readable configuration and sample data: only the necessary built-in MVC CSRF filter, default SQL retry and cookie-policy fixes were added, all inline in Program.cs. All 34 backend tests now pass; previous CSRF/concurrency failures are resolved. Both EF seed callbacks are inline and mirrored, saving users/matches/fights before child records and retaining existing data on reruns. No configuration/seed helper or options function/file was introduced.
 - Future agents must obey the prominent basic-inline rules in AGENTS/bootstrap/Instructions/scoped docs. Current six-user scenarios and database migration verification are in [local development](LOCAL_DEVELOPMENT.md); no new EF model/schema migration was required for the seeding callbacks.

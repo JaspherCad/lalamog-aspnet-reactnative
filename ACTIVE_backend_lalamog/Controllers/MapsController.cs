@@ -1,9 +1,12 @@
+using Lalamog.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lalamog.Api.Controllers;
 
+[Authorize(Policy = ApplicationPermissions.User_Map)]
 [Route("api/maps")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class MapsController : ApiController

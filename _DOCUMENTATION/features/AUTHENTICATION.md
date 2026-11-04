@@ -1,5 +1,9 @@
 # Native account authentication and browser session
 
+2026-11-04 latest seeder revision: demo accounts/roles/features are now in static Data/DatabaseSeeder.cs, called after migration from the Development startup scope. Sample passwords, signup defaults, cookies, CSRF and grant preservation are unchanged. Earlier callback/location records below are historical; [local development](LOCAL_DEVELOPMENT.md) owns the current flow.
+
+2026-11-04 role-permission extension: AuthService also uses IAccessRepository to find the saved User role and persists its link with each new account/profile. Clients cannot select signup roles. Cookie claims/hash/lockout/CSRF remain unchanged; feature authorization reads current SQL grants on each protected request. Login/logout/session access does not require a feature grant. Custom application roles are separate from retired Identity metadata. See [role permissions](ROLE_PERMISSIONS.md) for sources, endpoints, seeding and verification.
+
 2026-11-02 SQL recovery clarification: active authentication is native AppUser email/password plus HttpOnly cookies. No active OAuth/OIDC/Google/Facebook setup/package was found; none needed removal. Fake seed emails remain inline in Program.cs and need no real mailbox. Reported SQL error 18456 was a separate database connection issue: missing Lalamog database plus a placeholder normal-run connection. Existing migrations/seeds and owner-approved local Development JSON restored normal health/cookie login/session/profile. Auth business code unchanged; see [local development](LOCAL_DEVELOPMENT.md).
 
 Status: implemented with plain AppUser, native password hashing and cookie authentication. Updated/verified 2026-11-02; full-suite limits below. ASP.NET Identity is removed from active application code and package references.
@@ -28,7 +32,7 @@ The built-in MVC AutoValidateAntiforgeryToken filter is now registered inline wi
 
 ## Migration, compatibility and recovery
 
-Apply the new migration explicitly with `dotnet ef database update` from the backend before running this version against an existing database. It was tested in isolated databases. The inline-seeding task applied it to the backed-up local Lalamog database and verified a repeat update without duplicates or changed original passwords; operational results are in handoff/local development. Both seed callbacks remain in Program.cs; Development startup now invokes MigrateAsync inline so fresh local SQL volumes receive the schema and six fake cookie-login accounts; other environments use explicit migration commands.
+Apply the new migration explicitly with `dotnet ef database update` from the backend before running this version against an existing database. It was tested in isolated databases. The inline-seeding task applied it to the backed-up local Lalamog database and verified a repeat update without duplicates or changed original passwords; operational results are in handoff/local development. Development startup invokes MigrateAsync inline and then static DatabaseSeeder.SeedAsync so fresh local SQL volumes receive the schema, six fake accounts and default authorization data. Other environments use explicit migrations without automatic demo seeding.
 
 The migration creates AppUsers, copies existing account IDs/emails/hashes/lockout values, and redirects profile/swipe/match/message/confirmation foreign keys. Old framework account/role/claim/login/token tables are renamed RetiredAuth* as unmapped recovery archives rather than discarded. No active model or service maps those tables. Null email/hash values in historical placeholder rows are preserved; normal registration supplies validated values. A conflicting old normalized email stops the unique-index upgrade transaction rather than silently merging accounts.
 
@@ -37,6 +41,14 @@ Rollback copies new/updated native accounts back into the archived old user tabl
 Recover AppUser, DbContext mapping, repository, password verification, cookie setup and migration/snapshot together. Do not restore Identity services or the combined Entities.cs file. Keep each model in its own named .cs file. Account email/hash/lockout metadata must stay out of public profile/message DTOs and logs.
 
 ## Verification and latest work record
+
+2026-11-04 / static-seeder revision: sample data now lives once in Data/DatabaseSeeder.cs. A short Development startup scope resolves AppDbContext, awaits MigrateAsync and calls DatabaseSeeder.SeedAsync(db) before serving. Duplicated EF callbacks were removed; configuration and the owner's authorization comments remain in Program.cs. Existing data/order and preservation of passwords/edits/grant removals are unchanged. Build zero warnings/errors, four targeted SQL cases and all 61 backend tests passed. No EF model change; normal volumes/database/API process were preserved. See [local development](LOCAL_DEVELOPMENT.md) for startup, source/recovery and verification.
+
+### Earlier role-permission verification
+
+2026-11-04 / native role/feature authorization: added database-backed policies and admin assignment API with eight defaults. Signup saves User with the account/profile; both inline seed callbacks initialize roles/grants and preserve removals/edits on reruns. All startup configuration stays inline in Program.cs. Build zero warnings/errors; seven targeted SQL cases and all 61 backend tests passed; EF reports no model drift; knowledge and whitespace checks passed. Normal app database/restart and browser checks were not run. No required implementation work remains. Source, migration, access contracts and recovery: [role permissions](ROLE_PERMISSIONS.md).
+
+### Earlier verification (2026-11-02)
 
 2026-11-02 current follow-up: restored CSRF validation through the built-in MVC filter and default SQL retry handling, both inline in Program.cs. Cookie settings use the simple Development HTTP/other-environments HTTPS policy. Six fictional sample accounts and related rows are seeded by mirrored Program.cs EF callbacks, using native PasswordHashing and save-parent-first steps. Strict basic-inline rules are prominent in the future-session entry instructions.
 

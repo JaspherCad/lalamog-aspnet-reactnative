@@ -1,5 +1,7 @@
 # SQL data model and migration memory
 
+2026-11-04: additive Migrations/20261104073722_RoleSystemFeatures adds Roles, SystemFeatures, UserRoles and RoleSystemFeatures. Role names/feature codes are unique; join tables have composite primary keys and restrictive foreign keys. AppUser IDs/passwords and all product data are retained. Initial inline seeding backfills existing accounts with User once; subsequent runs preserve changed grants. Model, upgrade and recovery details: [role permissions](features/ROLE_PERMISSIONS.md).
+
 2026-11-02 map upgrade: `Migrations/20261102074948_PhilippineMapLocations.cs` adds seven nullable fields each to FighterProfile and Fight: RegionCode/ProvinceCode/CityCode/BarangayCode (max 10), PsgcVersion (max 16), Latitude/Longitude (double). SQL pair/range checks require both coordinates or neither (±90/±180); 0,0 is valid. No existing text/data is rewritten. Applied to local Lalamog after verified COPY_ONLY/CHECKSUM backup; populated SQL upgrade test preserves old text/null map fields. PSA catalog is versioned JSON reference data, not DbSets/seeding. See [maps guide](features/MAPS_AND_AREAS.md).
 
 2026-11-02 native account upgrade: `Migrations/20261102063804_NativeAppUsers.cs` creates AppUsers and copies existing IDs/emails/hashes/lockout values, retargets foreign keys and renames old framework tables to unmapped RetiredAuth* recovery archives. Active model/snapshot contains no Identity types. All seven models have separate Models/*.cs files. Upgrade/old-password login/metadata preservation/rollback with new accounts/re-upgrade passed against populated isolated SQL. Applied to local Lalamog after a verified COPY_ONLY/CHECKSUM backup; repeated EF update seeded no duplicates. Existing account/password preservation and Development HTTP flows verified. Details: [authentication](features/AUTHENTICATION.md).
@@ -9,6 +11,10 @@ Audited 2026-10-28. Source: `Models/` (one model per .cs file), `Data/AppDbConte
 | Entity | Key / relationships | Invariants |
 | --- | --- | --- |
 | AppUser | GUID ID, one FighterProfile, rowversion | Native password hash, normalized email unique filtered index, failed-login count/lockout; no Identity inheritance |
+| Role | int ID; unique Name (50), Description (200) | Many users and many system features |
+| SystemFeature | int ID; unique Code (80), Description (200) | Canonical feature choices for explicit policies |
+| UserRole | composite (UserId, RoleId) PK/FKs | One assignment per user/role; restrictive deletion |
+| RoleSystemFeature | composite (RoleId, SystemFeatureId) PK/FKs | One grant per role/feature; restrictive deletion |
 | FighterProfile | UserId PK/FK | unique normalized fighter name 50; non-unique nickname/alias 50, bio 500, style 50, location/availability 200, avatarKey 100; experience 1–3 |
 | Swipe | long ID; SwiperId/TargetId FKs | unique ordered actor/target pair; no self; direction like/pass |
 | FighterMatch | long ID; User1Id/User2Id FKs | unique pair; no self; service canonicalizes using ordinal GUID `D` strings |
@@ -30,7 +36,7 @@ Both directories are active and discovered for `AppDbContext`:
 
 2026-11-02 addition: `Migrations/20261102030056_UniqueFighterNames.cs` and its generated designer/snapshot add `FighterName` and `NormalizedFighterName` (50 chars), unique index on normalized name. Up backfills every existing row to `fighter-` + lowercase full UserId GUID and uppercase normalization before indexing; existing Nickname (now alias), bio/style, account IDs and relationships remain unchanged, including duplicate aliases. New entities receive a unique generated name; registration/profile service validation supports user-selected names. Do not roll back by dropping columns on populated data without an explicit recovery plan; that would discard chosen names. Populated-baseline upgrade and uniqueness tests are in `ProfileIdentityTests.cs`.
 
-Do not delete either migration, regenerate a baseline over a populated DB, or run `LEGACY_backend_lalamog/Migrations/` against the active database. Inspect migration SQL for data loss. Development startup calls Database.MigrateAsync directly inline in Program.cs before accepting requests; this creates a missing database, applies migrations and runs UseAsyncSeeding. EF commands still run the mirrored synchronous seed callback. Other environments use explicit migration commands. No seeder class or initializer mode exists.
+Do not delete either migration, regenerate a baseline over a populated DB, or run `LEGACY_backend_lalamog/Migrations/` against the active database. Inspect migration SQL for data loss. Development startup resolves AppDbContext in a short scope in Program.cs, awaits Database.MigrateAsync, then calls static DatabaseSeeder.SeedAsync. This creates a missing database/schema and fills the demo data before requests. EF update now migrates schema only; other environments use explicit migrations without automatic demo seeding. Sample data lives once in Data/DatabaseSeeder.cs (owner revision 2026-11-04); no initializer mode or new schema migration is needed for this move.
 
 From the Git root:
 
@@ -42,7 +48,7 @@ dotnet ef migrations script --idempotent --project ACTIVE_backend_lalamog
 dotnet ef database update --project ACTIVE_backend_lalamog
 ```
 
-EF tooling uses the inline configuration in `Program.cs`; the separate design-time factory was removed on 2026-11-02. Configure ConnectionStrings:DefaultConnection directly in appsettings.json. There is no API .env loader; EF callbacks seed six fictional accounts plus all related models, parent-first and repeatably. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
+EF tooling uses the inline configuration in `Program.cs`; the separate design-time factory was removed on 2026-11-02. Configure ConnectionStrings:DefaultConnection directly in appsettings.json. There is no API .env loader; Static DatabaseSeeder seeds six fictional accounts plus default roles/features and related models, parent-first and repeatably, when Development startup explicitly calls it. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
 
 ## Concurrency memory
 

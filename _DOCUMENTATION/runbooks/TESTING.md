@@ -51,6 +51,10 @@ dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx --filter FullyQualified
 
 The existing browser core expects another discovery card after liking. An isolated fixture with only its two accounts needs a neutral practice profile; otherwise its negative-text assertion waits for an element that disappeared in the legitimate empty state. Prefer fixing/explicitly preparing that fixture when broadening browser coverage; do not change product discovery behavior to satisfy the assertion. For this refactor, an isolated neutral profile was added and unchanged core passed using temporary ports and installed Edge (bundled Playwright browser absent). Normal restart tests were not run.
 
+## Role and feature authorization
+
+RolePermissionTests checks admin-only access, signup defaults, current-cookie changes, multiple roles, stacked policies, invalid selections and CSRF. RolePermissionMigrationTests upgrades populated SQL and checks preserved account/hash data, initial User assignment, composite uniqueness and revoked assignments surviving repeated static seeding. DatabaseSeederTests also preserves edited role descriptions and removed grants. See [role permissions](../features/ROLE_PERMISSIONS.md) for actual results and isolated-build prerequisites.
+
 ## Frontend build and browser checks
 
 From `ACTIVE_frontend_lalamog/`:

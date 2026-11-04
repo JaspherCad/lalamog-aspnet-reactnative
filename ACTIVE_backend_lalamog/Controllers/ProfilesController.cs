@@ -1,9 +1,12 @@
+using Lalamog.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lalamog.Api.Controllers
 {
+    [Authorize(Policy = ApplicationPermissions.User_View)]
     [Route("api/profiles")]
     public class ProfilesController : ApiController
     {
@@ -22,6 +25,7 @@ namespace Lalamog.Api.Controllers
         }
 
         [HttpPut("me")]
+        [Authorize(Policy = ApplicationPermissions.User_EditProfile)]
         public async Task<ActionResult<ProfileResponse>> Update(ProfileRequest request, CancellationToken cancellationToken)
         {
             ProfileResponse response = await _profileService.UpdateAsync(ActorId, request, cancellationToken);
@@ -37,6 +41,7 @@ namespace Lalamog.Api.Controllers
 
         [HttpPost("me/avatar")]
         [RequestSizeLimit(6 * 1024 * 1024)]
+        [Authorize(Policy = ApplicationPermissions.User_Upload)]
         public async Task<ActionResult<ProfileResponse>> Avatar(IFormFile file, CancellationToken cancellationToken)
         {
             ProfileResponse response = await _profileService.AvatarAsync(ActorId, file, cancellationToken);

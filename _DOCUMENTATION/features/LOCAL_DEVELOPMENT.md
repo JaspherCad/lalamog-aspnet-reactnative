@@ -1,36 +1,55 @@
-# Basic inline startup, migrations and test data
+# Basic startup, migrations and static test-data seeding
 
-2026-11-02 follow-up / fresh-volume startup: user confirmed expected Compose down -v → Compose up → dotnet run → seeded fake data. SQL volume creation time was newer than the prior successful migration and Lalamog was absent again (4060). Added only an inline Development scope/MigrateAsync block after Program.cs Build, before requests. It uses existing migrations/UseAsyncSeeding; no new schema/config helper. Three targeted SQL tests passed, including a missing-database startup and second-host restart preserving profile edits and six users. Real plain Development startup against the missing local database also passed health 200/native cookie login/session/profile with no manual EF update or connection override. All model counts verified: users 6, profiles 6, swipes 11, matches 5, messages 10, fights 6, confirmations 9. EF model, Git-ignore/credential/legacy integrity and knowledge/whitespace checks passed. Full unrelated/backend browser suites were not rerun. API remains running at localhost:5080. This supersedes earlier manual-only Development migration instructions.
+Status: implemented. Updated: 2026-11-04. Last verified: 2026-11-04 (zero-warning build, four targeted SQL cases, all 61 backend tests, EF/knowledge/context/whitespace checks).
 
-2026-11-02 SQL error 18456 recovery: current SQL container accepted the existing private sa credential against master, but had no Lalamog database (DB_ID null; only system datafiles). Applied existing migrations and mirrored inline seeds to create it: six users/profiles, five matches and six fights. Separately, tracked appsettings.json still had YOUR_SQL_SERVER_PASSWORD, so earlier transient-override smoke checks had not configured normal startup. Owner approved standard local Development JSON; stored verified connection there and removed its unignore exception in scripts/gitignore. Restarted only the verified workspace API; normal dotnet run now returns health 200 and native seeded-email cookie login/session/profile pass without an environment connection override. A normal EF update rerun also succeeded without overrides; counts remained 6 users/6 profiles/5 matches/6 fights. Git-ignore, credential/context, whitespace and knowledge checks passed; full backend/browser suites were not repeated for this runtime-only repair. Existing historical backup paths are absent in this current SQL volume; do not claim those older backups are available. No database reset, OAuth, new schema migration or C# startup abstraction.
+## Owner direction
 
-2026-11-02 maps follow-up: `Maps:NominatimUrl` in appsettings.json selects the free public lookup server (no key). HttpClient identity/timeout, shared pacing/cache and DI remain directly inline in Program.cs. No new configuration helper, .env loading, schema, initializer or provider account. Use public places only; provider limits/recovery: [maps guide](MAPS_AND_AREAS.md).
-
-Status: implemented. Updated 2026-11-02. The [mandatory owner rule](../../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs) requires beginner-readable startup and seeding directly in Program.cs; no options/seed helpers or configuration-only files/functions.
+Configuration, registrations and middleware stay beginner-readable and inline in Program.cs. Owner revision 2026-11-04 moves sample data into one static Data/DatabaseSeeder.cs class called from a short startup scope. This explicitly supersedes the former duplicated inline UseSeeding/UseAsyncSeeding requirement. No seeder interface, DI registration, initializer mode, extra settings or configuration helper is introduced. See the [mandatory owner rule](../../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs).
 
 ## Run the application
 
-1. Set ConnectionStrings:DefaultConnection in standard backend appsettings.Development.json with the existing local SQL credential. Owner explicitly approved this JSON override on 2026-11-02. The file is Git-ignored; appsettings.json retains the public placeholder/defaults. WebApplication.CreateBuilder loads both automatically; no connection environment override or custom loader is needed.
-2. In infrastructure/, use `docker compose up -d --wait`. Only Docker Compose reads its private .env; no API .env loader exists.
-3. In ACTIVE_backend_lalamog/, run `dotnet build` and `dotnet run`. The Development launch profile now creates/updates the database and runs the inline EF async seed before accepting requests. No separate migration command is required for this local flow; EF tools remain available.
-4. In ACTIVE_frontend_lalamog/, run `npm run dev` after installing dependencies if necessary.
+1. Set ConnectionStrings:DefaultConnection in standard ignored backend appsettings.Development.json using the existing local SQL credential. WebApplication.CreateBuilder loads it automatically; no API .env loader or connection override is needed.
+2. In infrastructure/, use `docker compose up -d --wait`. Compose hosts SQL/RabbitMQ/Redis infrastructure; the API runs natively.
+3. In ACTIVE_backend_lalamog/, run `dotnet build` and `dotnet run`. The Development profile creates/migrates a missing database and calls the static seeder before accepting requests.
+4. In ACTIVE_frontend_lalamog/, run `npm run dev` after installing dependencies if necessary (or npm.cmd if PowerShell blocks npm.ps1).
 
-Application configuration is read with GetConnectionString("DefaultConnection") or Configuration["Key"]. Storage:Path retains .cache/uploads relative to backend content root. Framework-default key handling applies; old .cache/keys files remain untouched. Standard appsettings.Development.json supplies local values; no hidden configuration class/custom loader, initializer mode, partial Program, IdentityUser, OAuth or SignalR.
+The startup block directly after Build is:
 
-## Minimum working options
+~~~csharp
+if (app.Environment.IsDevelopment())
+{
+    using (var serviceScope = app.Services.CreateScope())
+    {
+        var services = serviceScope.ServiceProvider;
+        var db = services.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+        await DatabaseSeeder.SeedAsync(db);
+    }
+}
+~~~
 
-All are visible inline in Program.cs:
+After an intentional `docker compose down -v`, run Compose up and start/restart the API. MigrateAsync rebuilds schema and DatabaseSeeder restores all fictional demo rows, roles and features. Compose up alone does not execute native API startup; an already-running API must restart. This task validates the same absent-database path in an isolated SQL test without resetting existing volumes.
 
-- SQL Server uses the default `EnableRetryOnFailure()` option required by the existing concurrent matching/scheduling transaction flow. No custom retry counts, delays or error-code settings.
-- Cookie auth keeps the existing name, HttpOnly/SameSite settings and one Development HTTP / other environments HTTPS policy. Antiforgery uses the same policy and the React X-CSRF-TOKEN header.
-- The built-in MVC AutoValidateAntiforgeryToken filter is registered directly with AddControllersWithViews; no custom CSRF middleware/filter class. Tests verify missing-token mutations fail, tokens are refreshed around sign-in/out, and cookie sessions work.
-- Existing rate-limit/service/middleware registrations remain inline; no speculative extra options.
+Normal restarts seed only missing sample rows and preserve passwords, profile edits, fight states and changed authorization grants. Other environments use explicit migrations and do not automatically create demo accounts. `dotnet ef database update` now migrates schema only; it no longer invokes seed callbacks. Development startup supplies sample data afterward.
 
-## Inline seeding and relationships
+## Minimum working configuration
 
-Both `UseSeeding` and `UseAsyncSeeding` are chained directly to the Program.cs AddDbContext options. Their logic is intentionally mirrored for EF tooling compatibility: find by email, add/save the parent user if absent, then add/save its profile with the saved ID. Save matches before messages/fights and fights before confirmations. No database IDs are hardcoded; GUIDs and SQL-generated keys come from saved entities.
+Use GetConnectionString("DefaultConnection") and direct Configuration["Key"] access. All registration/options remain inline in Program.cs:
 
-Development dotnet run calls MigrateAsync inline before accepting requests; it creates a missing database, applies existing migrations and invokes the inline UseAsyncSeeding callback even when no schema update is pending. Explicit `dotnet ef database update` remains available and invokes the synchronous callback. Other environments use explicit migration commands. No HasData, seeder/helper class, separate initializer mode, new environment flag, extra seed settings or new seed migration is needed. Existing rows/passwords/profile edits/fight state are left unchanged on reruns.
+- SQL Server with default EnableRetryOnFailure for existing matching/scheduling retryable transactions.
+- Existing cookie names, HttpOnly/SameSite and Development HTTP / otherwise HTTPS policy.
+- Built-in MVC AutoValidateAntiforgeryToken filter and X-CSRF-TOKEN header.
+- Existing rate limits, storage, provider and application-service registrations.
+
+Storage:Path remains .cache/uploads relative to backend content root. Maps:NominatimUrl retains the configured no-key lookup provider; usage limits/recovery are in [maps](MAPS_AND_AREAS.md). Framework-default cookie key handling remains; old keys/files are preserved. No extra package/settings file, .env reader, IdentityUser, OAuth, SignalR or partial Program is introduced.
+
+## Static seeding and relationships
+
+Data/DatabaseSeeder.cs exposes `public static Task SeedAsync(AppDbContext context, CancellationToken cancellationToken = default)`. It contains the former async callback's data and ordering once. LINQ query syntax follows backend conventions. Program.cs owns migration; the seeder fills an already-migrated database and never deletes/recreates one.
+
+Look up features/roles by unique code/name and users by normalized email, add/save parents if absent, then add children with saved IDs. Save matches before messages/fights and fights before confirmations. No fixed database IDs, alternate initializer mode or duplicated synchronous path.
+
+On first User-role creation, existing accounts receive User once. New demo accounts receive User; fictional Alex also receives Admin. Default role grants are populated only for newly created roles so later removals/edits survive reruns. New registrations still save User with the new account/profile. See [role permissions](ROLE_PERMISSIONS.md) for the feature catalog and access API.
 
 All six fictional test accounts use **Lalamog123!Test**:
 
@@ -45,18 +64,26 @@ All six fictional test accounts use **Lalamog123!Test**:
 
 Fresh seed totals: 6 users, 6 complete profiles, 11 directed swipes, 5 mutual matches, 10 messages, 6 fights (scheduled/confirmed/completed/canceled), 9 participant confirmations. Profiles include bio, level, style, location and availability. Contact numbers/venue addresses are explicitly fictional. AvatarKey stays null for the normal initials fallback; upload a photo through the UI when testing storage. Dates are UTC relative to first seed creation and are not shifted on reruns.
 
+Fresh authorization totals: 2 roles, 8 system features, 7 user-role assignments and 8 role-feature grants. Existing installations may have additional real/test rows; the seeder preserves them.
+
 ## Source map and recovery
 
-- Program.cs: all startup options and both complete seed callbacks.
-- appsettings.json / ignored appsettings.Development.json / Properties/launchSettings.json: ordinary configuration and Development port 5080; no private credential copy is committed.
-- Models/*.cs / Data/AppDbContext.cs: individual models and relationship/constraint mapping, not a new options layer.
-- tests/Lalamog.Api.Tests/InlineSeedingTests.cs: all-model relationships, canonical pairs, credential verification and sync/async reruns preserving edits.
-- tests/Lalamog.Api.Tests/CoreFlowTests.cs and native auth/migration tests: real SQL/auth/CSRF/concurrency coverage.
-- scripts/ launchers remain optional plain dotnet/npm helpers. Infrastructure project/container names, ports and volumes stay unchanged.
+- ACTIVE_backend_lalamog/Program.cs: inline configuration and the short Development migration/seeder startup scope.
+- ACTIVE_backend_lalamog/Data/DatabaseSeeder.cs: all sample-data and default role/feature initialization in one static async method.
+- ACTIVE_backend_lalamog/Data/AppDbContext.cs, Models and both migration directories: persistence/schema, unchanged by this refactor.
+- tests/Lalamog.Api.Tests/DatabaseSeederTests.cs: complete sample relationships/passwords plus repeated seeding preserving edits, removed grants/assignments and saved IDs.
+- tests/Lalamog.Api.Tests/DevelopmentStartupTests.cs: absent database, all eleven model counts, cookie/admin access and second-start profile preservation.
+- tests/Lalamog.Api.Tests/ApiFixture.cs and populated-upgrade tests: migrate then explicitly call the same static seeder for isolated SQL fixtures.
 
-Keep both LEGACY folders, existing data/migration history/uploads/keys and private credentials. Root AGENTS.md is the shared entry; maintained knowledge lives in _DOCUMENTATION. Tool/SDK manifests and solution remain under the backend (owner layout updated 2026-11-03). Shared Git exclusions are scripts/gitignore. Restore startup options and both seed blocks together; do not extract them into helpers to avoid duplication. See [development](../runbooks/DEVELOPMENT.md), [authentication](AUTHENTICATION.md), [data model](../DATA_MODEL.md), and [testing](../runbooks/TESTING.md).
+For SQL 18456/4060, distinguish invalid credentials from a missing database. Existing 2026-11-02 recovery found an absent Lalamog database after volume recreation and a placeholder normal-run connection; standard ignored Development JSON plus normal startup restored it. Never print the private connection or reset volumes to diagnose a login issue.
+
+Restore Program.cs's startup call and Data/DatabaseSeeder.cs together. Preserve existing data, migration history, credentials, uploads/keys and all LEGACY references. Source-only refactoring requires no new migration. Root AGENTS and central guides own the current rule; older inline-seed records below are historical. See [development](../runbooks/DEVELOPMENT.md), [authentication](AUTHENTICATION.md), [data model](../DATA_MODEL.md), and [testing](../runbooks/TESTING.md).
 
 ## Latest work record
+
+2026-11-04 / owner-requested static seeder: removed both duplicated EF seed callbacks from Program.cs and moved the existing async data/ordering to Data/DatabaseSeeder.cs. Development startup resolves a scoped AppDbContext, migrates and calls SeedAsync before requests. Program.cs shrank from 595 to 177 lines; the owner's authorization pseudocode comment and application configuration are preserved. Fixture/populated-upgrade tests now call the same static seeder, and the missing-database startup test verifies all sample/auth model counts and Admin access. Build zero warnings/errors; all four targeted seeder/startup/upgrade cases passed. All 61 full backend tests passed (zero skipped, 57 seconds). EF reports no model changes; knowledge validation, local/direct context exports, outside-path rejection and whitespace checks passed. No normal local volume/database reset or live API restart was performed.
+
+## Earlier work record (2026-11-02)
 
 2026-11-02 / owner request: strengthened strict inline/basic rules in AGENTS, bootstrap, engineering/scoped docs and workflow guide. Fixed missing-CSRF and SQL concurrency failures using minimal built-in options. Added six-user all-model sample data in mirrored inline EF callbacks. Build passed with zero warnings/errors; all 34 backend tests passed, including the new repeatability/edit-preservation test. The original database was backed up and RESTORE VERIFYONLY passed before applying changes. Applied NativeAppUsers migration and inline seed to the backed-up local Lalamog database; a second EF update completed with no duplicate data. Actual seed counts: users 6, profiles 6, swipes 11, matches 5, messages 10, fights 6, confirmations 9. Verification found zero original accounts missing or with changed password hashes. Development HTTP smoke passed SQL health, missing-CSRF rejection, seeded cookie login/session, profile/discovery, REST messages, all fight states and logout. The temporary API was stopped. EF reports no model changes; knowledge links (44 files / 249 local targets), diff whitespace, exported-context rule presence and private-credential absence checks passed. Tracked appsettings.json retains the SQL password placeholder; no private credentials were copied into pushable files. Historical no-seeding/current-startup failure notes in older work records are superseded.
 

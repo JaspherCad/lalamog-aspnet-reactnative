@@ -41,7 +41,9 @@ public class ApiFixture : WebApplicationFactory<AppDbContext>, IAsyncLifetime
         await using var create = new SqlCommand($"CREATE DATABASE [{database}]", connection);
         await create.ExecuteNonQueryAsync();
         using var scope = Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+        await DatabaseSeeder.SeedAsync(db);
     }
     public new async Task DisposeAsync()
     {

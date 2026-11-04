@@ -9,5 +9,6 @@ public class AppUser
     public int AccessFailedCount { get; set; }
     public DateTimeOffset? LockoutEnd { get; set; }
     public byte[] Version { get; set; } = [];
+    public List<UserRole> UserRoles { get; set; } = [];
     public FighterProfile Profile { get; set; } = null!;
 }

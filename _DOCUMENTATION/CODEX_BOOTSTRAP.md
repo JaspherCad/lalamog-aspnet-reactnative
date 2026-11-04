@@ -9,7 +9,8 @@ Follow links once; backlinks do not restart the sequence.
 For implementation, fixes, refactors, recovery, and durable investigations:
 
 1. Read root AGENTS and [ENGINEERING.md](ENGINEERING.md). Preserve the mandatory
-   inline Program.cs/seeding rule; the documentation move does not change it.
+   inline Program.cs configuration rule and static DatabaseSeeder startup call
+   (owner revision 2026-11-04).
 2. Read the capability inventory in [PROJECT_STATE.md](PROJECT_STATE.md) and
    the current [HANDOFF.md](memory/HANDOFF.md). Old checks are historical.
 3. Read [PROTOCOL.md](memory/PROTOCOL.md) and the matching row below; load the
@@ -34,7 +35,8 @@ in older guides are relative to ACTIVE_backend_lalamog unless stated otherwise.
 | --- | --- | --- |
 | UI, paper dossiers, swipe gestures, match reveal, typography, mobile layout | [Frontend design](features/FRONTEND_DESIGN.md) | ACTIVE_frontend_lalamog/src/Discover.tsx, ui.tsx, styles.css; [DESIGN](DESIGN.md), [frontend scope](scopes/FRONTEND.md). Target concepts are distinct from implemented UI. |
 | Constructors, DTOs, interfaces, repository boundaries, backend readability | [Backend structure](features/BACKEND_STRUCTURE.md) | ACTIVE_backend_lalamog/Controllers, Services, Repositories, Interfaces, DTOs, Models; [backend scope](scopes/BACKEND.md) |
-| dotnet/npm startup, SQL 18456/4060, migrations/seeds, Compose, local storage | [Local development](features/LOCAL_DEVELOPMENT.md) | ACTIVE_backend_lalamog/Program.cs, solution/Lalamog.slnx, global.json; infrastructure/compose.yaml; [getting started](GETTING_STARTED.md), [development](runbooks/DEVELOPMENT.md) |
+| dotnet/npm startup, SQL 18456/4060, migrations/seeds, Compose, local storage | [Local development](features/LOCAL_DEVELOPMENT.md) | ACTIVE_backend_lalamog/Program.cs, Data/DatabaseSeeder.cs, solution/Lalamog.slnx, global.json; infrastructure/compose.yaml; [getting started](GETTING_STARTED.md), [development](runbooks/DEVELOPMENT.md) |
+| Roles, system features, permission policies and access assignment | [Role permissions](features/ROLE_PERMISSIONS.md) | ACTIVE_backend_lalamog/Authorization, Services/AccessService.cs, Controllers/AccessController.cs; [backend scope](scopes/BACKEND.md) |
 | Signup/login/logout, cookies, CSRF, native account hashing | [Authentication](features/AUTHENTICATION.md) | ACTIVE_backend_lalamog/Services/AuthService.cs, Program.cs; ACTIVE_frontend_lalamog/src/api.ts; [API contracts](API_CONTRACTS.md) |
 | Fighter name/alias, style choices, profiles, discovery privacy | [Profiles and discovery](features/PROFILES_AND_DISCOVERY.md) | ACTIVE_backend_lalamog/Services/ProfileService.cs; ACTIVE_frontend_lalamog/src/ProfileEditor.tsx, Discover.tsx, types.ts |
 | Like/pass, reciprocal likes, duplicates, canonical pairs | [Matching](features/MATCHING.md) | ACTIVE_backend_lalamog/Services/MatchingService.cs, Repositories; [data model](DATA_MODEL.md), [domain rules](DOMAIN_RULES.md) |

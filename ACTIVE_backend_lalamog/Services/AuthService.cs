@@ -15,12 +15,14 @@ public class AuthService : IAuthService
     private readonly IUserRepository _users;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly TimeProvider _clock;
+    private readonly IAccessRepository _access;
 
-    public AuthService(IUserRepository users, IHttpContextAccessor httpContextAccessor, TimeProvider clock)
+    public AuthService(IUserRepository users, IHttpContextAccessor httpContextAccessor, TimeProvider clock, IAccessRepository access)
     {
         _users = users;
         _httpContextAccessor = httpContextAccessor;
         _clock = clock;
+        _access = access;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -50,6 +52,9 @@ public class AuthService : IAuthService
             user.Profile.NormalizedFighterName = FighterNames.Normalize(name);
             user.Profile.FighterName = name;
         }
+        Role defaultRole = await _access.FindRoleAsync("User", CancellationToken.None)
+            ?? throw new InvalidOperationException("The default User role has not been seeded.");
+        user.UserRoles.Add(new UserRole { RoleId = defaultRole.Id });
         try
         {
             await _users.AddAsync(user);

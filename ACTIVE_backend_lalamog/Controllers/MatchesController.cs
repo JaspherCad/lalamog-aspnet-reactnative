@@ -1,9 +1,12 @@
+using Lalamog.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lalamog.Api.Controllers
 {
+    [Authorize(Policy = ApplicationPermissions.User_Match)]
     [Route("api/matches")]
     public class MatchesController : ApiController
     {
@@ -31,6 +34,7 @@ namespace Lalamog.Api.Controllers
         }
 
         [HttpGet("{id:long}/messages")]
+        [Authorize(Policy = ApplicationPermissions.User_Chat)]
         public async Task<ActionResult<List<MessageResponse>>> Messages(
             long id, [FromQuery] long? before, [FromQuery] long? after, CancellationToken cancellationToken)
         {
@@ -39,6 +43,7 @@ namespace Lalamog.Api.Controllers
         }
 
         [HttpPost("{id:long}/messages")]
+        [Authorize(Policy = ApplicationPermissions.User_Chat)]
         public async Task<ActionResult<MessageResponse>> Send(long id, MessageRequest request, CancellationToken cancellationToken)
         {
             MessageResponse response = await _conversationService.SendAsync(ActorId, id, request, cancellationToken);

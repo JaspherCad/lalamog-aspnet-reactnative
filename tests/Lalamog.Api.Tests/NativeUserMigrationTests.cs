@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Lalamog.Api.Tests;
@@ -78,6 +79,12 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
             Guid newAccountId;
             using (WebApplicationFactory<AppDbContext> upgraded = _app.WithWebHostBuilder(host => host.UseSetting("ConnectionStrings:DefaultConnection", connectionString)))
             {
+                using (var scope = upgraded.Services.CreateScope())
+                {
+                    var appDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    await appDb.Database.MigrateAsync();
+                    await DatabaseSeeder.SeedAsync(appDb);
+                }
                 using HttpClient client = upgraded.CreateClient(new() { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
                 await PrepareCsrfAsync(client);
                 HttpResponseMessage login = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email.ToUpperInvariant(), password));

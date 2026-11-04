@@ -320,6 +320,47 @@ namespace Lalamog.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Lalamog.Api.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.RoleSystemFeature", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SystemFeatureId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoleId", "SystemFeatureId");
+
+                    b.HasIndex("SystemFeatureId");
+
+                    b.ToTable("RoleSystemFeatures");
+                });
+
             modelBuilder.Entity("Lalamog.Api.Models.Swipe", b =>
                 {
                     b.Property<long>("Id")
@@ -355,6 +396,47 @@ namespace Lalamog.Api.Migrations
 
                             t.HasCheckConstraint("CK_Swipe_NoSelf", "[SwiperId] <> [TargetId]");
                         });
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.SystemFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("SystemFeatures");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("Lalamog.Api.Models.ChatMessage", b =>
@@ -426,6 +508,25 @@ namespace Lalamog.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Lalamog.Api.Models.RoleSystemFeature", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.Role", "Role")
+                        .WithMany("RoleSystemFeatures")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Lalamog.Api.Models.SystemFeature", "SystemFeature")
+                        .WithMany("RoleSystemFeatures")
+                        .HasForeignKey("SystemFeatureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("SystemFeature");
+                });
+
             modelBuilder.Entity("Lalamog.Api.Models.Swipe", b =>
                 {
                     b.HasOne("Lalamog.Api.Models.AppUser", null)
@@ -441,15 +542,48 @@ namespace Lalamog.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Lalamog.Api.Models.UserRole", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Lalamog.Api.Models.AppUser", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Lalamog.Api.Models.AppUser", b =>
                 {
                     b.Navigation("Profile")
                         .IsRequired();
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Lalamog.Api.Models.Fight", b =>
                 {
                     b.Navigation("Confirmations");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.Role", b =>
+                {
+                    b.Navigation("RoleSystemFeatures");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.SystemFeature", b =>
+                {
+                    b.Navigation("RoleSystemFeatures");
                 });
 #pragma warning restore 612, 618
         }
