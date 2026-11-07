@@ -3,10 +3,11 @@
 Read [root instructions](../../AGENTS.md), [local development](../features/LOCAL_DEVELOPMENT.md),
 [getting started](../GETTING_STARTED.md), and the owning feature before changes.
 
-infrastructure/compose.yaml runs supporting SQL Server, RabbitMQ and Redis.
+infrastructure/compose.yaml runs supporting SQL Server, RabbitMQ, Redis and Azurite.
 Preserve project name lalamog, loopback ports, named volumes, pinned images and
-existing credentials. Only SQL is integrated with application workflows;
-RabbitMQ/Redis are provisioned. Blob/Azurite remain planned. Do not turn
+existing credentials. SQL and Blob/Azurite are integrated with application workflows;
+RabbitMQ/Redis are provisioned. Azurite has its own persistent volume and loopback Blob port.
+See [media storage](../features/MEDIA_STORAGE.md) for user-derived avatars without SQL image metadata and guarded legacy-file transfer. Do not turn
 container startup into an application completion claim.
 
 Inspect public .env.example and key names, never dump the private .env or

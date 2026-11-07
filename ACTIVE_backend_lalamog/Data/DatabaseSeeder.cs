@@ -72,7 +72,23 @@ public static class DatabaseSeeder
             (Email: "jordan.seed@example.test", Name: "Seed-Jordan", Alias: "Storm", Style: "wrestling", Level: 3, City: "Pasig", Availability: "Weekday evenings"),
             (Email: "miko.seed@example.test", Name: "Seed-Miko", Alias: "Crow", Style: "streetfighting|kickboxing", Level: 1, City: "Rizal", Availability: "Sunday afternoons"),
             (Email: "jae.seed@example.test", Name: "Seed-Jae", Alias: "Reaper", Style: "martial", Level: 2, City: "Makati", Availability: "Friday evenings"),
-            (Email: "ana.seed@example.test", Name: "Seed-Ana", Alias: "Blaze", Style: "kickboxing|bjj", Level: 1, City: "Marikina", Availability: "Weekends")
+            (Email: "ana.seed@example.test", Name: "Seed-Ana", Alias: "Blaze", Style: "kickboxing|bjj", Level: 1, City: "Marikina", Availability: "Weekends"),
+            // Discovery-only accounts: keep them out of the swipes and pairs below.
+            (Email: "nico.seed@example.test", Name: "Seed-Nico", Alias: "Rook", Style: "kickboxing", Level: 1, City: "Quezon City", Availability: "Weekday evenings"),
+            (Email: "bea.seed@example.test", Name: "Seed-Bea", Alias: "Viper", Style: "bjj", Level: 2, City: "Manila", Availability: "Saturday mornings"),
+            (Email: "carlo.seed@example.test", Name: "Seed-Carlo", Alias: "Atlas", Style: "wrestling", Level: 3, City: "Pasig", Availability: "Sunday afternoons"),
+            (Email: "dani.seed@example.test", Name: "Seed-Dani", Alias: "Comet", Style: "martial", Level: 1, City: "Makati", Availability: "Weekends"),
+            (Email: "enzo.seed@example.test", Name: "Seed-Enzo", Alias: "Bolt", Style: "streetfighting|kickboxing", Level: 2, City: "Marikina", Availability: "Friday evenings"),
+            (Email: "faye.seed@example.test", Name: "Seed-Faye", Alias: "Phoenix", Style: "kickboxing|bjj", Level: 2, City: "Taguig", Availability: "Weekday mornings"),
+            (Email: "gio.seed@example.test", Name: "Seed-Gio", Alias: "Anchor", Style: "wrestling|bjj", Level: 3, City: "Mandaluyong", Availability: "Saturday afternoons"),
+            (Email: "hana.seed@example.test", Name: "Seed-Hana", Alias: "Echo", Style: "martial|kickboxing", Level: 1, City: "San Juan", Availability: "Tuesday and Thursday evenings"),
+            (Email: "ivan.seed@example.test", Name: "Seed-Ivan", Alias: "Talon", Style: "streetfighting|wrestling", Level: 2, City: "Pasay", Availability: "Sunday mornings"),
+            (Email: "luna.seed@example.test", Name: "Seed-Luna", Alias: "Nova", Style: "martial|bjj", Level: 1, City: "Antipolo", Availability: "Weekends"),
+            (Email: "omar.seed@example.test", Name: "Seed-Omar", Alias: "Flint", Style: "kickboxing|wrestling", Level: 2, City: "Valenzuela", Availability: "Wednesday evenings"),
+            (Email: "pia.seed@example.test", Name: "Seed-Pia", Alias: "Sable", Style: "bjj|martial", Level: 1, City: "Las Pinas", Availability: "Saturday mornings"),
+            (Email: "rafa.seed@example.test", Name: "Seed-Rafa", Alias: "Hawk", Style: "streetfighting", Level: 3, City: "Paranaque", Availability: "Sunday afternoons"),
+            (Email: "tala.seed@example.test", Name: "Seed-Tala", Alias: "Ember", Style: "kickboxing|martial", Level: 1, City: "Muntinlupa", Availability: "Weekends"),
+            (Email: "yuri.seed@example.test", Name: "Seed-Yuri", Alias: "Drift", Style: "wrestling|bjj", Level: 2, City: "Caloocan", Availability: "Friday evenings")
         };
         var users = new List<AppUser>();
         var now = DateTimeOffset.UtcNow;
@@ -108,10 +124,11 @@ public static class DatabaseSeeder
             }
             users.Add(user);
 
-            if (!(await (from profile in context.Profiles
-                          where profile.UserId == user.Id select profile).AnyAsync(cancellationToken)))
+            var profile = await (from stored in context.Profiles
+                                 where stored.UserId == user.Id select stored).SingleOrDefaultAsync(cancellationToken);
+            if (profile == null)
             {
-                context.Set<FighterProfile>().Add(new FighterProfile
+                profile = new FighterProfile
                 {
                     UserId = user.Id,
                     FighterName = person.Name,
@@ -122,12 +139,13 @@ public static class DatabaseSeeder
                     ExperienceLevel = person.Level,
                     Location = person.City,
                     Availability = person.Availability
-                });
+                };
+                context.Set<FighterProfile>().Add(profile);
                 await context.SaveChangesAsync(cancellationToken);
             }
         }
 
-        // Ana has no swipes/matches, so she remains available in discovery.
+        // Only the original first five participate; Ana and all fifteen additions have no seeded swipes/matches.
         var pairs = new[] { (Left: 0, Right: 1), (Left: 0, Right: 2), (Left: 0, Right: 3), (Left: 0, Right: 4), (Left: 1, Right: 2) };
         var matches = new List<FighterMatch>();
         foreach (var pair in pairs)

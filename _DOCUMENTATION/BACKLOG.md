@@ -1,5 +1,7 @@
 # LALAMOG delivery backlog
 
+2026-11-06: completed and locally verified no-column, user-derived avatars and fifteen discovery-only candidates; normal API upgraded after a verified SQL backup, with all 64 backend tests passing; local Azurite/current checks are recorded in [media storage](features/MEDIA_STORAGE.md) and [local development](features/LOCAL_DEVELOPMENT.md).
+
 2026-11-03 knowledge layout completed: root AGENTS.md and _DOCUMENTATION replace the former backend-only/folder-only-root layout. Existing product task statuses remain unchanged by this documentation/tooling work. Entry, question routing, feature registration and context export are documented in [agent workflow](features/AGENT_WORKFLOW.md). Dated layout/build results below remain historical.
 
 Updated 2026-10-28. Goal: a fully functional **mobile-first React web app + .NET/SQL Server backend**, real RabbitMQ workflows, Azure Blob Storage with Azurite locally, and no-payment maps/Philippine areas. Pending integrations are not marked implemented.
@@ -45,7 +47,7 @@ The former flat backlog is retained with ownership. Prioritize functional core a
 - [x] Local Philippine area selectors, private pins, optional GPS and participant fight map: BE-02/FE-03 delivered 2026-11-02; see [maps evidence](features/MAPS_AND_AREAS.md).
 - [ ] Nearby/distance discovery: remaining FE-04/BE-03. Explicit free public-place address suggestions were subsequently implemented; manual editing remains.
 - [ ] GIF/video/highlights: FE-09 / BE-09; separate from avatars.
-- [ ] Object storage: FE-02 / BE-01; **Azure Blob/Azurite replaces earlier S3 exploration**.
+- [x] Core avatar object storage: BE-01 / FE-02 API parity; private Azure Blob/Azurite, retained legacy import and restart checks delivered 2026-11-05. Browser UX/cloud/operations remain separate; [media evidence](features/MEDIA_STORAGE.md).
 - [ ] Reference-aware/grace-period orphan-photo cleanup: BE-01.
 - [ ] Account recovery/email verification: FE-07 / BE-05; Google login: FE-09 / BE-09.
 - [ ] Notifications: FE-05 / BE-04; read receipts: FE-08 / BE-08.

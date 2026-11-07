@@ -456,7 +456,7 @@ Keep React DOM / TypeScript / Router / Vite, the shared `api.ts` cookie/CSRF cli
 | Discover + `/api/matches/swipes` | Deck uses existing decisions; preserve/recover returned `matchId`; no undo API assumed |
 | Match list + match-scoped messages | Latest-message/unread summaries only if new read contracts support them |
 | Existing Fight ownership/lifecycle | Stable `locationId`, location coordinates, list/history under Match, result revisions, publication approval/versioning |
-| Current `IFileStorage` abstraction | Blob/Azurite adapter and separate validated video upload/read contracts; existing image route is not a video API |
+| Current `IFileStorage` with private Azure/Azurite avatar adapter | Separate validated/authorized video upload/read contracts and orphan cleanup; existing image route is not a video API |
 
 Proposed read contracts: a bounded map-area Location summary (ID, label, coordinates, Hotspot flag, published fight count); selected Location's paged published Fight list; selected published Fight's participants, occurrence time, explicit result status and playable-media metadata. Return public projections only. Exclude account email, contacts, messages, home/live location, unpublished arrangements and internal storage credentials.
 

@@ -21,6 +21,15 @@ export function LocationPicker({ value, onChange, purpose, onAddressSelected }: 
   const canLookup = typeof value.latitude === 'number' && typeof value.longitude === 'number'
     && Number.isFinite(value.latitude) && Number.isFinite(value.longitude) && Math.abs(value.latitude) <= 90 && Math.abs(value.longitude) <= 180;
   const visibleSuggestion = suggestion && suggestion.latitude === value.latitude && suggestion.longitude === value.longitude ? suggestion : null;
+  const azureAddress = visibleSuggestion?.features?.find(feature => feature.properties?.address)?.properties?.address;
+  const addressDetails: [string, string | null | undefined][] = [
+    ['House / building number', visibleSuggestion?.streetNumber], ['Street', visibleSuggestion?.road],
+    ['Neighbourhood', visibleSuggestion?.suburb], ['City / locality', visibleSuggestion?.city],
+    ['Administrative areas', azureAddress?.adminDistricts?.map(area => area.name).filter(Boolean).join(' › ')],
+    ['Postal code', visibleSuggestion?.postalCode], ['Country', visibleSuggestion?.country],
+    ['Country code', visibleSuggestion?.countryCode], ['Match confidence', visibleSuggestion?.confidence],
+    ['Location type', visibleSuggestion?.resultType?.replace(/([a-z])([A-Z])/g, '$1 $2')],
+  ];
   useEffect(() => {
     setSuggestion(null); setLookupError(''); setLookingUp(false);
     return () => { lookupRequest.current?.abort(); lookupRequest.current = null; };
@@ -95,14 +104,18 @@ export function LocationPicker({ value, onChange, purpose, onAddressSelected }: 
     {showMap && <LocationMap value={value} onChange={onChange}/>}
     <div className="address-lookup">
       <button type="button" className="secondary" disabled={!canLookup || lookingUp} onClick={() => void findAddress()}>{lookingUp ? 'Finding address…' : 'Find address for this pin'}</button>
-      <p className="small muted">This sends the pin to OpenStreetMap/Nominatim. Look up public meeting places only; keep home and confidential locations private.</p>
+      <p className="small muted">This sends the pin to Azure Maps to find an address. Look up public meeting places only; keep home and confidential locations private.</p>
       {lookupError && <p className="small error" role="alert">{lookupError} You can still enter the address manually.</p>}
       {visibleSuggestion && <div className="suggested-address" role="status"><strong>Suggested address</strong><p>{visibleSuggestion.address}</p>
         <p className="small muted">Map data may be incomplete. Review it before using it. This does not select an official PSGC barangay.</p>
+        <details className="address-details"><summary>View address details</summary>
+          <dl>{addressDetails.filter(([, detail]) => detail).map(([label, detail]) => <div key={label}><dt>{label}</dt><dd>{detail}</dd></div>)}</dl>
+          <p className="small muted">Only available details are shown. The suggested address may refer to a nearby street or area.</p>
+        </details>
         {onAddressSelected && visibleSuggestion.address.length > 300 && <p className="small muted">The venue address fits 300 characters. Review the shortened text after copying.</p>}
         {onAddressSelected && <button type="button" className="secondary" onClick={() => onAddressSelected(visibleSuggestion.address.slice(0, 300))}>Use this address</button>}
       </div>}
-      <small className="muted">Address lookup: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · <a href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noreferrer">Nominatim usage policy</a></small>
+      <small className="muted">Address lookup: <a href="https://azure.microsoft.com/products/azure-maps/" target="_blank" rel="noreferrer">Azure Maps</a></small>
     </div>
     <small className="muted">Area names: <a href="https://psa.gov.ph/classification/psgc/" target="_blank" rel="noreferrer">Philippine Statistics Authority</a>, PSGC 2026 Q3. Map tiles load from OpenStreetMap when opened.</small>
   </fieldset>;

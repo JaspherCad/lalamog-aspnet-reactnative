@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Lalamog.Api.DTOs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -13,8 +14,10 @@ public class GeocodingApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     public async Task ReverseLookupRequiresCookieCsrfAndValidCoordinates_AndUsesConfiguredClient()
     {
         using var handler = new FakeProvider();
-        using var app = fixture.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
-            services.AddHttpClient("Nominatim").ConfigurePrimaryHttpMessageHandler(() => handler)));
+        using var app = fixture.WithWebHostBuilder(builder => builder
+            .ConfigureAppConfiguration((context, configuration) => configuration.AddInMemoryCollection(
+                new Dictionary<string, string?> { ["Maps:AzureMapsApiKey"] = "fixture-only-key" }))
+            .ConfigureServices(services => services.AddHttpClient("AzureMaps").ConfigurePrimaryHttpMessageHandler(() => handler)));
         using var client = app.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
         var request = new ReverseGeocodeRequest { Latitude = 14.64, Longitude = 121.04 };
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/maps/reverse", request)).StatusCode);
@@ -31,10 +34,15 @@ public class GeocodingApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Headers.CacheControl!.NoStore);
         var result = await response.Content.ReadFromJsonAsync<ReverseGeocodeResponse>();
-        Assert.Equal("Test Road, Pinyahan, Quezon City, Philippines", result!.Address);
+        Assert.Equal("42 East Avenue, Pinyahan, Quezon City 1100, Philippines", result!.Address);
         Assert.Equal("Pinyahan", result.Suburb);
-        Assert.Contains("Lalamog/1.0", handler.UserAgent);
-        Assert.Equal("nominatim.openstreetmap.org", handler.Host);
+        Assert.Equal("Azure Maps", result.Provider);
+        Assert.Equal("1100", result.PostalCode);
+        Assert.Equal(2, result.Features.Count);
+        Assert.Equal("fixture-only-key", handler.Key);
+        Assert.Equal("en", handler.Language);
+        Assert.Equal("atlas.microsoft.com", handler.Host);
+        Assert.DoesNotContain("fixture-only-key", await response.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/maps/reverse", request)).StatusCode);
         Assert.Equal(1, handler.Calls);
     }
@@ -49,12 +57,14 @@ public class GeocodingApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     private sealed class FakeProvider : HttpMessageHandler
     {
         public int Calls { get; private set; }
-        public string UserAgent { get; private set; } = "";
+        public string Key { get; private set; } = "";
+        public string Language { get; private set; } = "";
         public string Host { get; private set; } = "";
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Calls++; UserAgent = request.Headers.UserAgent.ToString(); Host = request.RequestUri!.Host;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"address\":{\"road\":\"Test Road\",\"suburb\":\"Pinyahan\",\"city\":\"Quezon City\",\"country\":\"Philippines\"}}") });
+            Calls++; Key = request.Headers.GetValues("subscription-key").Single(); Host = request.RequestUri!.Host;
+            Language = request.Headers.AcceptLanguage.ToString();
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(ReverseGeocodingTests.DetailedResult) });
         }
     }
 }

@@ -118,7 +118,6 @@ namespace Lalamog.Api.Data
             profile.Property(nameof(FighterProfile.FightingStyle)).HasMaxLength(50);
             profile.Property(nameof(FighterProfile.Location)).HasMaxLength(200);
             profile.Property(nameof(FighterProfile.Availability)).HasMaxLength(200);
-            profile.Property(nameof(FighterProfile.AvatarKey)).HasMaxLength(100);
             profile.Property(nameof(FighterProfile.RegionCode)).HasMaxLength(10);
             profile.Property(nameof(FighterProfile.ProvinceCode)).HasMaxLength(10);
             profile.Property(nameof(FighterProfile.CityCode)).HasMaxLength(10);

@@ -1,5 +1,9 @@
 # SQL data model and migration memory
 
+2026-11-06: ServerDerivedAvatars removes the avatar column after guarded storage transfer. Current FighterProfile contains no avatar metadata; C# derives API/storage paths from UserId. Existing references are copied byte-for-byte before clearing/removal; missing images block the upgrade. Down restores a nullable column without references; old-binary rollback needs backups/reverse transfer. See [media storage](features/MEDIA_STORAGE.md).
+
+Historical 2026-11-05: Migrations/20261104085551_AvatarBlobNames renames Profiles.AvatarKey to AvatarBlobName without rewriting/dropping values; Down renames it back. The string (max 100) is an object name only. Image bytes, full URLs, credentials and SAS tokens stay out of SQL; C# builds public avatar URLs. Existing-reference populated upgrade/rollback is covered by NativeUserMigrationTests. Source/recovery and demo defaults: [media storage](features/MEDIA_STORAGE.md).
+
 2026-11-04: additive Migrations/20261104073722_RoleSystemFeatures adds Roles, SystemFeatures, UserRoles and RoleSystemFeatures. Role names/feature codes are unique; join tables have composite primary keys and restrictive foreign keys. AppUser IDs/passwords and all product data are retained. Initial inline seeding backfills existing accounts with User once; subsequent runs preserve changed grants. Model, upgrade and recovery details: [role permissions](features/ROLE_PERMISSIONS.md).
 
 2026-11-02 map upgrade: `Migrations/20261102074948_PhilippineMapLocations.cs` adds seven nullable fields each to FighterProfile and Fight: RegionCode/ProvinceCode/CityCode/BarangayCode (max 10), PsgcVersion (max 16), Latitude/Longitude (double). SQL pair/range checks require both coordinates or neither (±90/±180); 0,0 is valid. No existing text/data is rewritten. Applied to local Lalamog after verified COPY_ONLY/CHECKSUM backup; populated SQL upgrade test preserves old text/null map fields. PSA catalog is versioned JSON reference data, not DbSets/seeding. See [maps guide](features/MAPS_AND_AREAS.md).
@@ -15,7 +19,7 @@ Audited 2026-10-28. Source: `Models/` (one model per .cs file), `Data/AppDbConte
 | SystemFeature | int ID; unique Code (80), Description (200) | Canonical feature choices for explicit policies |
 | UserRole | composite (UserId, RoleId) PK/FKs | One assignment per user/role; restrictive deletion |
 | RoleSystemFeature | composite (RoleId, SystemFeatureId) PK/FKs | One grant per role/feature; restrictive deletion |
-| FighterProfile | UserId PK/FK | unique normalized fighter name 50; non-unique nickname/alias 50, bio 500, style 50, location/availability 200, avatarKey 100; experience 1–3 |
+| FighterProfile | UserId PK/FK | unique normalized fighter name 50; non-unique nickname/alias 50, bio 500, style 50, location/availability 200; no avatar metadata; experience 1–3 |
 | Swipe | long ID; SwiperId/TargetId FKs | unique ordered actor/target pair; no self; direction like/pass |
 | FighterMatch | long ID; User1Id/User2Id FKs | unique pair; no self; service canonicalizes using ordinal GUID `D` strings |
 | ChatMessage | long ID; MatchId/SenderId FKs | content 2000; index `(MatchId, Id)` for cursor history |
@@ -48,7 +52,7 @@ dotnet ef migrations script --idempotent --project ACTIVE_backend_lalamog
 dotnet ef database update --project ACTIVE_backend_lalamog
 ```
 
-EF tooling uses the inline configuration in `Program.cs`; the separate design-time factory was removed on 2026-11-02. Configure ConnectionStrings:DefaultConnection directly in appsettings.json. There is no API .env loader; Static DatabaseSeeder seeds six fictional accounts plus default roles/features and related models, parent-first and repeatably, when Development startup explicitly calls it. Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
+EF tooling uses the inline configuration in `Program.cs`; the separate design-time factory was removed on 2026-11-02. Configure ConnectionStrings:DefaultConnection directly in appsettings.json. There is no API .env loader; static DatabaseSeeder seeds 21 fictional accounts plus default roles/features and related models, parent-first and repeatably, when Development startup explicitly calls it. Fifteen discovery-only accounts are now appended to the original six; current scenarios/totals are owned by [local development](features/LOCAL_DEVELOPMENT.md#static-seeding-and-relationships). Run changes against a disposable practice/test DB first. Back up populated SQL before applying a risky migration. Do not publish expanded connection strings in docs or logs.
 
 ## Concurrency memory
 
@@ -58,7 +62,7 @@ Swipes use deterministic pair/direction reads; matching uniqueness is structural
 
 ## Planned schema additions
 
-- BE-01: Blob storage adapter may retain AvatarKey; any legacy key migration needs a manifest and compatibility handling.
+- BE-01 remaining: grace-period/reference-aware orphan cleanup and backup/restore operations; private Blob storage and preserving first-read migration are implemented.
 - BE-03 remaining: server distance/radius queries and any measured indexing. Basic versioned catalog/string codes/private nullable pins are implemented.
 - BE-04: transactional outbox, consumer deduplication/inbox, and participant-scoped notification records. Event payloads exclude sensitive contacts/chat/location details.
 - BE-06: moderation/retention models after specifying user flows and access.

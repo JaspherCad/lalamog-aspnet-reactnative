@@ -336,6 +336,7 @@ summary { cursor: pointer; min-height: 44px; padding: 10px 0; font-weight: 700; 
 
 /* Local area selectors and ordinary Leaflet maps. */
 .location-picker { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--ink, #302c29); min-width: 0; }
+.schedule-form .location-picker { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr); }
 .location-picker legend { font-weight: 700; padding: 0 .4rem; }
 .location-picker .form-grid > *, .barangay-field { min-width: 0; }
 .location-picker select { width: 100%; text-overflow: ellipsis; }
@@ -356,3 +357,12 @@ summary { cursor: pointer; min-height: 44px; padding: 10px 0; font-weight: 700; 
 .address-lookup { display: grid; gap: .5rem; margin-block: 1rem; }
 .address-lookup p { margin: 0; }
 .suggested-address { display: grid; gap: .6rem; padding: 1rem; border: 1px solid currentColor; overflow-wrap: anywhere; }
+.address-details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; text-decoration: underline; }
+.address-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.address-details dl { display: grid; gap: .5rem; margin: 0 0 .75rem; }
+.address-details dl > div { display: grid; gap: .15rem; }
+.address-details dt { font-weight: 600; }
+.address-details dd { margin: 0; }
+@media (min-width: 600px) {
+  .address-details dl > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: .75rem; }
+}

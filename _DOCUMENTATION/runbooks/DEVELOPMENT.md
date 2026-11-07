@@ -65,7 +65,7 @@ Docker Compose private settings remain `MSSQL_SA_PASSWORD`, `RABBITMQ_USER` and 
 | Native API | localhost:5080 | Root `.cache/uploads`, `.cache/keys` |
 | Native Vite | localhost:5173 | Active frontend source |
 
-Compose project remains `lalamog`, with unchanged pinned images, names, volumes and loopback ports. No app/initializer build or container is included. Redis/RabbitMQ remain provisioned infrastructure; Blob/Azurite remain planned. Private maps/area selectors and explicit address suggestions are implemented. Stop native apps with Ctrl+C; normal Compose `down` preserves volumes.
+Compose project remains `lalamog`; existing SQL/broker/cache names, volumes and loopback ports are preserved. A pinned Azurite service now provides avatar Blob Storage on loopback 10000 with its own azurite-data volume. No app/initializer container is included. Redis/RabbitMQ remain provisioned infrastructure. Avatar references/server-built URLs, existing-file migration and emulator configuration are in [media storage](../features/MEDIA_STORAGE.md). Private maps/areas and explicit address suggestions are implemented. Stop native apps with Ctrl+C; normal Compose `down` preserves volumes.
 
 ## Recovery and troubleshooting
 

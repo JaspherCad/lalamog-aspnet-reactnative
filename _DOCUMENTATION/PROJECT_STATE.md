@@ -1,5 +1,13 @@
 # Current project state
 
+2026-11-07 current maps revision: owner-selected Azure Maps replaces Nominatim reverse lookup. The protected POST retains compatible address fields and returns complete Azure GeoJSON features plus postal/street/country/match metadata. The web form adds an expandable address breakdown; Leaflet/OSM tiles, local PSGC selectors and private pin contracts remain. Source, checks and limits: [maps guide](features/MAPS_AND_AREAS.md).
+
+2026-11-06 current: avatars use user-ID-derived API/storage paths with no avatar metadata in SQL. Guarded transfer preserves existing files before column removal. 21 demo users include fifteen discovery-only additions with zero seeded swipes/matches; Ana is also initially unconnected. All 64 backend tests, Compose Azurite restart, build/model/publish/assets and knowledge checks passed. After a verified SQL backup, normal startup applied the upgrade; API is healthy at localhost:5080 and live Alex sees all fifteen additions with working portraits. Current evidence is in [media storage](features/MEDIA_STORAGE.md). Older dated records below are historical.
+
+2026-11-05 media update: AzureBlobStorage/private Azurite storage and sixteen bundled synthetic demo portraits are implemented. SQL stores AvatarBlobName; C# builds existing public avatar URLs. A preserving column rename retains old references, and first reads import old local/default files without deleting originals. Five targeted SQL/Azurite checks passed, including emulator restart persistence; final regression/model/knowledge checks are recorded in [media storage](features/MEDIA_STORAGE.md). Cloud deployment remains unverified.
+
+2026-11-04 latest discovery seed expansion: DatabaseSeeder.cs now supplies sixteen fictional accounts, including ten additional complete profiles with no seeded swipes or matches. Normal Development restart adds them without resetting existing data; refresh Discover afterward. Current scenarios, verification and rerun behavior are in [local development](features/LOCAL_DEVELOPMENT.md) and [profiles/discovery](features/PROFILES_AND_DISCOVERY.md). No schema, API or frontend changes.
+
 2026-11-04 latest: owner-approved static Data/DatabaseSeeder.cs replaces duplicated Program.cs EF callbacks. Development startup migrates then calls SeedAsync with a scoped AppDbContext, rebuilding all fictional test data after a fresh SQL volume and preserving edits/grant removals on ordinary restarts. Build zero warnings/errors, four targeted SQL checks and all 61 backend tests passed. No schema change or live volume reset. [Local development](features/LOCAL_DEVELOPMENT.md) owns the current flow; earlier inline-seed records below are historical.
 
 2026-11-04: database-backed role/system-feature authorization is implemented with four join/catalog entities, eight explicit policies, safe User signup defaults, mirrored inline seeds and admin selection endpoints. AppUsers may have multiple roles. Existing cookie/CSRF/participant checks and public avatar/area contracts remain; all setup stays inline. Build zero warnings/errors, all 61 backend tests, EF model and knowledge/whitespace checks passed; evidence is in [role permissions](features/ROLE_PERMISSIONS.md). Normal app database is not migrated in this task; next Development startup applies it.
@@ -48,8 +56,8 @@ LALAMOG connects sparring partners through discovery, mutual matching, private c
 | Local application startup | Infrastructure-only Compose | Direct dotnet/npm startup with appsettings.json; no API .env loader; static DatabaseSeeder runs after migration in the Development startup scope; optional launchers; see `_DOCUMENTATION/features/LOCAL_DEVELOPMENT.md` |
 | RabbitMQ | Provisioned only | Compose service; no client package, outbox, producer, or consumer |
 | Redis | Provisioned only | Compose service; no cache/backplane integration |
-| Azure Blob Storage | Planned, required direction | Current DI uses `LocalFileStorage`; see BE-01 |
-| Azurite | Planned, required local testing target | No service, SDK adapter, or integration fixture yet; BE-01 |
+| Azure Blob Storage | Avatar adapter implemented; cloud deployment unverified | Private container, server-built URLs and legacy first-read import; [media](features/MEDIA_STORAGE.md) |
+| Azurite | Implemented local Blob service | Pinned image, loopback 10000, persistent volume and real integration/restart tests |
 | GPS, web map picker, private venue map | Implemented | Optional GPS, manual addresses, private pins; distance/public maps remain planned; explicit public-place reverse lookup implemented; BE-03/FE-04 partial |
 | Philippine region/province/city/barangay catalog | Implemented | Bundled PSA 2026-Q3, 18 regions/42,010 barangays, local anonymous lookup endpoints; BE-02/FE-03 |
 | Results, Elo, disputes, public events/maps | Deferred | Historical guides are not active API capabilities |
@@ -79,7 +87,7 @@ The photo test's method name mentions storage instances, but its body primarily 
 
 ## Next implementation order
 
-1. BE-01 + FE-02: Blob/Azurite parity and photo migration with stable media URLs.
+1. BE-01 + FE-02 remaining: grace-period orphan cleanup, broader browser failure UX and backup/restore operations; core Blob/Azurite parity and first-read migration are delivered.
 2. BE-03/FE-04 remaining: distance/radius discovery if requested. Catalog/private pins/basic map and explicit public-place address suggestions are delivered.
 3. BE-04 + FE-05: SQL outbox/RabbitMQ and durable in-app session notifications.
 4. FE-01/06/07 + BE-05/06/07: mobile resilience, authentication/recovery, moderation/privacy, wider persistence/failure checks, and operational readiness.

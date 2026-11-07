@@ -34,10 +34,15 @@ public class ReverseGeocodingService : IReverseGeocodingService, IDisposable
             throw new ApiException(400, "Choose a valid map pin first.");
         }
 
-        using HttpClient client = _clients.CreateClient("Nominatim");
-        string lat = latitude.ToString("F5", CultureInfo.InvariantCulture);
-        string lon = longitude.ToString("F5", CultureInfo.InvariantCulture);
-        string key = "reverse:" + client.BaseAddress + lat + "," + lon;
+        cancellationToken.ThrowIfCancellationRequested();
+        using HttpClient client = _clients.CreateClient("AzureMaps");
+        if (!client.DefaultRequestHeaders.Contains("subscription-key"))
+        {
+            throw new ApiException(503, "Azure Maps address lookup is not configured. Enter the address manually.");
+        }
+        string lat = latitude.ToString("R", CultureInfo.InvariantCulture);
+        string lon = longitude.ToString("R", CultureInfo.InvariantCulture);
+        string key = "reverse:azuremaps:2026-01-01:" + client.BaseAddress + lon + "," + lat;
         if (_cache.TryGetValue(key, out ReverseGeocodeResponse? cached))
         {
             return RequireAddress(cached!);
@@ -69,8 +74,9 @@ public class ReverseGeocodingService : IReverseGeocodingService, IDisposable
             cancellationToken.ThrowIfCancellationRequested();
             _lastRequest = Stopwatch.GetTimestamp();
             using HttpResponseMessage response = await client.GetAsync(
-                "reverse?format=jsonv2&lat=" + lat + "&lon=" + lon + "&zoom=18&addressdetails=1&accept-language=en", cancellationToken);
-            if (response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.Forbidden)
+                "reverseGeocode?api-version=2026-01-01&coordinates=" + lon + "," + lat, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.TooManyRequests
+                || (response.StatusCode == HttpStatusCode.ServiceUnavailable && response.Headers.RetryAfter != null))
             {
                 _retryAfter = response.Headers.RetryAfter?.Date
                     ?? DateTimeOffset.UtcNow.Add(response.Headers.RetryAfter?.Delta ?? _minimumInterval);
@@ -83,27 +89,18 @@ public class ReverseGeocodingService : IReverseGeocodingService, IDisposable
                 response.EnsureSuccessStatusCode();
                 using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
                 JsonElement root = document.RootElement;
-                if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("address", out JsonElement address)
-                    && address.ValueKind == JsonValueKind.Object)
+                if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("features", out JsonElement features)
+                    || features.ValueKind != JsonValueKind.Array)
                 {
-                    result.Road = Text(address, "road");
-                    result.Suburb = Text(address, "suburb") ?? Text(address, "neighbourhood") ?? Text(address, "quarter");
-                    result.City = Text(address, "city") ?? Text(address, "town") ?? Text(address, "village");
-                    result.State = Text(address, "state");
-                    result.Country = Text(address, "country");
-                    var parts = new List<string>();
-                    foreach (string? part in new[] { result.Road, result.Suburb, result.City, result.State, result.Country })
-                    {
-                        if (!string.IsNullOrWhiteSpace(part) && !parts.Contains(part))
-                        {
-                            parts.Add(part);
-                        }
-                    }
-                    result.Address = string.Join(", ", parts);
+                    throw new ApiException(503, "Address lookup returned no usable data. Enter the address manually.");
                 }
-                if (result.Address.Length == 0 && root.ValueKind == JsonValueKind.Object)
+                foreach (JsonElement feature in features.EnumerateArray())
                 {
-                    result.Address = Text(root, "display_name") ?? string.Empty;
+                    result.Features.Add(feature.Clone());
+                    if (result.Address.Length == 0)
+                    {
+                        ReadAddress(feature, result);
+                    }
                 }
             }
             _cache.Set(key, result, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = _cacheDuration, Size = 1 });
@@ -127,9 +124,71 @@ public class ReverseGeocodingService : IReverseGeocodingService, IDisposable
         }
     }
 
+    private static void ReadAddress(JsonElement feature, ReverseGeocodeResponse result)
+    {
+        if (feature.ValueKind != JsonValueKind.Object || !feature.TryGetProperty("properties", out JsonElement properties)
+            || properties.ValueKind != JsonValueKind.Object || !properties.TryGetProperty("address", out JsonElement address)
+            || address.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        result.Road = Text(address, "streetName");
+        result.StreetNumber = Text(address, "streetNumber");
+        result.Suburb = Text(address, "neighborhood");
+        result.City = Text(address, "locality");
+        result.PostalCode = Text(address, "postalCode");
+        var parts = new List<string>();
+        string street = string.Join(" ", new[] { result.StreetNumber, result.Road }).Trim();
+        AddPart(parts, Text(address, "addressLine") ?? street);
+        AddPart(parts, result.Suburb);
+        AddPart(parts, result.City);
+        result.State = null;
+        if (address.TryGetProperty("adminDistricts", out JsonElement districts) && districts.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement district in districts.EnumerateArray())
+            {
+                string? name = Text(district, "name");
+                result.State ??= name;
+                AddPart(parts, name);
+            }
+        }
+        AddPart(parts, result.PostalCode);
+        result.Country = null;
+        result.CountryCode = null;
+        if (address.TryGetProperty("countryRegion", out JsonElement country) && country.ValueKind == JsonValueKind.Object)
+        {
+            result.Country = Text(country, "name");
+            result.CountryCode = Text(country, "ISO");
+        }
+        AddPart(parts, result.Country);
+        result.Address = Text(address, "formattedAddress") ?? string.Join(", ", parts);
+        result.ResultType = Text(properties, "type");
+        result.Confidence = Text(properties, "confidence");
+        result.MatchCodes.Clear();
+        if (properties.TryGetProperty("matchCodes", out JsonElement codes) && codes.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement code in codes.EnumerateArray())
+            {
+                if (code.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(code.GetString()))
+                {
+                    result.MatchCodes.Add(code.GetString()!);
+                }
+            }
+        }
+    }
+
+    private static void AddPart(List<string> parts, string? part)
+    {
+        if (!string.IsNullOrWhiteSpace(part) && !parts.Contains(part))
+        {
+            parts.Add(part);
+        }
+    }
+
     private static string? Text(JsonElement value, string property)
     {
-        if (value.TryGetProperty(property, out JsonElement text) && text.ValueKind == JsonValueKind.String)
+        if (value.ValueKind == JsonValueKind.Object && value.TryGetProperty(property, out JsonElement text) && text.ValueKind == JsonValueKind.String)
         {
             string? result = text.GetString()?.Trim();
             if (!string.IsNullOrEmpty(result))

@@ -28,6 +28,7 @@ public class ApiFixture : WebApplicationFactory<AppDbContext>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:DefaultConnection", Connection);
         builder.UseSetting("Storage:Path", Path.Combine(directory, "uploads"));
+        builder.UseSetting("Storage:Provider", "Local");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();

@@ -96,11 +96,13 @@ backend-only documentation rule.
 - Messaging uses authorized REST with three-second active-conversation refresh.
   Public profiles exclude account email, emergency contacts, and precise pins;
   avatar images are public. Read the owning guide before changing these contracts.
-- Current media is local. Blob/Azurite are planned; RabbitMQ and Redis are
+- Avatar media uses Azure Blob Storage with local Azurite; the local adapter
+  remains for validation, retained uploads and migration fallback. SQL stores no avatar
+  metadata; the server derives avatar paths/URLs from existing user IDs. RabbitMQ and Redis remain
   provisioned infrastructure only. Do not describe them as application features.
   Use RabbitMQ for concrete durable workflows; introduce Redis only for a need.
-- Maps use no-payment providers/data with attribution, usage limits, caching,
-  explicit GPS/lookup actions, and manual fallback. Do not reintroduce MinIO,
+- Maps use Leaflet/OSM tiles, local PSA areas and owner-selected Azure Maps reverse lookup
+  (2026-11-07 override to no-payment-only reverse lookup). Keep its key server-only, attribution, usage limits/caching, explicit GPS/lookup actions and manual fallback. Do not reintroduce MinIO,
   browser-stored JWTs, or native-app patterns from obsolete examples.
 - Inspect `git status --short` and read files before editing. Preserve user
   changes and local data. Use targeted `rg` searches and small, scoped edits.

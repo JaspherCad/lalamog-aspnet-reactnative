@@ -7,11 +7,7 @@ namespace Lalamog.Api.Services
     {
         public static ProfileResponse ToProfileResponse(FighterProfile profile, bool includePrivateLocation = false)
         {
-            string? avatarUrl = null;
-            if (profile.AvatarKey != null)
-            {
-                avatarUrl = $"/api/media/{profile.AvatarKey}";
-            }
+            string avatarUrl = $"/api/media/avatars/{profile.UserId:D}";
 
             return new ProfileResponse
             {

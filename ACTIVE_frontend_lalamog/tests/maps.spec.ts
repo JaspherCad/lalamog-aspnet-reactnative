@@ -27,7 +27,11 @@ async function fixture(page: Page, offline = false) {
     else if (path === '/areas/barangays') value = [{ code: '1381300082', name: 'Pinyahan' }, { code: '1381300001', name: 'Alicia' }];
     else if (path === '/maps/reverse') {
       reverseCalls.push(body);
-      value = { address: 'East Avenue, Pinyahan, Quezon City, Metro Manila, Philippines', road: 'East Avenue', suburb: 'Pinyahan', city: 'Quezon City', state: 'Metro Manila', country: 'Philippines' };
+      value = {
+        address: '42 East Avenue, Pinyahan, Quezon City 1100, Philippines', road: 'East Avenue', suburb: 'Pinyahan', city: 'Quezon City', state: 'Metro Manila', country: 'Philippines',
+        provider: 'Azure Maps', streetNumber: '42', postalCode: '1100', countryCode: 'PH', resultType: 'Address', confidence: 'High', matchCodes: ['Good'],
+        features: [{ type: 'Feature', properties: { address: { adminDistricts: [{ name: 'Metro Manila' }, { name: 'Test district' }] } } }],
+      };
     }
     else if (path === '/matches') value = [{ id: 7, opponent: other, createdAt: '2026-10-01T10:00:00Z' }];
     else if (path === '/fights') {
@@ -130,15 +134,30 @@ test('explicit address lookup keeps PSGC choice and manual text until accepted; 
   await page.getByLabel('Longitude', { exact: true }).fill('121.04');
   expect(state.reverseCalls).toHaveLength(0);
   await page.getByRole('button', { name: 'Find address for this pin', exact: true }).press('Enter');
-  await expect(page.getByText('East Avenue, Pinyahan, Quezon City, Metro Manila, Philippines', { exact: true })).toBeVisible();
+  await expect(page.getByText('42 East Avenue, Pinyahan, Quezon City 1100, Philippines', { exact: true })).toBeVisible();
+  await expect(page.getByText('This sends the pin to Azure Maps', { exact: false })).toBeVisible();
+  await page.getByText('View address details', { exact: true }).press('Enter');
+  const details = page.locator('.address-details');
+  await expect(details.locator('dd').filter({ hasText: /^1100$/ })).toBeVisible();
+  await expect(details.locator('dd').filter({ hasText: /^42$/ })).toBeVisible();
+  await expect(details).toContainText('Metro Manila › Test district');
+  await expect(details).toContainText('High');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   expect(state.reverseCalls).toEqual([{ latitude: 14.64, longitude: 121.04 }]);
   await expect(page.getByLabel('Venue address', { exact: true })).toHaveValue('My manual address');
   await expect(page.getByLabel('Barangay', { exact: true })).toHaveValue('1381300001');
   await page.getByRole('button', { name: 'Use this address', exact: true }).press('Enter');
   const address = page.getByLabel('Venue address', { exact: true });
-  await expect(address).toHaveValue('East Avenue, Pinyahan, Quezon City, Metro Manila, Philippines');
+  await expect(address).toHaveValue('42 East Avenue, Pinyahan, Quezon City 1100, Philippines');
   await address.fill('East Avenue, Pinyahan, Quezon City - public gate 2');
   await page.screenshot({ path: 'test-results/map-address-suggestion-375.png', fullPage: true, animations: 'disabled' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  const pickerBounds = await page.locator('fieldset.location-picker').boundingBox();
+  const formBounds = await page.locator('.schedule-form').boundingBox();
+  expect(pickerBounds!.width).toBeGreaterThan(formBounds!.width * .8);
+  await page.screenshot({ path: 'test-results/map-address-suggestion-1440.png', fullPage: true, animations: 'disabled' });
+  await page.setViewportSize({ width: 375, height: 900 });
   await page.getByRole('button', { name: 'Arrange fight', exact: true }).press('Enter');
   await expect(page.getByText('Fight arranged.', { exact: false })).toBeVisible();
   expect(state.saved[0]).toMatchObject({ address: 'East Avenue, Pinyahan, Quezon City - public gate 2', mapLocation: { barangayCode: '1381300001' } });

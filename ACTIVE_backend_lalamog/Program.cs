@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Azure.Storage.Blobs;
 using Lalamog.Api.Data;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Infrastructure;
@@ -119,12 +120,17 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton<IAreaService, AreaService>();
 builder.Services.AddMemoryCache(options => options.SizeLimit = 500);
-builder.Services.AddHttpClient("Nominatim", client =>
+builder.Services.AddHttpClient("AzureMaps", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Maps:NominatimUrl"]!);
+    client.BaseAddress = new Uri("https://atlas.microsoft.com/");
     client.Timeout = TimeSpan.FromSeconds(8);
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("Lalamog/1.0");
-}).RemoveAllLoggers(); // Provider URLs contain private coordinates.
+    client.DefaultRequestHeaders.Add("Accept-Language", "en");
+    var apiKey = builder.Configuration["Maps:AzureMapsApiKey"];
+    if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("subscription-key", apiKey);
+    }
+}).RemoveAllLoggers(); // Keep coordinates and provider credentials out of HTTP logs.
 builder.Services.AddSingleton<IReverseGeocodingService>(services => new ReverseGeocodingService(
     services.GetRequiredService<IHttpClientFactory>(), services.GetRequiredService<IMemoryCache>(),
     TimeSpan.FromSeconds(1), TimeSpan.FromDays(1)));
@@ -141,20 +147,44 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IFightService, FightService>();
-builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<LocalFileStorage>();
+if (builder.Configuration["Storage:Provider"] == "AzureBlob")
+{
+    builder.Services.AddSingleton(new BlobContainerClient(
+        builder.Configuration.GetConnectionString("BlobStorage"), builder.Configuration["Storage:Container"],
+        new BlobClientOptions(BlobClientOptions.ServiceVersion.V2025_05_05)
+        {
+            Retry = { MaxRetries = 2, NetworkTimeout = TimeSpan.FromSeconds(10) }
+        }));
+    builder.Services.AddScoped<IFileStorage, AzureBlobStorage>();
+}
+else
+{
+    builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
+}
 builder.Services.AddSingleton(TimeProvider.System);
 
 var app = builder.Build();
 
-// Rebuild a fresh local database and fill its demo data before accepting requests.
-if (app.Environment.IsDevelopment())
+// Preserve old avatar files before removing their SQL references. Tests run this explicitly.
+if (!app.Environment.IsEnvironment("Testing"))
 {
     using (var serviceScope = app.Services.CreateScope())
     {
         var services = serviceScope.ServiceProvider;
         var db = services.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
-        await DatabaseSeeder.SeedAsync(db);
+        if (await db.Database.CanConnectAsync())
+        {
+            await services.GetRequiredService<IProfileService>().MigrateLegacyAvatarsAsync(CancellationToken.None);
+        }
+
+
+        //development only....
+        if (app.Environment.IsDevelopment())
+        {
+            await db.Database.MigrateAsync();
+            await DatabaseSeeder.SeedAsync(db);
+        }
     }
 }
 

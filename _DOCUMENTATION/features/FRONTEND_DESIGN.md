@@ -1,6 +1,6 @@
 # Mobile-first fighter dossier design
 
-2026-11-02 address suggestions: LocationPicker adds explicit public-place Nominatim lookup, loading/error/review states, visible attribution/policy/privacy notice, and optional copy-to-editable venue address. Profile public city/official barangay selection stay untouched. Pin changes abort stale lookups. No automatic geocoding; provider/schema/recovery evidence in [maps guide](MAPS_AND_AREAS.md).
+2026-11-07 address-provider revision: LocationPicker uses explicit Azure Maps lookup with an expandable available-address breakdown, loading/error/review states, visible provider/privacy notice, and optional copy-to-editable venue address. Profile public city/official barangay selection stay untouched. Pin changes abort stale lookups. No automatic geocoding; provider/schema/recovery evidence in [maps guide](MAPS_AND_AREAS.md).
 
 2026-11-02 latest work: LocationPicker/LocationMap/FightMap extend the paper UI with private profile/venue pins, local cascading PSA selectors, explicit optional GPS, manual fallback, status-filtered participant map and attribution. App /map placeholder replaced; public publication/results remain deferred. Production build and map/profile/chat fixture regressions passed; mobile 375 px and desktop 1440 px map screenshots inspected. Automated tiles are intercepted. Backend persistence/privacy verified in SQL tests; see [maps guide](MAPS_AND_AREAS.md).
 
@@ -33,6 +33,8 @@ Run: frontend `npm run build`; set `LALAMOG_WEB_URL` to the running preview, opt
 No current APIs for public records, measurements, opponent reviews/aggregates, badges, rankings, map or video. Show honest unavailable/empty states; seeded visual examples must be explicitly labeled and separate from real accounts. `RecordPanel` in `ui.tsx` now uses one proportional W/L/D bar plus cm/kg and opponent-rating stars/score/count; its separate `FighterStats` view type is not an extension of the backend Profile DTO. Only preview Miko has sample stats (178 cm, 76 kg, 4/5 from 8 reviews). Rating meter green = average/5, red = remaining scale; unknown is neutral.
 
 ## Latest work record
+
+- 2026-11-07 / Azure address details: replaced the Nominatim notice with Azure Maps, added an expandable available-field breakdown and readable mobile labels, and kept the venue picker full-width in the desktop schedule grid. Existing map tile provider, private pins, explicit lookup/review/edit and stale-response handling remain. Current verification and recovery are owned by [maps](MAPS_AND_AREAS.md).
 
 - 2026-11-02 / REST-only messaging: removed the SignalR browser client/package and hub proxies. Conversation keeps the existing UI/send/history/arrangement flow, refreshes new messages through REST every three seconds and on tab visibility, and displays the refresh status honestly. Added incoming-partner/no-hub polling fixture coverage; verification: production build passed; both runs passed the REST polling/send/arrangement cases. Full fixture runs each passed 9/10 with an intermittent Fight intel stability timeout (375px first, 360px second). Existing design code was not changed; current handoff/chat guide records limits.
 

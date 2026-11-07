@@ -1,8 +1,10 @@
 using Lalamog.Api.Data;
 using Lalamog.Api.Authorization;
 using Lalamog.Api.Infrastructure;
+using Lalamog.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SkiaSharp;
 using Xunit;
 
 namespace Lalamog.Api.Tests;
@@ -24,9 +26,9 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
         Assert.Equal(2, await db.Roles.CountAsync());
         Assert.Equal(8, await db.SystemFeatures.CountAsync());
         Assert.Equal(8, await db.RoleSystemFeatures.CountAsync());
-        Assert.Equal(7, await db.UserRoles.CountAsync());
-        Assert.Equal(6, await db.Users.CountAsync());
-        Assert.Equal(6, await db.Profiles.CountAsync());
+        Assert.Equal(22, await db.UserRoles.CountAsync());
+        Assert.Equal(21, await db.Users.CountAsync());
+        Assert.Equal(21, await db.Profiles.CountAsync());
         Assert.Equal(11, await db.Swipes.CountAsync());
         Assert.Equal(5, await db.Matches.CountAsync());
         Assert.Equal(10, await db.Messages.CountAsync());
@@ -34,6 +36,7 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
         Assert.Equal(9, await db.FightConfirmations.CountAsync());
 
         var users = await db.Users.Include(u => u.Profile).ToListAsync();
+        var profileService = scope.ServiceProvider.GetRequiredService<IProfileService>();
         foreach (var user in users)
         {
             Assert.True(PasswordHashing.Verify(user.PasswordHash, "Lalamog123!Test"));
@@ -41,6 +44,13 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
             Assert.False(string.IsNullOrWhiteSpace(user.Profile.Bio));
             Assert.False(string.IsNullOrWhiteSpace(user.Profile.Location));
             Assert.False(string.IsNullOrWhiteSpace(user.Profile.Availability));
+            var photo = await profileService.OpenAvatarAsync(user.Id, CancellationToken.None);
+            await using (photo.Content)
+            {
+                using var decoded = SKBitmap.Decode(photo.Content);
+                Assert.NotNull(decoded);
+                Assert.True(decoded.Width > 0 && decoded.Height > 0);
+            }
         }
         var fights = await db.Fights.Include(f => f.Match).Include(f => f.Confirmations).ToListAsync();
         Assert.Equal(1, fights.Count(f => f.Status == "scheduled"));
@@ -62,6 +72,36 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
         Assert.False(await db.Matches.AnyAsync(m => m.User1Id == ana.Id || m.User2Id == ana.Id));
         Assert.False(await db.Swipes.AnyAsync(s => s.SwiperId == alex.Id && s.TargetId == ana.Id));
 
+        string[] discoveryEmails =
+        {
+            "nico.seed@example.test", "bea.seed@example.test", "carlo.seed@example.test", "dani.seed@example.test",
+            "enzo.seed@example.test", "faye.seed@example.test", "gio.seed@example.test", "hana.seed@example.test",
+            "ivan.seed@example.test", "luna.seed@example.test", "omar.seed@example.test", "pia.seed@example.test",
+            "rafa.seed@example.test", "tala.seed@example.test", "yuri.seed@example.test"
+        };
+        var discoveryUsers = (from user in users where discoveryEmails.Contains(user.Email) select user).ToList();
+        Assert.Equal(15, discoveryUsers.Count);
+        foreach (var candidate in discoveryUsers)
+        {
+            Assert.False(await (from swipe in db.Swipes
+                                where swipe.SwiperId == candidate.Id || swipe.TargetId == candidate.Id
+                                select swipe).AnyAsync());
+            Assert.False(await (from match in db.Matches
+                                where match.User1Id == candidate.Id || match.User2Id == candidate.Id
+                                select match).AnyAsync());
+        }
+        foreach (var viewer in users)
+        {
+            var discovery = await profileService.DiscoverAsync(viewer.Id, CancellationToken.None);
+            foreach (var candidate in discoveryUsers)
+            {
+                if (candidate.Id != viewer.Id)
+                {
+                    Assert.Contains(candidate.Id, from profile in discovery select profile.UserId);
+                }
+            }
+        }
+
         alex.Profile.Bio = "Edited after seeding; keep this.";
         var canceled = fights.Single(f => f.Location == "Seed QC weekend court");
         canceled.Status = "canceled";
@@ -80,8 +120,8 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
 
         await DatabaseSeeder.SeedAsync(db);
         await DatabaseSeeder.SeedAsync(db);
-        Assert.Equal(6, await db.Users.CountAsync());
-        Assert.Equal(6, await db.Profiles.CountAsync());
+        Assert.Equal(21, await db.Users.CountAsync());
+        Assert.Equal(21, await db.Profiles.CountAsync());
         Assert.Equal(11, await db.Swipes.CountAsync());
         Assert.Equal(5, await db.Matches.CountAsync());
         Assert.Equal(10, await db.Messages.CountAsync());

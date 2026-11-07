@@ -1,6 +1,6 @@
 # LALAMOG
 
-Free maps are available in profile/session forms and the private Map screen: Leaflet + OpenStreetMap, local PSA region-to-barangay selectors, optional GPS, manual addresses and explicit public-place suggested-address lookup. No API key or registration required. Provider links, legacy audit, nullable migration and limits: [maps guide](features/MAPS_AND_AREAS.md). Startup options stay inline in Program.cs; seed data lives in static Data/DatabaseSeeder.cs called after migration from its Development startup scope under the [owner rule](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs).
+Maps are available in profile/session forms and the private Map screen: Leaflet + OpenStreetMap, local PSA region-to-barangay selectors, optional GPS, manual addresses and explicit Azure Maps address lookup with an expandable breakdown. Reverse lookup uses the server-only Maps:AzureMapsApiKey setting supplied by the owner; the map and local selectors need no key. Provider links, legacy audit, nullable migration and limits: [maps guide](features/MAPS_AND_AREAS.md). Startup options stay inline in Program.cs; seed data lives in static Data/DatabaseSeeder.cs called after migration from its Development startup scope under the [owner rule](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs).
 
 Mobile-first React/Vite web app with a .NET 10 / SQL Server API. Only supporting services run in Docker.
 
@@ -60,14 +60,14 @@ Configure the local connection in standard `appsettings.Development.json` under 
 
 The same file contains Storage:Path, preserving root .cache/uploads. Custom DataProtection persistence was removed; framework defaults apply. Existing .cache/keys files are preserved. The built-in Development JSON override is owner-approved for local connection values. There is no custom API .env loader or initializer mode. Test data is seeded by static Data/DatabaseSeeder.cs, called from the Development startup scope after migration. Docker Compose still uses `infrastructure/.env` for its own SQL/broker credentials.
 
-In Development, normal `dotnet run` creates/updates the database and runs the inline EF seed automatically before accepting requests. After an intentional `docker compose down -v`, run `docker compose up -d --wait` in infrastructure, then `dotnet run` in the backend to refill six fake users and related data. Explicit EF commands remain available:
+In Development, normal `dotnet run` creates/updates the database and calls the static seeder automatically before accepting requests. After an intentional `docker compose down -v`, run `docker compose up -d --wait` in infrastructure, then `dotnet run` in the backend to refill 21 fake users and related data. Explicit EF commands remain available:
 
 ```powershell
 dotnet tool restore
 dotnet ef database update
 ```
 
-The migration command updates schema only. Development API startup then calls static DatabaseSeeder.SeedAsync to add six fictional users, roles/features and matching/chat/fight data. All six use Lalamog123!Test; start with alex.seed@example.test, or ana.seed@example.test for an unmatched discovery account. Full account/scenario list: [local development](features/LOCAL_DEVELOPMENT.md#static-seeding-and-relationships). Rerunning migrations preserves existing data and edits. Development dotnet run migrates/seeds automatically; other environments require explicit migration commands. The http launch profile selects Development/port 5080 and HTTP-compatible cookies; other environments require HTTPS. Full-solution checks use `solution/Lalamog.slnx`; plain backend build selects the sole API project. Optional PowerShell launchers simply run the applications.
+For populated avatar columns, normal updated API startup must first transfer existing images with storage available; the guarded migration refuses to discard references otherwise. The migration command updates schema only. Development API startup then calls static DatabaseSeeder.SeedAsync to add 21 fictional users, roles/features and matching/chat/fight data. All 21 use Lalamog123!Test; start with alex.seed@example.test. Ana and fifteen additional accounts have no seeded swipes/matches and are available in discovery. Restart the Development API and refresh Discover to add/load the new accounts on an existing database; no reset is needed. Full account/scenario list: [local development](features/LOCAL_DEVELOPMENT.md#static-seeding-and-relationships). Rerunning migrations preserves existing data and edits. Development dotnet run migrates/seeds automatically; other environments require explicit migration commands. The http launch profile selects Development/port 5080 and HTTP-compatible cookies; other environments require HTTPS. Full-solution checks use `solution/Lalamog.slnx`; plain backend build selects the sole API project. Optional PowerShell launchers simply run the applications.
 
 The versioned ignore rules are in `scripts/gitignore`. On a new checkout, register them once from the repository root before working with secrets: `git config --local core.excludesFile scripts/gitignore`. Existing checkouts retain their current registration. No script is needed for this.
 
@@ -109,7 +109,7 @@ Frontend checks run inside `ACTIVE_frontend_lalamog`: `npm.cmd run build` and `n
 
 The optional setup helper registers `scripts/gitignore` as this checkout's repository-local Git exclusion file. Run setup after cloning or moving the checkout to refresh that absolute local path before creating private environment data. No global Git settings are changed.
 
-Latest validation and limits: [local development memory](features/LOCAL_DEVELOPMENT.md) and [handoff](memory/HANDOFF.md). Broader work: [delivery backlog](BACKLOG.md), [frontend](backlogs/FRONTEND.md), [backend](backlogs/BACKEND.md). Blob/Azurite and real RabbitMQ workflows remain planned; private maps/area selectors and explicit address suggestions are implemented.
+Latest validation and limits: [local development memory](features/LOCAL_DEVELOPMENT.md) and [handoff](memory/HANDOFF.md). Blob/Azurite avatar storage is implemented: start Azurite through Compose, restart the Development API, then refresh Discover to load bundled demo photos. Default settings use the public local emulator shortcut; no Azure account is required locally. Real Azure requires private server configuration. See [media storage](features/MEDIA_STORAGE.md) for migration/rollback. Broader work: [delivery backlog](BACKLOG.md), [frontend](backlogs/FRONTEND.md), [backend](backlogs/BACKEND.md). RabbitMQ workflows remain planned; private maps/areas and explicit address suggestions are implemented.
 
 ## Private backup procedure
 

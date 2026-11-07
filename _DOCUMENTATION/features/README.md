@@ -13,8 +13,8 @@ Each guide records inspected behavior, source ownership, invariants, recovery st
 | Likes and mutual matching | Implemented | [Matching](MATCHING.md) | matching |
 | Private REST chat and cursor refresh | Implemented; REST-only with three-second polling, targeted checks passed; broader layout timing gap recorded | [Chat](CHAT.md) | chat |
 | Scheduling/waivers/contacts | Implemented | [Sessions](SESSIONS_AND_WAIVERS.md) | sessions |
-| Avatar decoding/local persistence | Implemented; Blob/Azurite planned | [Media/storage](MEDIA_STORAGE.md) | media |
-| Map/GPS/Philippine areas/distance | Basic selectors, optional GPS/pins, explicit address suggestions and private fight map implemented; distance/public maps planned | [Maps/areas](MAPS_AND_AREAS.md) | maps |
+| Server-derived avatars and demo portraits | No SQL avatar metadata; guarded migration; local Azurite verified; cloud deployment unverified | [Media/storage](MEDIA_STORAGE.md) | media |
+| Map/GPS/Philippine areas/distance | Basic selectors, optional GPS/pins, explicit Azure Maps address details and private fight map implemented; distance/public maps planned | [Maps/areas](MAPS_AND_AREAS.md) | maps |
 | RabbitMQ durable notifications | Infrastructure only; app workflow planned | [Background workflows](BACKGROUND_WORKFLOWS.md) | background |
 | AI entry/navigation and durable feature memory | Implemented repository workflow; host must load entry | [Agent workflow](AGENT_WORKFLOW.md) | workflow |
 

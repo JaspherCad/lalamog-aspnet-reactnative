@@ -1,5 +1,7 @@
 # Roles and system-feature permissions
 
+2026-11-06 current seed totals: 21 fictional users, 22 user-role assignments (Alex has User + Admin), unchanged two roles/eight features/eight grants. All fifteen discovery additions receive User; existing grants/removals remain preserved. Current checks: [local development](LOCAL_DEVELOPMENT.md). Earlier counts below are historical.
+
 Status: implemented. Last updated: 2026-11-04. Static seeder revision: see [local development](LOCAL_DEVELOPMENT.md). Last verified: 2026-11-04 (build, all 61 backend tests, EF model and knowledge/whitespace checks). Owning scope: backend.
 
 ## Purpose and user flow
@@ -19,7 +21,7 @@ Users can have several roles, and each role can grant several system features. A
 | user_canMap | User | MapsController: explicit public-place address lookup |
 | admin_canManageAccess | Admin | AccessController: feature/role lists and assignment changes |
 
-User receives seven app features; Admin grants access administration. Holding Admin alone does not imply the other permissions. Existing accounts receive User once during initial role setup, and registration saves the account/profile/User assignment together. Request bodies cannot choose signup roles. The fictional alex.seed@example.test account receives User plus Admin; the other five demo accounts receive User. Existing demo passwords are documented in [local development](LOCAL_DEVELOPMENT.md).
+User receives seven app features; Admin grants access administration. Holding Admin alone does not imply the other permissions. Existing accounts receive User once during initial role setup, and registration saves the account/profile/User assignment together. Request bodies cannot choose signup roles. The fictional alex.seed@example.test account receives User plus Admin; the other fifteen demo accounts receive User. Existing demo passwords and the ten discovery-only additions are documented in [local development](LOCAL_DEVELOPMENT.md).
 
 There is no admin_all wildcard. Avatar reads and Philippine area lookups remain public. Login/register/CSRF remain accessible before authentication; auth/me and logout require a cookie but no feature permission, so a user whose grants were removed can still sign out. Public media does not need an invented download permission.
 
@@ -86,6 +88,8 @@ Full backend regression: all 61 cases passed, zero skipped, using sequential tes
 No management UI, role CRUD, deny rules, role inheritance or cross-request permission cache is introduced. No additional implementation work remains for this task. Public deployment/recovery/moderation remains in the existing backlog.
 
 ## Latest work record
+
+- 2026-11-04 / discovery seed expansion: ten new fictional accounts receive the existing User role, bringing a fresh seed to sixteen users and seventeen user-role links. Grant definitions and rerun preservation are unchanged. Seeder/startup SQL checks and current totals are recorded in [local development](LOCAL_DEVELOPMENT.md).
 
 - 2026-11-04 / static seeder revision: moved default feature/role/account initialization from duplicated Program.cs callbacks to static Data/DatabaseSeeder.cs. Program.cs retains policy/configuration setup and calls the seeder after Development migration. Seed data, permission unions and preserved removals are unchanged. Four targeted SQL startup/seed/upgrade cases passed; full regression is recorded in [local development](LOCAL_DEVELOPMENT.md). No schema change or new configuration.
 

@@ -11,5 +11,9 @@ namespace Lalamog.Api.Interfaces
         Task<ProfileResponse> UpdateAsync(Guid userId, ProfileRequest request, CancellationToken cancellationToken);
 
         Task<ProfileResponse> AvatarAsync(Guid userId, IFormFile file, CancellationToken cancellationToken);
+
+        Task<StoredFile> OpenAvatarAsync(Guid userId, CancellationToken cancellationToken);
+
+        Task MigrateLegacyAvatarsAsync(CancellationToken cancellationToken);
     }
 }

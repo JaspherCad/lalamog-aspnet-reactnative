@@ -42,8 +42,8 @@ in older guides are relative to ACTIVE_backend_lalamog unless stated otherwise.
 | Like/pass, reciprocal likes, duplicates, canonical pairs | [Matching](features/MATCHING.md) | ACTIVE_backend_lalamog/Services/MatchingService.cs, Repositories; [data model](DATA_MODEL.md), [domain rules](DOMAIN_RULES.md) |
 | Chat messages, three-second polling, stale/duplicate history, membership | [Chat](features/CHAT.md) | ACTIVE_backend_lalamog/Services/ConversationService.cs; ACTIVE_frontend_lalamog/src/Matches.tsx, api.ts; REST only |
 | Propose/cancel/complete fight, waivers, emergency contacts, UTC/concurrency | [Sessions and waivers](features/SESSIONS_AND_WAIVERS.md) | ACTIVE_backend_lalamog/Services/FightService.cs; ACTIVE_frontend_lalamog/src/Fights.tsx; [domain rules](DOMAIN_RULES.md) |
-| Avatar upload/validation/URLs, persistent files, future Blob/Azurite | [Media storage](features/MEDIA_STORAGE.md) | ACTIVE_backend_lalamog/Services/LocalFileStorage.cs, Interfaces/IFileStorage.cs; [infrastructure scope](scopes/INFRASTRUCTURE.md) |
-| Map/GPS, private pins, Philippine barangays, Nominatim suggested address | [Maps and areas](features/MAPS_AND_AREAS.md) | ACTIVE_frontend_lalamog/src/LocationPicker.tsx, LocationMap.tsx, FightMap.tsx; ACTIVE_backend_lalamog/Services/AreaService.cs, ReverseGeocodingService.cs |
+| User-derived avatars without SQL metadata, demo photos, Azure/Azurite and local migration | [Media storage](features/MEDIA_STORAGE.md) | ACTIVE_backend_lalamog/Services/AzureBlobStorage.cs, LocalFileStorage.cs, Data/SeedPortraits, Interfaces/IFileStorage.cs; [infrastructure scope](scopes/INFRASTRUCTURE.md) |
+| Map/GPS, private pins, Philippine barangays, Azure Maps suggested address | [Maps and areas](features/MAPS_AND_AREAS.md) | ACTIVE_frontend_lalamog/src/LocationPicker.tsx, LocationMap.tsx, FightMap.tsx; ACTIVE_backend_lalamog/Services/AreaService.cs, ReverseGeocodingService.cs |
 | Broker/outbox, notifications, retries, Redis integration | [Background workflows](features/BACKGROUND_WORKFLOWS.md) | infrastructure/compose.yaml; [infrastructure scope](scopes/INFRASTRUCTURE.md). Broker/Redis provisioned; app workflows planned. |
 | Agent instructions, auto-maintained Markdown, routing, context exports | [Agent workflow](features/AGENT_WORKFLOW.md) | AGENTS.md, scripts/agent-context.ps1, scripts/check-knowledge.ps1; [tooling scope](scopes/TOOLING.md), [protocol](memory/PROTOCOL.md) |
 
@@ -97,5 +97,5 @@ and handoff in the same task. Task: ..."
 
 The correct baseline is React web, SQL Server, native cookie/CSRF auth,
 REST-only chat, local media, private maps/area catalog with explicit suggested
-addresses, and planned Blob/Azurite/broker application work. Expo, PostgreSQL,
+addresses, Azure Blob/Azurite avatar storage and planned broker application work. Expo, PostgreSQL,
 JWT/MinIO, and old public results are legacy examples.

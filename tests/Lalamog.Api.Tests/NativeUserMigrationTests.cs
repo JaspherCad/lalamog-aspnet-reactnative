@@ -3,6 +3,11 @@ using System.Net.Http.Json;
 using Lalamog.Api.Data;
 using Lalamog.Api.DTOs;
 using Lalamog.Api.Infrastructure;
+using Lalamog.Api.Interfaces;
+using Lalamog.Api.Repositories;
+using Lalamog.Api.Services;
+using Microsoft.AspNetCore.Http;
+using SkiaSharp;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
@@ -28,6 +33,15 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
     {
         const string previousMigration = "20261102030056_UniqueFighterNames";
         const string password = "Practice123!Example";
+        using var storageScope = _app.Services.CreateScope();
+        var storage = storageScope.ServiceProvider.GetRequiredService<IFileStorage>();
+        using var bitmap = new SKBitmap(2, 2);
+        bitmap.Erase(SKColors.Red);
+        using var image = SKImage.FromBitmap(bitmap);
+        using var encoded = image.Encode(SKEncodedImageFormat.Png, 90);
+        byte[] portrait = encoded.ToArray();
+        string previousAvatarBlobName = await storage.SavePhotoAsync(
+            new FormFile(new MemoryStream(portrait), 0, portrait.Length, "file", "old.png"), CancellationToken.None);
         const string previousHash = "AQAAAAIAAYagAAAAEAABAgMEBQYHCAkKCwwNDg/x+D7MHTUzdF2GX4CN2BrHMo1FJG0yVF0JTgSoDn74Iw==";
         string database = "LalamogTests_UserUpgrade_" + Guid.NewGuid().ToString("N");
         var builder = new SqlConnectionStringBuilder(_app.Connection) { InitialCatalog = "master" };
@@ -52,10 +66,12 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
                      [AccessFailedCount],[EmailConfirmed],[PhoneNumberConfirmed],[TwoFactorEnabled],[LockoutEnabled])
                 VALUES ({originalId},{email},{email.ToUpperInvariant()},{email},{email.ToUpperInvariant()},{previousHash},2,1,0,0,1);
                 INSERT INTO [Profiles]
-                    ([UserId],[Nickname],[FighterName],[NormalizedFighterName],[Bio],[FightingStyle],[ExperienceLevel],[Location],[Availability])
-                VALUES ({originalId},'Crow','Native-Migration','NATIVE-MIGRATION','Preserved bio','Boxing',1,'Rizal','Weekends');
+                    ([UserId],[Nickname],[FighterName],[NormalizedFighterName],[Bio],[FightingStyle],[ExperienceLevel],[Location],[Availability],[AvatarKey])
+                VALUES ({originalId},'Crow','Native-Migration','NATIVE-MIGRATION','Preserved bio','Boxing',1,'Rizal','Weekends',{previousAvatarBlobName});
                 INSERT INTO [AspNetUserClaims] ([UserId],[ClaimType],[ClaimValue]) VALUES ({originalId},'migration-test','kept');");
 
+            var profiles = new ProfileService(new ProfileRepository(db), storage, storageScope.ServiceProvider.GetRequiredService<IAreaService>());
+            await profiles.MigrateLegacyAvatarsAsync(CancellationToken.None);
             await migrator.MigrateAsync();
             var stored = await db.Users.AsNoTracking().SingleAsync();
             Assert.Equal(originalId, stored.Id);
@@ -66,6 +82,8 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
             var upgradedProfile = await db.Profiles.AsNoTracking().SingleAsync();
             Assert.Equal("Preserved bio", upgradedProfile.Bio);
             Assert.Equal("Rizal", upgradedProfile.Location);
+            var migratedPhoto = await storage.OpenAsync($"avatars/{originalId:N}/current", CancellationToken.None);
+            await migratedPhoto.Content.DisposeAsync();
             Assert.Null(upgradedProfile.Latitude);
             Assert.Null(upgradedProfile.BarangayCode);
 
@@ -107,6 +125,9 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
                 Assert.Equal(1, Convert.ToInt32(await command.ExecuteScalarAsync()));
             }
             await migrator.MigrateAsync();
+            db.ChangeTracker.Clear();
+            var retainedPhoto = await storage.OpenAsync($"avatars/{originalId:N}/current", CancellationToken.None);
+            await retainedPhoto.Content.DisposeAsync();
             Assert.NotNull(await db.Users.FindAsync(newAccountId));
             Assert.NotNull(await db.Profiles.FindAsync(newAccountId));
             Assert.False(db.Database.HasPendingModelChanges());

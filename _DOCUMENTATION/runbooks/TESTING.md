@@ -55,6 +55,16 @@ The existing browser core expects another discovery card after liking. An isolat
 
 RolePermissionTests checks admin-only access, signup defaults, current-cookie changes, multiple roles, stacked policies, invalid selections and CSRF. RolePermissionMigrationTests upgrades populated SQL and checks preserved account/hash data, initial User assignment, composite uniqueness and revoked assignments surviving repeated static seeding. DatabaseSeederTests also preserves edited role descriptions and removed grants. See [role permissions](../features/ROLE_PERMISSIONS.md) for actual results and isolated-build prerequisites.
 
+## Avatar Blob Storage checks
+
+Start the pinned local Azurite service before running AzureBlobStorageTests. It creates/deletes only a generated lalamog-tests container, exercises three-format upload/read, private access, legacy import, default photos, atomic owner replacement and guarded avatar transfer, application-host restart and safe outage/missing/path behavior. Main ApiFixture instances explicitly select Local for unrelated SQL cases. LALAMOG_TEST_BLOB may override the local test connection; keep its value private.
+
+For emulator restart persistence, explicitly set LALAMOG_RESTART_AZURITE=1 for this test only. It restarts lalamog-azurite, refuses a non-default emulator connection and verifies the same Blob/API bytes afterward. This does not restart SQL or any other service. Coordinate if another local session is using Azurite. Clear the flag afterward. Current implementation/results: [media storage](../features/MEDIA_STORAGE.md).
+
+```powershell
+dotnet test ACTIVE_backend_lalamog/solution/Lalamog.slnx --filter FullyQualifiedName~AzureBlobStorageTests
+```
+
 ## Frontend build and browser checks
 
 From `ACTIVE_frontend_lalamog/`:
@@ -87,7 +97,7 @@ No lint script or frontend unit-test runner currently exists in package.json; do
 
 ## Pending integration gates
 
-- Blob/Azurite: real emulator save/read/delete and validation parity; API/emulator restart; migration/read fallback; failure compensation.
+- Blob/Azurite remaining: real cloud deployment and backup/restore drill. Local emulator/host persistence, guarded legacy transfer and replacement are covered by current integration tests; see media guide.
 - RabbitMQ: real broker outage, confirms, redelivery, worker crash, dead letter/replay, idempotency, private notification access.
 - Maps/areas: deterministic provider fixtures; no live public service calls in automated tests; denied GPS/offline/manual input; hierarchy and privacy checks.
 - Schema changes: real SQL upgrade from populated baseline plus concurrency/constraint checks and backup compatibility.

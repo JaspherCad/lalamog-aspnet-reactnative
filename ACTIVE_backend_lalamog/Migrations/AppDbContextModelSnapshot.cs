@@ -244,10 +244,6 @@ namespace Lalamog.Api.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("AvatarKey")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<string>("BarangayCode")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");

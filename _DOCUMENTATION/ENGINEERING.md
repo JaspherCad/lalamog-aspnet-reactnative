@@ -47,7 +47,7 @@ When code and docs disagree, inspect the active code and tests, report the discr
 - Preserve Compose project name, loopback port bindings, named volumes, and existing old cookie-key files. Current startup uses framework-default key handling; do not restore custom key setup as part of a docs move. Inspect `infrastructure/.env.example` and configuration keys; do not dump `infrastructure/.env`.
 - Target Azure Blob through `IFileStorage`; local integration tests use Azurite. Keep existing avatar keys/URLs working during migration. Cloud deployment and spending are separate from local implementation.
 - RabbitMQ must implement a concrete durable workflow, not merely add a package. Planned approach: SQL outbox, publisher confirms, idempotent consumer, bounded retries, dead-letter handling, and observable processing. SQL stays the source of truth.
-- No-payment means no billing account/card/trial requirement for the map/area feature. Community endpoints have limits and no availability guarantee. Do not promise unlimited free production service.
+- Owner selected Azure Maps reverse geocoding on 2026-11-07, superseding the earlier no-billing-account requirement for this integration. Keep the key server-only and calls explicit/cached; Azure free usage is limited and excess may be billed. Leaflet/OSM tiles and the local PSA catalog remain. Community endpoints have limits and no availability guarantee.
 - Evaluate package/provider changes against current official documentation and pin chosen dependencies/images deliberately. Do not update unrelated dependencies as part of a feature fix.
 
 ## Verification and completion

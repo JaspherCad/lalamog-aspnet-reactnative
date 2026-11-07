@@ -1,5 +1,7 @@
 # Architecture and source map
 
+2026-11-07 reverse lookup revision: MapsController -> IReverseGeocodingService/singleton ReverseGeocodingService -> named HttpClient AzureMaps -> Azure reverseGeocode 2026-01-01. Direct Maps:AzureMapsApiKey header configuration stays inline in Program.cs; no key in browser, query string or HTTP logs. Shared pacing/cache and complete cloned GeoJSON features replace the old Nominatim formatter. No new packages/SQL changes. [Maps guide](features/MAPS_AND_AREAS.md) owns current details; earlier Nominatim notes below are historical.
+
 2026-11-04 static-seeder revision: Program.cs keeps configuration/registrations inline and a short Development startup scope that migrates then calls static Data/DatabaseSeeder.SeedAsync(db). Seed contents now live once in Data/DatabaseSeeder.cs; the old inline-callback statements below are historical. No schema/API behavior change. [Current flow](features/LOCAL_DEVELOPMENT.md).
 
 2026-11-04: explicit controller feature policies -> generalized SystemPermissionHandler -> IAccessService/AccessService -> IAccessRepository/AccessRepository -> SQL UserRole/RoleSystemFeature joins. Native AppUser supports many roles; policies use the union of current grants without cookie permission claims. The admin access controller uses the same service/repository boundary. Registration/policy configuration remains inline in Program.cs; sample data now lives in static Data/DatabaseSeeder.cs. See [role permissions](features/ROLE_PERMISSIONS.md).
@@ -18,10 +20,11 @@ Browser: React DOM + TypeScript + Vite build
      /api/* and /health -> ASP.NET Core
      other routes       -> SPA index.html fallback
 ASP.NET Core: Controllers -> Services -> domain repositories -> EF Core -> SQL Server
-                                     -> IFileStorage -> LocalFileStorage -> .cache/uploads
+                                     -> IFileStorage -> AzureBlobStorage -> private Azure/Azurite blobs
+                                                        -> LocalFileStorage -> staging/legacy import
 Cookie authentication encryption -> framework-default DataProtection behavior (no custom persistence setup)
 RabbitMQ / Redis containers: provisioned, no application integration
-Planned: IFileStorage -> Azure Blob SDK -> Azurite locally / Azure in deployment
+Existing UserId -> DtoMapper builds /api/media/avatars/{userId} -> avatars/{userId:N}/current in Blob Storage; no avatar metadata in SQL
 Planned: SQL outbox -> RabbitMQ -> idempotent notification consumer
 ```
 
@@ -58,13 +61,13 @@ SQL is authoritative for identity, matches, messages, and sessions. C# services 
 
 Chat sends and reads through authorized REST only. The browser refreshes cursor-based SQL history every three seconds and on visibility changes. ConversationService has no hub/logger delivery dependency. Preserve participant checks, cursor ordering and ID deduplication.
 
-Profile photos use immutable generated keys behind `/api/media/{key}`. A storage migration should preserve that URL seam and decoding safeguards; it must account for old local objects. Do not expose storage credentials to React.
+Profile photos use user-derived owner paths behind `/api/media/avatars/{userId}`, with no-store and server-generated upload refresh queries. AzureBlobStorage uses a private container; the API streams public avatars. SQL stores no avatar metadata. ProfileService/ProfileRepository transfer old references before the guarded column-removal migration; missing media blocks destructive schema change. LocalFileStorage supplies validation/staging, atomic fallback replacement and retained/default first-read import. Old immutable URLs/originals remain. Private documents/videos need separate authorization contracts. See [media storage](features/MEDIA_STORAGE.md).
 
 ## Security and deployment boundary
 
 Native AppUser authentication uses a HttpOnly/SameSite Strict session cookie with the framework lifetime defaults; auth/CSRF cookies use the simple Development HTTP/otherwise HTTPS policy inline. The built-in MVC mutation antiforgery filter is configured directly in Program.cs. No custom middleware/filter class is needed. Custom key-directory/application-name persistence and hub/security-header middleware were removed at owner request; DataProtection uses framework defaults. Private session responses include emergency contacts and must remain participant-only.
 
-Compose runs only SQL Server, Redis and RabbitMQ with loopback ports. Native API runs at localhost:5080; Vite at localhost:5173 proxies same-origin requests. Native uploads remain under `.cache/uploads`; existing `.cache/keys` files are preserved but no longer selected by custom startup configuration. Authentication cookies allow local Development HTTP; other environments require HTTPS through the inline cookie policy. A public deployment needs HTTPS, appropriate cookie/proxy configuration, fresh secret management, backup/restore evidence, moderation/account recovery decisions, and monitoring. No public deployment is asserted by these docs. See [local development](features/LOCAL_DEVELOPMENT.md) for the 2026-10-29 startup change and former-container recovery.
+Compose runs SQL Server, Redis, RabbitMQ and Azurite with loopback ports. Native API runs at localhost:5080; Vite at localhost:5173 proxies same-origin requests. Azure/Azurite stores new avatar blobs; retained local uploads/staging use `.cache/uploads`. Existing `.cache/keys` files are preserved. Authentication cookies allow Development HTTP; other environments require HTTPS through the inline cookie policy. Public deployment needs reviewed cookie/proxy configuration, secret management, backup/restore evidence, moderation/recovery decisions and monitoring. No public deployment is asserted. See [local development](features/LOCAL_DEVELOPMENT.md) for native startup/recovery.
 
 ## Planned additions
 

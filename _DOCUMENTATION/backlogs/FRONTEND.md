@@ -1,5 +1,7 @@
 # Frontend backlog: mobile-first browser experience
 
+2026-11-07 / FE-04 provider revision: address suggestions use Azure Maps and an expandable available-field breakdown. Explicit lookup/review/edit, stale-pin cancellation and independent official PSGC selection remain. Leaflet/OSM map rendering is retained; no client key or automatic calls. Six fixture browser cases and the production build passed again after the final mobile adjustment; 375/1440px screenshots were reviewed. [Maps guide](../features/MAPS_AND_AREAS.md).
+
 2026-11-02 FE-04 follow-up implemented: explicit public-place pin lookup with editable suggested venue address, independent PSGC selectors, stale-request cancellation/manual fallback and attribution. Distance/public publication remain pending. Evidence: maps guide/handoff.
 
 2026-11-02 FE-03 delivered: local cascading region/province/city/barangay controls, name filter/reset/manual fallback. FE-04 partial: bundled Leaflet/OSM, explicit optional GPS, pin/coordinates and private participant fight map implemented; nearby/radius discovery remains pending. Build and fixture map/profile/chat checks passed; 375/1440 px map evidence inspected. No geocoder/key; manual addresses per owner. [Maps guide](../features/MAPS_AND_AREAS.md).
@@ -32,6 +34,8 @@ Acceptance: register → profile → discovery → match → chat → schedule/c
 
 ## FE-02 — avatar storage integration UX
 
+2026-11-05: existing avatarUrl/UI works with the private Azure/Azurite API adapter and bundled demo faces; no frontend code/contract changes. API-level three-format upload/read, application/emulator restart, old-image import and failed-save preservation pass. Wider browser failure/accessibility UX checks below remain pending. Evidence: [media storage](../features/MEDIA_STORAGE.md).
+
 Preserve public-photo disclosure, format/size limits and `/api/media` URLs. Show preview/current saved image, busy state, actionable rejected-file/network errors, and previous avatar after failed replacement. No storage credentials in React.
 
 Acceptance: real BE-01 Azurite upload/reload/API+emulator restart; existing local images still resolve after migration; invalid/timeout does not blank profile. Update [media guide](../features/MEDIA_STORAGE.md).
@@ -44,7 +48,7 @@ Acceptance: valid hierarchy persists/restores, duplicate barangay names remain d
 
 ## FE-04 — map/GPS/distance
 
-Bundle DOM Leaflet/CSS through npm; venue pin + editable address + explicit optional Use my location. Handle denied/timeout/inaccurate GPS and missing tiles/geocoder, attribution and keyboard/touch controls. Use server-filtered distance results with units and missing-coordinate states. Do not filter only loaded 50 cards or copy Expo WebView dependencies. No Nominatim autocomplete; optional reverse lookup requires the policy-constrained backend adapter and deliberate provider choice.
+Bundle DOM Leaflet/CSS through npm; venue pin + editable address + explicit optional Use my location. Handle denied/timeout/inaccurate GPS and missing tiles/geocoder, attribution and keyboard/touch controls. Use server-filtered distance results with units and missing-coordinate states. Do not filter only loaded 50 cards or copy Expo WebView dependencies. Explicit Azure Maps reverse lookup and address breakdown use the backend adapter selected by the owner on 2026-11-07. No automatic lookups, autocomplete, or client-side provider key.
 
 Acceptance: pin/area/address persists through BE-03; manual flow works without public providers; precise profile coordinates stay private; mobile/fixture tests pass without live public calls. Public fight maps remain deferred.
 

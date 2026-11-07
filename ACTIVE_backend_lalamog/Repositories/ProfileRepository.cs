@@ -1,6 +1,7 @@
 using Lalamog.Api.Data;
 using Lalamog.Api.Interfaces;
 using Lalamog.Api.Models;
+using Lalamog.Api.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lalamog.Api.Repositories
@@ -16,7 +17,7 @@ namespace Lalamog.Api.Repositories
 
         public Task<FighterProfile?> GetAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var query = from profile in _db.Profiles
+            var query = from profile in _db.Profiles.Include(nameof(FighterProfile.User))
                         where profile.UserId == userId
                         select profile;
             return query.SingleOrDefaultAsync(cancellationToken);
@@ -41,6 +42,32 @@ namespace Lalamog.Api.Repositories
         public Task SaveAsync(CancellationToken cancellationToken)
         {
             return _db.SaveChangesAsync(cancellationToken);
+        }
+
+        public Task<List<LegacyAvatar>> GetLegacyAvatarsAsync(CancellationToken cancellationToken)
+        {
+            // Dynamic SQL avoids referencing a column that may already have been removed.
+            return _db.Database.SqlQueryRaw<LegacyAvatar>("""
+                IF COL_LENGTH('Profiles', 'AvatarBlobName') IS NOT NULL
+                    EXEC('SELECT UserId, AvatarBlobName AS BlobName FROM Profiles WHERE AvatarBlobName IS NOT NULL');
+                ELSE IF COL_LENGTH('Profiles', 'AvatarKey') IS NOT NULL
+                    EXEC('SELECT UserId, AvatarKey AS BlobName FROM Profiles WHERE AvatarKey IS NOT NULL');
+                ELSE
+                    SELECT CAST(NULL AS uniqueidentifier) AS UserId, CAST(NULL AS nvarchar(100)) AS BlobName WHERE 1 = 0;
+                """).ToListAsync(cancellationToken);
+        }
+
+        public Task ClearLegacyAvatarAsync(LegacyAvatar avatar, CancellationToken cancellationToken)
+        {
+            // Clear only the exact reference that has just been safely copied to storage.
+            return _db.Database.ExecuteSqlInterpolatedAsync($"""
+                IF COL_LENGTH('Profiles', 'AvatarBlobName') IS NOT NULL
+                    EXEC sp_executesql N'UPDATE Profiles SET AvatarBlobName = NULL WHERE UserId = @id AND AvatarBlobName = @name',
+                        N'@id uniqueidentifier, @name nvarchar(100)', @id = {avatar.UserId}, @name = {avatar.BlobName};
+                ELSE IF COL_LENGTH('Profiles', 'AvatarKey') IS NOT NULL
+                    EXEC sp_executesql N'UPDATE Profiles SET AvatarKey = NULL WHERE UserId = @id AND AvatarKey = @name',
+                        N'@id uniqueidentifier, @name nvarchar(100)', @id = {avatar.UserId}, @name = {avatar.BlobName};
+                """, cancellationToken);
         }
     }
 }

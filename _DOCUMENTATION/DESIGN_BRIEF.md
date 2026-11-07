@@ -209,7 +209,7 @@ The backend retains the earlier scheduling contracts while the React UI now refl
 | Matching | Reciprocal likes create one persistent match; match list; dialog opens the pair's conversation | No new matching persistence required |
 | Conversation | Private REST/SignalR text chat, Start the Match CTA, current/previous Fight context, exact-pair arrangement links | Result/video actions and richer fight cards |
 | Existing fights/sessions | Manual place/address, optional private pin/PSGC area, date/time, acknowledgements/contacts, cancel/complete; one unfinished fight per Match | Map-selected location/hotspots; result flow; target lifecycle if chosen |
-| Media | Local validated JPEG/PNG/WebP avatar upload | Blob/Azurite adapter; video metadata/upload/publication/playback |
+| Media | Validated JPEG/PNG/WebP avatar upload via private Azure/Azurite and server-built URLs; bundled demo faces | Video/document metadata, authorized upload/publication/playback; orphan cleanup |
 | Public map | Not implemented | Locations/coordinates, hotspot data, pin history and video/result panels |
 | Fight outcome | Completion has no win/loss/draw fields | Result persistence, agreement and display |
 | Redis/RabbitMQ | Containers provisioned, no application workflow | No need to add work solely to use these containers |

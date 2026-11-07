@@ -17,7 +17,6 @@ public class FighterProfile
     public int ExperienceLevel { get; set; } = 1;
     public string Location { get; set; } = "";
     public string Availability { get; set; } = "";
-    public string? AvatarKey { get; set; }
     public string? RegionCode { get; set; }
     public string? ProvinceCode { get; set; }
     public string? CityCode { get; set; }

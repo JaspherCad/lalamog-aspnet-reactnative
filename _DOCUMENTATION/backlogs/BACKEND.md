@@ -1,5 +1,11 @@
 # Backend backlog: complete the local full stack
 
+2026-11-07 / BE-03 provider revision: Azure Maps replaces Nominatim using the existing server-only key setting. Complete provider features, match quality and compatible address fields are returned, with exact coordinate precision, cached explicit calls, safe manual fallback and no schema change. Distance/radius remains pending. Verification and recovery: [maps guide](../features/MAPS_AND_AREAS.md).
+
+2026-11-06 / BE-01 owner follow-up: server-derived owner paths replace avatar metadata in SQL; guarded transfer retains old files and blocks missing-media data loss. Fifteen discovery-only additions bring demo users to 21. Local Azurite is the confirmed test target. All 64 backend tests, Compose Azurite persistence, build/model/publish/assets and live application upgrade/discovery checks passed. Normal API remains running after a verified SQL backup. Evidence/remaining cloud/restore limits are in [media storage](../features/MEDIA_STORAGE.md). Earlier dated evidence below is historical.
+
+2026-11-05 / BE-01 storage core delivered: private AzureBlobStorage with local Azurite, reference-only AvatarBlobName and server-built URLs, preserving SQL rename, conditional first-read legacy import, sixteen bundled synthetic portraits and retained originals. Five targeted cases including emulator restart and all 62 backend tests passed, including application-host restart/error/compensation checks. Cloud deployment, backup/restore and grace-period orphan cleanup remain separate work. See [media storage](../features/MEDIA_STORAGE.md).
+
 2026-11-04 latest owner revision: extracted static Data/DatabaseSeeder.cs with a short post-Build Development migration/seed scope; no configuration abstraction. Four targeted SQL cases and all 61 backend tests passed, including all seeded-model counts on absent-database startup and preserved edits/grant removals on reruns. Existing volumes/processes are untouched. Earlier inline-seed statements below are historical; [current local-development flow](../features/LOCAL_DEVELOPMENT.md).
 
 2026-11-04 owner-requested role/feature authorization slice delivered: native many-role accounts, eight default feature policies and admin assignment API; existing signup/demo access preserved and removed grants survive seed reruns. This supports BE-06 authorization but does not implement reporting/blocking/retention. Verification and operational limits: [role permissions](../features/ROLE_PERMISSIONS.md).
@@ -41,6 +47,8 @@ P1 integrations are required for the requested target; P0 protects existing usab
 
 ## BE-01 — Blob/Azurite
 
+Core avatar storage/migration is implemented as of 2026-11-05; requirements below describe the original target and remaining operational/cleanup work. Current source, actual checks and rollback limits are owned by [media storage](../features/MEDIA_STORAGE.md).
+
 Implement Azure Blob behind IFileStorage; extract shared image validation/re-encoding so adapters retain safeguards. Add provider selection, private container init, pinned Azurite service/volume, loopback host endpoint and correct container/native endpoints. Document actual setup keys without values. No Azure subscription required locally.
 
 Preserve generated keys/API URLs: nondestructive copy + integrity/count manifest + retained originals; complete migration or provide explicit legacy-read fallback before switching. Add grace-period/reference-aware orphan cleanup. Keep cloud deployment/auth separate from local proof.
@@ -57,7 +65,7 @@ Acceptance: hierarchy/codes/duplicate names/exceptions fixture-tested; works whi
 
 Add migration/DTOs for nullable WGS84 lat/lon and area label/code on profiles and venues. Validate range/pair/hierarchy, preserve text, and separate public approximate area/distance from participant-only precise venue. Server filters true distance before limit/pagination, with explicit units/missing-coordinate rules and SQL-compatible indexing/calculation.
 
-Explicit public-place Nominatim adapter was approved/implemented 2026-11-02; any additional reverse adapter needs deliberate policy-compliant provider choice. Public Nominatim requires shared <=1 request/sec across the app, identifying header, cache/deduplication, bounded timeout, no autocomplete/bulk/confidential queries; account for replicas. Manual pin/text/catalog flow remains usable without it. Introduce Redis only for a concrete requirement.
+The owner-selected Azure Maps adapter replaced Nominatim on 2026-11-07; full provider results and compatible address fields are returned. The following public-Nominatim constraints are historical and apply only if deliberately reintroducing that provider. Public Nominatim requires shared <=1 request/sec across the app, identifying header, cache/deduplication, bounded timeout, no autocomplete/bulk/confidential queries; account for replicas. Manual pin/text/catalog flow remains usable without it. Introduce Redis only for a concrete requirement.
 
 Acceptance: known-distance and invalid/absent coordinates, lon/lat ordering, public DTO privacy, populated upgrade, provider outage/429 fixtures and fallback. No live public calls in automated tests; no client-claimed distance trusted. See [maps guide](../features/MAPS_AND_AREAS.md) and FE-04.
 

@@ -93,22 +93,58 @@ namespace Lalamog.Api.Services
         public async Task<ProfileResponse> AvatarAsync(Guid userId, IFormFile file, CancellationToken cancellationToken)
         {
             FighterProfile profile = await RequireProfileAsync(userId, cancellationToken);
-            string key = await _fileStorage.SavePhotoAsync(file, cancellationToken);
+            string blobName = await _fileStorage.SavePhotoAsync(file, cancellationToken);
 
-            // Existing tabs may still reference an older immutable photo URL.
-            // Reference-aware cleanup remains a separate maintenance workflow.
-            profile.AvatarKey = key;
             try
             {
-                await _profileRepository.SaveAsync(cancellationToken);
+                StoredFile photo = await _fileStorage.OpenAsync(blobName, cancellationToken);
+                await using (photo.Content)
+                {
+                    await _fileStorage.SetAvatarAsync(userId, photo, false, cancellationToken);
+                }
             }
-            catch
+            finally
             {
-                await _fileStorage.DeleteAsync(key, CancellationToken.None);
-                throw;
+                await _fileStorage.DeleteAsync(blobName, CancellationToken.None);
             }
 
-            return DtoMapper.ToProfileResponse(profile, true);
+            var response = DtoMapper.ToProfileResponse(profile, true);
+            // Refresh an already-mounted browser image after replacing its stable owner path.
+            response.AvatarUrl += $"?v={Guid.NewGuid():N}";
+            return response;
+        }
+
+        public async Task<StoredFile> OpenAvatarAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            FighterProfile profile = await RequireProfileAsync(userId, cancellationToken);
+            try
+            {
+                return await _fileStorage.OpenAsync($"avatars/{userId:N}/current", cancellationToken);
+            }
+            catch (ApiException exception) when (exception.StatusCode == 404)
+            {
+                // Only fictional seed accounts use bundled defaults; SQL stores no avatar metadata.
+                string email = profile.User.Email ?? "";
+                if (!email.EndsWith(".seed@example.test", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw;
+                }
+                string name = email[..email.IndexOf('.')].ToLowerInvariant();
+                return await _fileStorage.OpenAsync($"seed-{name}.webp", cancellationToken);
+            }
+        }
+
+        public async Task MigrateLegacyAvatarsAsync(CancellationToken cancellationToken)
+        {
+            foreach (LegacyAvatar avatar in await _profileRepository.GetLegacyAvatarsAsync(cancellationToken))
+            {
+                StoredFile photo = await _fileStorage.OpenAsync(avatar.BlobName, cancellationToken);
+                await using (photo.Content)
+                {
+                    await _fileStorage.SetAvatarAsync(avatar.UserId, photo, true, cancellationToken);
+                }
+                await _profileRepository.ClearLegacyAvatarAsync(avatar, cancellationToken);
+            }
         }
 
         private async Task<FighterProfile> RequireProfileAsync(Guid userId, CancellationToken cancellationToken)

@@ -9,11 +9,13 @@ namespace Lalamog.Api.Services
     public partial class LocalFileStorage : IFileStorage
     {
         private readonly string _root;
+        private readonly string _seedPortraitsRoot;
 
         public LocalFileStorage(IConfiguration configuration, IWebHostEnvironment environment)
         {
             string root = configuration["Storage:Path"] ?? Path.Combine(environment.ContentRootPath, "data", "uploads");
             _root = Path.GetFullPath(root, environment.ContentRootPath);
+            _seedPortraitsRoot = Path.Combine(environment.ContentRootPath, "Data", "SeedPortraits");
             Directory.CreateDirectory(_root);
         }
 
@@ -77,14 +79,14 @@ namespace Lalamog.Api.Services
                 throw new ApiException(400, "This photo could not be encoded.");
             }
 
-            string key = $"{Guid.NewGuid():N}.{extension}";
-            string path = Resolve(key);
+            string blobName = $"{Guid.NewGuid():N}.{extension}";
+            string path = ResolveUpload(blobName);
             try
             {
                 await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
                 encoded.SaveTo(output);
                 await output.FlushAsync(cancellationToken);
-                return key;
+                return blobName;
             }
             catch
             {
@@ -96,10 +98,20 @@ namespace Lalamog.Api.Services
             }
         }
 
-        public Task<StoredFile> OpenAsync(string key, CancellationToken cancellationToken)
+        public Task<StoredFile> OpenAsync(string blobName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string path = Resolve(key);
+            ValidateBlobName(blobName);
+            string path;
+            if (SeedPortraitPattern().IsMatch(blobName))
+            {
+                // Bundled synthetic demo photos are read-only and need no external API at runtime.
+                path = Path.Combine(_seedPortraitsRoot, blobName);
+            }
+            else
+            {
+                path = ResolveUpload(blobName);
+            }
             if (!File.Exists(path))
             {
                 throw new ApiException(404, "Photo not found.");
@@ -115,30 +127,78 @@ namespace Lalamog.Api.Services
                     contentType = "image/png";
                     break;
                 default:
-                    contentType = "image/webp";
+                    using (var codec = SKCodec.Create(path))
+                    {
+                        contentType = codec?.EncodedFormat switch
+                        {
+                            SKEncodedImageFormat.Jpeg => "image/jpeg",
+                            SKEncodedImageFormat.Png => "image/png",
+                            _ => "image/webp"
+                        };
+                    }
                     break;
             }
-            var file = new StoredFile(File.OpenRead(path), contentType);
+            var file = new StoredFile(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete), contentType);
             return Task.FromResult(file);
         }
 
-        public Task DeleteAsync(string key, CancellationToken cancellationToken)
+        public async Task SetAvatarAsync(Guid userId, StoredFile photo, bool onlyIfMissing, CancellationToken cancellationToken)
+        {
+            string path = ResolveUpload($"avatars/{userId:N}/current");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    await photo.Content.CopyToAsync(output, cancellationToken);
+                }
+                try
+                {
+                    File.Move(temporary, path, overwrite: !onlyIfMissing);
+                }
+                catch (IOException) when (onlyIfMissing && File.Exists(path))
+                {
+                    // A prior import or a concurrent upload already supplied this avatar.
+                }
+            }
+            finally
+            {
+                File.Delete(temporary);
+            }
+        }
+
+        public Task DeleteAsync(string blobName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            File.Delete(Resolve(key));
+            File.Delete(ResolveUpload(blobName));
             return Task.CompletedTask;
         }
 
-        private string Resolve(string key)
+        private string ResolveUpload(string blobName)
         {
-            if (!KeyPattern().IsMatch(key))
+            if (!BlobNamePattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName))
             {
                 throw new ApiException(404, "Photo not found.");
             }
-            return Path.Combine(_root, key);
+            return Path.Combine(_root, blobName);
+        }
+
+        public static void ValidateBlobName(string blobName)
+        {
+            if (!BlobNamePattern().IsMatch(blobName) && !SeedPortraitPattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName))
+            {
+                throw new ApiException(404, "Photo not found.");
+            }
         }
 
         [GeneratedRegex(@"\A[a-f0-9]{32}\.(jpg|png|webp)\z", RegexOptions.CultureInvariant)]
-        private static partial Regex KeyPattern();
+        private static partial Regex BlobNamePattern();
+
+        [GeneratedRegex(@"\Aseed-[a-z]{2,16}\.webp\z", RegexOptions.CultureInvariant)]
+        private static partial Regex SeedPortraitPattern();
+
+        [GeneratedRegex(@"\Aavatars/[a-f0-9]{32}/current\z", RegexOptions.CultureInvariant)]
+        private static partial Regex AvatarNamePattern();
     }
 }

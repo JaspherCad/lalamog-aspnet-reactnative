@@ -1,6 +1,26 @@
 export interface AreaOption { code: string; name: string }
 export interface ReverseGeocodeResult {
   address: string; road: string | null; suburb: string | null; city: string | null; state: string | null; country: string | null;
+  provider: string; streetNumber: string | null; postalCode: string | null; countryCode: string | null;
+  resultType: string | null; confidence: string | null; matchCodes: string[];
+  features: AzureMapsFeature[];
+}
+export interface AzureMapsFeature {
+  type: 'Feature'; id?: string; bbox?: number[];
+  geometry?: { type: 'Point'; coordinates: number[] };
+  properties?: {
+    address?: {
+      formattedAddress?: string; addressLine?: string; streetNumber?: string; streetName?: string;
+      neighborhood?: string; locality?: string; postalCode?: string;
+      countryRegion?: { name?: string; ISO?: string };
+      adminDistricts?: { name?: string; shortName?: string }[];
+      intersection?: Record<string, unknown>;
+    };
+    type?: string; confidence?: string; matchCodes?: string[];
+    geocodePoints?: { geometry: { type: 'Point'; coordinates: number[] }; calculationMethod?: string; usageTypes?: string[] }[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 }
 export interface MapLocation {
   regionCode?: string | null; provinceCode?: string | null; cityCode?: string | null; barangayCode?: string | null;

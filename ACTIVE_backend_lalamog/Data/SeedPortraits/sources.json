@@ -1,0 +1,139 @@
+{
+  "provider": "Open Pravatar",
+  "licenseUrl": "https://openpravatar.com/legal",
+  "retrieved": "2026-11-04",
+  "description": "Synthetic demo portraits, permitted for use in software UIs; no attribution required. Do not redistribute as stock or a competing asset library.",
+  "images": [
+    {
+      "file": "seed-alex.webp",
+      "source": "https://openpravatar.com/thumbs/ast_austin_engineer_portrait.webp?w=600",
+      "assetId": "ast_austin_engineer_portrait",
+      "sha256": "082e37c0811aac3ed05fee60e7a46220d0e46113993b7c22d6a7335a9c9e30ab"
+    },
+    {
+      "file": "seed-sam.webp",
+      "source": "https://openpravatar.com/thumbs/ast_bangkok_startup_portrait.webp?w=600",
+      "assetId": "ast_bangkok_startup_portrait",
+      "sha256": "c188bf12054414ceb9d9681655e04808589d9cb1322844cd81da3b669c1cd6e3"
+    },
+    {
+      "file": "seed-jordan.webp",
+      "source": "https://openpravatar.com/thumbs/ast_berlin_junior_dev.webp?w=600",
+      "assetId": "ast_berlin_junior_dev",
+      "sha256": "22fc47dc157b02fbb132452fa49b33001670b4970d4fd6ee0b7120e884c9a3e7"
+    },
+    {
+      "file": "seed-miko.webp",
+      "source": "https://openpravatar.com/thumbs/ast_cairo_professional_portrait.webp?w=600",
+      "assetId": "ast_cairo_professional_portrait",
+      "sha256": "c5f4b02a5c32f5e88a694dc992dc1bc3f165b81fbe7d5bac11ed9c650310f791"
+    },
+    {
+      "file": "seed-jae.webp",
+      "source": "https://openpravatar.com/thumbs/ast_chicago_sales_lead.webp?w=600",
+      "assetId": "ast_chicago_sales_lead",
+      "sha256": "8446c75b4512b75ad22ad31c8156c5d26dfc397da735016ad2fe6d5c892033c4"
+    },
+    {
+      "file": "seed-ana.webp",
+      "source": "https://openpravatar.com/thumbs/ast_bangalore_engineer_portrait.webp?w=600",
+      "assetId": "ast_bangalore_engineer_portrait",
+      "sha256": "d562ed8e1d51328beab9a3db457f683b2f685dd0cd9cce075d894f55117f7396"
+    },
+    {
+      "file": "seed-nico.webp",
+      "source": "https://openpravatar.com/thumbs/ast_kuala_lumpur_developer.webp?w=600",
+      "assetId": "ast_kuala_lumpur_developer",
+      "sha256": "fcf72519e418f7b78249e47c9084664d212bc0cc830bc7ce37b31547fdaa84c0"
+    },
+    {
+      "file": "seed-bea.webp",
+      "source": "https://openpravatar.com/thumbs/ast_atlanta_sales_portrait.webp?w=600",
+      "assetId": "ast_atlanta_sales_portrait",
+      "sha256": "21b2b6df55cebe12477573442ebd0368d8b0a5499510cab938568e998b15dada"
+    },
+    {
+      "file": "seed-carlo.webp",
+      "source": "https://openpravatar.com/thumbs/ast_lagos_tech_portrait.webp?w=600",
+      "assetId": "ast_lagos_tech_portrait",
+      "sha256": "41abb9a31f3c0f2c61880fff19344dd9957e7d943f0a9f6584f94ca0d72fb685"
+    },
+    {
+      "file": "seed-dani.webp",
+      "source": "https://openpravatar.com/thumbs/ast_barcelona_creative_portrait.webp?w=600",
+      "assetId": "ast_barcelona_creative_portrait",
+      "sha256": "ac144bbabbdc8721ef441ab90ba8af23aef3ab1eb103b1d3eeaa2a0885e75648"
+    },
+    {
+      "file": "seed-enzo.webp",
+      "source": "https://openpravatar.com/thumbs/ast_london_founder_coat.webp?w=600",
+      "assetId": "ast_london_founder_coat",
+      "sha256": "9bc26aa6151d2c08349d21e15a528da17df12f3d47d4b5d398f0c6e5dce7d78c"
+    },
+    {
+      "file": "seed-faye.webp",
+      "source": "https://openpravatar.com/thumbs/ast_brussels_policy_portrait.webp?w=600",
+      "assetId": "ast_brussels_policy_portrait",
+      "sha256": "2f15028219b40dbc4d1879ac714c63de283d84a30de70cea0461b74a7da385f3"
+    },
+    {
+      "file": "seed-gio.webp",
+      "source": "https://openpravatar.com/thumbs/ast_dubai_ops_analyst.webp?w=600",
+      "assetId": "ast_dubai_ops_analyst",
+      "sha256": "813f3393d913e43eba389ed193dedf8766dcab5f96293563a417fb990c9ef693"
+    },
+    {
+      "file": "seed-hana.webp",
+      "source": "https://openpravatar.com/thumbs/ast_jakarta_analytics_portrait.webp?w=600",
+      "assetId": "ast_jakarta_analytics_portrait",
+      "sha256": "fd24ec89faec58ee19602ca5b6447030c5d45e56a9f70c60dfa732b54e3ddd65"
+    },
+    {
+      "file": "seed-ivan.webp",
+      "source": "https://openpravatar.com/thumbs/ast_delhi_executive_portrait.webp?w=600",
+      "assetId": "ast_delhi_executive_portrait",
+      "sha256": "798117e695dcd803e6160938a844169ebef12c30cb3f456ae5d35c9b29088a84"
+    },
+    {
+      "file": "seed-luna.webp",
+      "source": "https://openpravatar.com/thumbs/ast_buenos_aires_designer_portrait.webp?w=600",
+      "assetId": "ast_buenos_aires_designer_portrait",
+      "sha256": "cb0a491daa38be500933426cfad061c13245648f65055b721e775aa9d59df162"
+    },
+    {
+      "file": "seed-omar.webp",
+      "source": "https://openpravatar.com/thumbs/ast_dublin_healthcare_profile.webp?w=600",
+      "assetId": "ast_dublin_healthcare_profile",
+      "sha256": "509af529cfa18223915b7fe6f8964e685fb1072867a939ec1cffdb6f41011587",
+      "retrieved": "2026-11-06"
+    },
+    {
+      "file": "seed-pia.webp",
+      "source": "https://openpravatar.com/thumbs/ast_sf_engineer_laptop.webp?w=600",
+      "assetId": "ast_sf_engineer_laptop",
+      "sha256": "9c0dbda64dba7906def62d1f2279426e9ea67a053be1feafb956e4a859906fbe",
+      "retrieved": "2026-11-06"
+    },
+    {
+      "file": "seed-rafa.webp",
+      "source": "https://openpravatar.com/thumbs/ast_stockholm_designer_minimal.webp?w=600",
+      "assetId": "ast_stockholm_designer_minimal",
+      "sha256": "3cc69ed9085107cb16091f49e431126997951a7c39fe1987ccdf4813d04eedd6",
+      "retrieved": "2026-11-06"
+    },
+    {
+      "file": "seed-tala.webp",
+      "source": "https://openpravatar.com/thumbs/ast_seoul_marketer_profile.webp?w=600",
+      "assetId": "ast_seoul_marketer_profile",
+      "sha256": "2fa839e78045f1dee9acc7a893a805cd7d3837b8efaad4d1d341791cd5f1d1e2",
+      "retrieved": "2026-11-06"
+    },
+    {
+      "file": "seed-yuri.webp",
+      "source": "https://openpravatar.com/thumbs/ast_paris_editorial_scarf.webp?w=600",
+      "assetId": "ast_paris_editorial_scarf",
+      "sha256": "97ebb4fa69019180c5a9417192da7ca1012714950ac7d870cf7521ac06b2f4f1",
+      "retrieved": "2026-11-06"
+    }
+  ]
+}

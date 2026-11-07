@@ -41,17 +41,18 @@ official administrative selections. Preserve provider attribution, pacing,
 cache and usage/privacy rules from [maps](features/MAPS_AND_AREAS.md).
 
 Decoded-image validation, size/path safeguards and stable media URLs belong to
-[media storage](features/MEDIA_STORAGE.md). Current files are local. Blob/Azurite
-migration must preserve existing keys/reads and requires real local integration
-coverage; provisioned containers or a design proposal are not implementation.
+[media storage](features/MEDIA_STORAGE.md). Avatar blobs use private Azure/Azurite
+storage with server-built public image URLs. SQL stores no avatar metadata; C# derives owner paths/URLs from existing user IDs. First-read
+import retains local originals/old URLs. Private document/video reads need
+owning-resource authorization rather than secrecy of an ID or URL.
 
 ## Data preservation and future design
 
-Inline EF seeding is parent-first, idempotent and preserves existing rows/edits/
-passwords; both sync and async callbacks match. Development migrations/seeding
+Static DatabaseSeeder is parent-first, idempotent and preserves existing rows/edits/
+passwords/custom avatars; it runs after inline Development migration. Migrations/seeding
 do not authorize destructive resets. See [local development](features/LOCAL_DEVELOPMENT.md).
 
-Results, ratings, video/montages, public demo map projections, Blob/Azurite and
+Results, ratings, video/montages, public demo map projections, Blob maintenance and
 broker notifications have planned/deferred portions. Inspect
 [project state](PROJECT_STATE.md), [backlog](BACKLOG.md) and the owning guide.
 Do not revive historical legacy/result rules to fill these gaps.

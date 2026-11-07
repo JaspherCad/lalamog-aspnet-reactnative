@@ -37,8 +37,10 @@ repository and storage contracts; DTOs holds individual request/response
 classes; Models holds one entity per file.
 
 Both Migrations/ and Data/Migrations/ are active history. Do not discard either.
-Data/Reference contains the bundled Philippine catalog. Services/LocalFileStorage.cs
-is the current media implementation, not Blob. Use [backend structure](features/BACKEND_STRUCTURE.md),
+Data/Reference contains the bundled Philippine catalog. Services/AzureBlobStorage.cs
+owns private Azure/Azurite owner-path avatars without SQL image metadata; LocalFileStorage.cs provides validation/staging
+and legacy reads. Data/SeedPortraits bundles synthetic demo faces/provenance.
+Use [backend structure](features/BACKEND_STRUCTURE.md),
 [data model](DATA_MODEL.md), and the owning feature for exact paths and rules.
 
 Full solution: ACTIVE_backend_lalamog/solution/Lalamog.slnx.
@@ -62,10 +64,10 @@ there is no assumed lint or unit test command.
 
 ## Supporting services and tests
 
-Compose runs SQL Server, RabbitMQ and Redis only. SQL is integrated; broker/
+Compose runs SQL Server, RabbitMQ, Redis and Azurite. SQL and avatar storage are integrated; broker/
 Redis are provisioned. Current local API/Vite ports are 5080/5173 and SQL is
 loopback 14333; consult [development](runbooks/DEVELOPMENT.md) before running.
-Blob/Azurite and actual notification workers remain planned.
+Actual notification workers and broader Blob maintenance remain planned.
 
 Tests use isolated SQL databases and fixtures; some old scaffold files are
 excluded. Browser persistence restart is explicit opt-in. Read the testing
