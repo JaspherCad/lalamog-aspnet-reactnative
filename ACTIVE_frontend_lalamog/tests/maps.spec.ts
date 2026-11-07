@@ -301,6 +301,7 @@ test('full-screen map fits phones, landscape and desktop; floating popups preser
     await expect(list.locator('.map-venue')).toHaveCount(24);
     await list.locator('.map-venue').last().scrollIntoViewIfNeeded();
     await expect(list.locator('.map-venue').last()).toBeInViewport();
+    await expect(list.getByRole('button', { name: 'Close dialog' })).toBeInViewport();
     await page.keyboard.press('Escape'); await expect(browse).toBeFocused();
     expect(await pane.getAttribute('style')).toBe(position);
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(height + 1);
@@ -318,6 +319,46 @@ test('full-screen map fits phones, landscape and desktop; floating popups preser
   await page.getByRole('button', { name: 'Reset filters' }).click();
   await page.keyboard.press('Escape'); await expect(page.locator('.venue-marker')).toHaveCount(25);
   expect(errors).toEqual([]);
+});
+
+test('notebook popups keep long venue details, photos and every map action usable on small screens', async ({ page }) => {
+  await fixture(page);
+  const gym = { id: 11, name: 'Demo Antipolo Community Training Gym', address: 'Fictional public venue, Antipolo, Rizal', latitude: 14.58, longitude: 121.18,
+    isDemo: true, areaPath: [], fights: [], description: 'Fictional gym information. '.repeat(15), contactInformation: 'Public reception contact',
+    sessionPrice: 500, sessionDurationMinutes: 60, coverUrl: '/test-gym-cover.svg',
+  };
+  await page.route('**/api/gyms', route => route.fulfill({ json: [gym] }));
+  await page.route('**/api/gyms/11', route => route.fulfill({ json: gym }));
+  await page.route('**/test-gym-cover.svg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#b9b29b"/><path d="M70 260V100h500v160M70 180h500M170 100v160M470 100v160" fill="none" stroke="#494d40" stroke-width="12"/><text x="320" y="320" text-anchor="middle" font-size="24">Fictional gym photograph fixture</text></svg>' }));
+  await page.goto('/map');
+  for (const [name, title, suffix] of [['Filters', 'Map filters', 'filters'], ['About this map', 'About this map', 'about'], ['Browse gyms', 'Public gyms', 'gyms'], ['Private pins', 'Your private pins', 'private']]) {
+    await page.getByRole('button', { name: new RegExp(`^${name}`) }).click();
+    const dialog = page.getByRole('dialog', { name: title, exact: true });
+    await expect(dialog).toBeVisible();
+    await page.screenshot({ path: `test-results/notebook-popup-${suffix}-375.png`, animations: 'disabled' });
+    if (suffix === 'private') {
+      await dialog.getByRole('button', { name: /Earlier venue/ }).click();
+      await expect(page.getByRole('link', { name: 'Open selected fight' })).toHaveAttribute('href', '/sessions?matchId=7');
+      await page.screenshot({ path: 'test-results/notebook-popup-fight-375.png', animations: 'disabled' });
+    }
+    await page.keyboard.press('Escape');
+  }
+  for (const width of [320, 375, 390, 1440]) {
+    await page.setViewportSize({ width, height: width === 320 ? 568 : 900 });
+    await page.getByRole('button', { name: /^Browse gyms/ }).click();
+    await page.locator('.public-gym').click();
+    const dialog = page.getByRole('dialog', { name: gym.name });
+    await expect(dialog.locator('img.gym-cover')).toBeVisible();
+    await page.screenshot({ path: `test-results/notebook-popup-gym-${width}.png`, animations: 'disabled' });
+    await dialog.getByText('No completed fights yet.').scrollIntoViewIfNeeded();
+    await expect(dialog.getByRole('button', { name: 'Close dialog' })).toBeInViewport();
+    await expect(dialog.getByRole('link', { name: 'View gym & book' })).toHaveAttribute('href', '/gyms/11');
+    const box = (await dialog.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x + box.width).toBeLessThanOrEqual(width);
+    expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBeTruthy();
+    await dialog.getByRole('button', { name: 'Close dialog' }).click();
+    await expect(page.getByRole('button', { name: /^Browse gyms/ })).toBeFocused();
+  }
 });
 
 test('anonymous map keeps private data unrequested and exposes recoverable gym/tiles failure in popups', async ({ page }) => {

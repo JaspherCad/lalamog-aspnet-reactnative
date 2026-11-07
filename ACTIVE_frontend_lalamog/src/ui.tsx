@@ -68,9 +68,9 @@ export function RecordPanel({ record, stats }: { record?: FightRecord; stats?: F
       <small className="record-note">{hasRating ? `${rating.count} opponent ${rating.count === 1 ? 'review' : 'reviews'}` : 'No opponent rating available'}</small></div>
   </section>;
 }
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children, className = '' }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null); const titleId = useId();
   useEffect(() => { const dialog = ref.current!; dialog.showModal(); return () => dialog.close(); }, []);
-  return <dialog ref={ref} className="paper-dialog" aria-labelledby={titleId} onClose={() => { if (!ref.current?.open) onClose(); }} onClick={event => { if (event.target === ref.current) onClose(); }}>
+  return <dialog ref={ref} className={`paper-dialog ${className}`} aria-labelledby={titleId} onClose={() => { if (!ref.current?.open) onClose(); }} onClick={event => { if (event.target === ref.current) onClose(); }}>
     <div className="dialog-heading"><h2 id={titleId}>{title}</h2><button className="icon-button secondary" aria-label="Close dialog" onClick={onClose}><Icon name="x"/></button></div>{children}</dialog>;
 }

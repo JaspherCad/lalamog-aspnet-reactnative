@@ -8,6 +8,12 @@ Keep the map mounted under popups and preserve visible attribution/zoom, manual
 list alternatives and privacy. This supersedes the inline map/list and proposed
 map bottom-sheet geometry below. Current scope/checks: [maps](features/MAPS_AND_AREAS.md#full-screen-map-presentation).
 
+Owner follow-up 2026-11-08: **every map popup uses the swipe police notebook
+skin**—spiral binding, warm ruled paper/red margin, red newspaper headings,
+typed labels and taped Polaroid venue photos. Preserve native dialog behavior
+and internal scrolling, with a sticky close header. Keep other modules' popups
+unchanged. Source/recovery/checks: [map notebook dialogs](features/MAPS_AND_AREAS.md#notebook-styling-for-every-map-popup).
+
 Updated: 2026-11-08 (Asia/Manila). Status: **swipe notebook and viewport public-gym/private-pin map implemented; competitive results/video targets remain proposed**.
 
 Owner revision 2026-11-07, implemented for **swipe/Discover only**: a police

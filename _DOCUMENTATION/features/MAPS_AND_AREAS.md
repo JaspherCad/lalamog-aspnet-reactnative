@@ -176,6 +176,36 @@ physical-device/200% zoom audit and usability review of overlay density. Nearby
 or geographic search needs its own backend/query contract; do not imply it
 already exists or silently enable GPS while polishing this presentation.
 
+### Notebook styling for every map popup
+
+Implemented 2026-11-08 at the owner's request to reuse the swipe police
+notebook direction. All six dialog types use local `MapModal` in `FightMap.tsx`:
+Filters, About, Public gyms, Your private pins, private fight details and public
+gym details (including loading/error/retry/empty content). The shared native
+`Modal` in `ui.tsx` accepts an optional className; other modules retain their
+existing dialog appearance and behavior.
+
+`FightMap.css` scopes the skin to `.fight-map-page .map-notebook-dialog`:
+warm `#f3ecd7` paper, 24px CSS notebook rules, a red left margin, CSS spiral
+binding and layered paper shadows. Courier New/Courier metadata and notes pair
+with existing red Old Newspaper Types headings. Lists read as aligned notebook
+entries; selected filter rows have a faint yellow tint and native checkmarks.
+The header/44px close button stays sticky during dialog scrolling. Long names
+wrap; long content scrolls inside the dialog without scrolling the map page.
+
+Gym details add numbered Venue notes/Session details and a CSS-taped Polaroid
+frame around `GymCover`. Existing venue images are reused; missing/failed images
+retain the explicit photo-coming-soon placeholder, now on paper rather than a
+dark banner. Public history/booking links, fictional-demo notices, prices,
+privacy, keyboard focus, Escape and map position are preserved. No new image,
+font, dependency, backend field or endpoint is required.
+
+Recovery: keep `FightMap.tsx`, its `MapModal` wrapper, `FightMap.css` and the
+optional `Modal.className` support in `ui.tsx` together. Avoid moving these
+selectors onto every `.paper-dialog`; this request is map-module only. Popup
+screenshots are ignored QA artifacts under frontend `test-results/`, with
+`notebook-popup-*.png` names. Reproduce through the map browser suite above.
+
 ## Privacy, migration and compatibility
 
 Nested `mapLocation`: nullable `regionCode`, `provinceCode`, `cityCode`, `barangayCode`, `psgcVersion`, `latitude`, `longitude`. Paired finite WGS84 latitude/longitude with ranges Â±90/Â±180; 0,0 valid. A structured selection requires region/city/barangay and matching optional province. Coordinates may be used without areas; no point-in-boundary verification.
@@ -213,6 +243,22 @@ Official API reference: [Azure reverse geocoding](https://learn.microsoft.com/en
 Recovery: restore the service, response DTO, inline named client, web types/UI and provider fixtures together. Keep Maps:AzureMapsApiKey private and restart the API after rebuilding; clearing/restarting the process also clears its old cache. Manual text/catalog/map controls work during a provider outage. No database migration, volume reset, media change or legacy edit is required.
 
 ## Latest work record and verification
+
+2026-11-08 / notebook map popups: all six map dialogs now reuse the approved
+swipe notebook visual language through one map-specific wrapper. CSS supplies
+binding, ruled pages, red margins, typed labels and taped photo frames. The
+close header stays visible while long content scrolls. Existing native dialog,
+filter, request, privacy, history and booking contracts are unchanged.
+Verification: frontend production build and ten `tests/maps.spec.ts` cases
+passed in Edge against local Vite 5193 (about one minute). Existing viewport,
+filter, focus/scroll, anonymous privacy, offline/retry and map/profile/scheduling
+regressions passed. New popup checks exercise all six dialogs, long venue names
+and notes, photos, internal scrolling/visible close control, booking link and
+focus return at 320/375/390/1440px. All six 375px popup screenshots were visually
+reviewed; the existing public-gym cases retain missing-photo coverage. Final
+list alignment was tightened after review; its focused recheck is recorded in
+handoff. No backend/SQL/storage or physical-device/200% zoom audit was rerun for
+this presentation task. No required implementation remains after final checks.
 
 2026-11-08 / viewport map: implemented the owner's full-screen mobile-map
 direction with floating controls, modal public/private lists, filters and pin

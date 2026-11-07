@@ -1,5 +1,10 @@
 # Frontend backlog: mobile-first browser experience
 
+2026-11-08 / FE-04 notebook popups: all map dialogs now reuse the swipe notebook
+paper/binding/typography; venue images get taped photo frames. Sticky close
+headers preserve controls during popup scrolling. Build/ten map browser cases
+passed; recovery and verification in [maps](../features/MAPS_AND_AREAS.md#notebook-styling-for-every-map-popup).
+
 2026-11-08 / FE-04 map presentation: viewport-fitted `/map`, floating paper
 controls and popup filters/public gyms/private pins/details implemented.
 Existing permission/provider/privacy contracts retained; no page scrolling.

@@ -65,6 +65,90 @@
 .fight-map-page .map-venue .icon { width: 18px; height: 18px; }
 .fight-map-page .paper-dialog { overscroll-behavior: contain; }
 
+/* All map dialogs share the swipe notebook's paper, rules, binding and photo treatment. */
+.fight-map-page .map-notebook-dialog {
+  --notebook-paper: #f3ecd7;
+  --notebook-rule: #657c8e30;
+  --typewriter: 'Courier New', Courier, monospace;
+  width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 32px);
+  padding: 38px 16px 16px; border: 1px solid #6d634e;
+  background: linear-gradient(90deg, #b7a47c24, transparent 12%, #fff5 55%, transparent), var(--notebook-paper);
+  box-shadow: 4px 5px 0 #b2a07c, 8px 9px 0 #30291d45;
+  scrollbar-gutter: stable;
+}
+.fight-map-page .map-notebook-binding {
+  position: absolute; top: 7px; left: 12px; right: 12px; height: 26px; pointer-events: none;
+  background: radial-gradient(ellipse at 7px 21px, #403b2c 0 3px, transparent 3.5px) 0 0 / 20px 26px repeat-x;
+}
+.fight-map-page .map-notebook-binding::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, #353a37 0 2px, #d1d1bd 2px 4px, #686d63 4px 6px, transparent 6px) 4px 0 / 20px 22px repeat-x;
+  border-radius: 5px 5px 0 0;
+}
+.fight-map-page .map-notebook-dialog .dialog-heading {
+  position: sticky; top: 0; z-index: 2; align-items: flex-start; gap: 12px;
+  padding: 8px 0 12px; margin-bottom: 14px; border-bottom: 1px solid #9d9177;
+  background: var(--notebook-paper);
+}
+.fight-map-page .map-notebook-dialog .dialog-heading h2 { color: var(--red); font-size: 30px; }
+.fight-map-page .map-notebook-dialog .dialog-heading .icon-button { flex-shrink: 0; margin: 0; min-height: 44px; background: #fcf9ef; }
+.fight-map-page .map-notebook-page {
+  padding: 0 0 0 12px; border-left: 1px solid #b9564b70;
+  background: repeating-linear-gradient(transparent 0 23px, var(--notebook-rule) 23px 24px);
+  font: 13px/24px var(--typewriter); overflow-wrap: anywhere;
+}
+.fight-map-page .map-notebook-page p { margin-bottom: 16px; }
+.fight-map-page .map-notebook-page .small,
+.fight-map-page .map-notebook-page small { font: 12px/1.6 Barlow, sans-serif; }
+.fight-map-page .map-notebook-page h2 { color: var(--red); font-size: 26px; margin: 20px 0 12px; }
+.fight-map-page .map-notebook-page .map-notebook-label {
+  display: table; margin: 0 0 8px; padding: 0 2px; color: #655d4a;
+  font: 700 11px/24px var(--typewriter); letter-spacing: .03em; text-transform: uppercase;
+  background: linear-gradient(transparent 45%, #e3c65660 45% 90%, transparent 90%);
+}
+.fight-map-page .map-notebook-page .notice { padding: 10px 12px; font: 13px/1.6 Barlow, sans-serif; background: #fcf9ef; }
+.fight-map-page .map-notebook-page button,
+.fight-map-page .map-notebook-page .button-link,
+.fight-map-page .map-notebook-page .text-action { min-height: 44px; font: 700 13px/1.5 var(--typewriter); }
+.fight-map-page .map-notebook-page .button-link { margin: 4px 0 12px; }
+.fight-map-page .map-notebook-page .map-venue-list { gap: 0; }
+.fight-map-page .map-notebook-page .map-venue {
+  padding: 16px 10px; gap: 6px; border: 0; border-bottom: 1px solid #9d9177; border-radius: 0;
+  background: #f8f2e2e6; box-shadow: none; grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: start;
+}
+.fight-map-page .map-notebook-page .map-venue:hover { background: #e9dfc5; }
+.fight-map-page .map-notebook-page .map-venue strong { color: var(--red); font: 400 22px/1.2 var(--highlight); }
+.fight-map-page .map-notebook-page .map-venue span { font: 13px/1.6 Barlow, sans-serif; }
+.fight-map-page .map-notebook-page .map-venue small { color: #655d4a; }
+.fight-map-page .map-notebook-page label { font: 700 12px/1.6 var(--typewriter); }
+.fight-map-page .map-notebook-page select { font: 16px/1.5 Barlow, sans-serif; background: #fcf9ef; }
+.fight-map-page .map-notebook-page .map-layer-option { padding: 12px 10px; background: #fcf9efe6; }
+.fight-map-page .map-notebook-page .map-layer-option:has(input:checked) { border-left: 3px solid var(--red); background: #e3c65620; }
+.fight-map-page .map-notebook-photo {
+  position: relative; margin: 26px 2px 22px; padding: 7px 7px 4px; background: #fcf9ef;
+  border: 1px solid #b6ad98; box-shadow: 2px 4px 5px #3f342e2b;
+}
+.fight-map-page .map-notebook-photo::after {
+  content: ''; position: absolute; top: -12px; left: calc(50% - 35px); width: 70px; height: 24px;
+  transform: rotate(-7deg); pointer-events: none; background: #d8c48bbb; border: 1px solid #b59e5955;
+}
+.fight-map-page .map-notebook-photo .gym-cover { display: block; width: 100%; height: auto; max-height: 280px; object-fit: cover; border: 1px solid #8b8675; margin: 0; }
+.fight-map-page .map-notebook-photo .gym-cover-placeholder {
+  min-height: 140px; padding: 20px 14px; margin: 0; background: #e5deca; color: var(--ink); border: 1px solid #b6ad98;
+}
+.fight-map-page .map-notebook-photo .gym-cover-placeholder > span { font: 700 10px/1.5 var(--typewriter); }
+.fight-map-page .map-notebook-photo .gym-cover-placeholder > strong { color: var(--red); font: 400 26px/1.2 var(--highlight); }
+.fight-map-page .map-notebook-photo figcaption { padding: 7px 0 3px; text-align: center; font: 10px/1.5 var(--typewriter); color: #5c574b; }
+.fight-map-page .map-notebook-page .gym-fight-list { gap: 0; }
+.fight-map-page .map-notebook-page .gym-fight-list li { border-color: #9d9177; padding: 12px 0; }
+.fight-map-page .map-notebook-page .history-portraits img { border-radius: 0; border: 3px solid #fcf9ef; outline: 1px solid #b6ad98; }
+
+@media (min-width: 700px) {
+  .fight-map-page .map-notebook-dialog { padding: 38px 24px 24px; }
+  .fight-map-page .map-notebook-dialog .dialog-heading h2 { font-size: 36px; }
+  .fight-map-page .map-notebook-page { padding-left: 16px; font-size: 14px; }
+}
+
 @media (min-width: 700px) {
   .app-layout:has(.fight-map-page) .app-main { padding: 0; }
   .fight-map-page .map-floating-top { top: 24px; left: 24px; right: 24px; }

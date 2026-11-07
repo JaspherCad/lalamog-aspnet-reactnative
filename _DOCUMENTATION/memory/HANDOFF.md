@@ -4,7 +4,20 @@ Updated: 2026-11-08 (Asia/Manila). [Change log](CHANGELOG.md).
 
 ## Current implementation and next action
 
-Latest task: `/map` viewport UI implemented in `FightMap.tsx`, new scoped
+Latest task: all six map popups now use the swipe notebook skin. `MapModal` in
+`FightMap.tsx`, notebook rules in `FightMap.css` and optional `Modal.className`
+in `ui.tsx` supply spiral binding, ruled paper/red margins, typed labels and
+taped venue-photo frames. Sticky close headers keep controls reachable during
+dialog scrolling. Other modules retain their dialog styling. Production build
+and ten map browser cases passed; all six mobile popup screenshots reviewed.
+Final production rebuild and focused long-content/photo/popup recheck passed
+after list alignment. Knowledge validation passed (56 files, 568 local targets,
+14 guides), and `git diff --check` passed. Backend/SQL/storage, physical devices
+and a comprehensive 200% zoom/accessibility audit were not rerun.
+No backend/data/provider changes. Source/reproduction/recovery:
+[map notebook dialogs](../features/MAPS_AND_AREAS.md#notebook-styling-for-every-map-popup).
+
+Preceding task: `/map` viewport UI implemented in `FightMap.tsx`, new scoped
 `FightMap.css` and shared `LocationMap.tsx` fullscreen/resize support. Floating
 title/filters/about and public/private browse buttons open dialogs; the page
 fits between app header/navigation without vertical scrolling. Long modal lists
