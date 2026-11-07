@@ -168,3 +168,84 @@
   .discover-page .dossier-info { grid-column: 1; }
   .discover-page .notebook-index { font-size: 8px; gap: 4px; }
 }
+
+.discover-page .style-stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: 10px 4px; }
+.discover-page .style-badge { max-width: none; width: 100%; overflow-wrap: anywhere; }
+
+.discover-page .portrait-panel .intel-button { display: none; }
+.discover-page .portrait-panel > .avatar { bottom: 28px; }
+
+/* Discover occupies the available viewport; expanded information lives in intel. */
+.app-layout:has(.discover-page) { height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.app-layout:has(.discover-page) .app-header { flex-shrink: 0; }
+.app-layout:has(.discover-page) .site-footer { display: none; }
+.app-layout:has(.discover-page) .app-main { flex: 1; width: 100%; min-height: 0; padding: 18px 16px calc(78px + env(safe-area-inset-bottom)); }
+.app-main:has(.discover-page) > div { height: 100%; }
+.discover-page { height: 100%; min-height: 0; display: flex; flex-direction: column; container-type: size; }
+.discover-page > .section-heading, .discover-page > .discover-intro, .discover-page > .swipe-caption { display: none; }
+.discover-page > .choice-notice { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.discover-page > .preview-banner { padding: 3px 6px; margin: 0 0 12px; font-size: 10px; flex-shrink: 0; }
+.discover-page .deck { flex: 1; min-height: 0; }
+.discover-page .fighter-dossier { height: 100%; display: flex; flex-direction: column; }
+.discover-page .dossier-heading { flex-shrink: 0; padding: 8px 12px; }
+.discover-page .dossier-heading h2 { font-size: 30px; }
+.discover-page .dossier-content { flex: 1; min-height: 0; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); grid-template-rows: minmax(0, 1fr) auto; padding: 16px 10px 4px; gap: 10px; }
+.discover-page .dossier-portrait-column { min-height: 0; display: flex; flex-direction: column; }
+.discover-page .portrait-panel { flex: 1; min-height: 60px; padding: 0; }
+.discover-page .portrait-panel > .avatar { min-height: 0; }
+.discover-page .fighter-tags { margin: 8px 0; }
+.discover-page .style-stack { flex-shrink: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.discover-page .style-stack:has(> :only-child) { grid-template-columns: 1fr; }
+.discover-page .style-stack:has(> :first-child:nth-last-child(2)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.discover-page .style-badge { font-size: 11px; }
+.discover-page .style-emblem { width: 32px; height: 30px; }
+.discover-page .style-emblem .icon { width: 24px; height: 24px; }
+.discover-page .dossier-info { min-height: 0; }
+.discover-page .dossier-notes { padding-top: 0; }
+.discover-page .fighter-bio { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 12px; line-height: 19px; }
+.discover-page .dossier-notes .text-action { font-size: 13px; padding: 4px 0; }
+.discover-page .dossier-footer { flex-shrink: 0; padding: 5px 10px; font-size: 8px; }
+.discover-page .swipe-actions { flex-shrink: 0; width: 100%; margin: 16px auto 0; }
+.discover-page .swipe-actions button { min-height: 48px; padding: 6px; }
+.discover-page > .error { position: absolute; z-index: 5; inset: 90px 16px auto; max-height: 45dvh; overflow: auto; }
+@media (min-width: 700px) {
+ .app-layout:has(.discover-page) .app-main { padding: 18px 32px 16px; }
+ .discover-page .dossier-heading h2 { font-size: 36px; }
+ .discover-page .dossier-content { padding: 20px 20px 4px; gap: 12px 24px; }
+ .discover-page .fighter-facts { margin-bottom: 10px; }
+ .discover-page .fighter-measurements { margin: 10px 0; }
+ .discover-page .style-badge { font-size: 14px; }
+}
+@container (max-height: 640px) {
+ .discover-page .fighter-measurements, .discover-page .opponent-rating { display: none; }
+ .discover-page .fighter-facts { margin-bottom: 10px; gap: 5px; }
+ .discover-page .notebook-label { margin-bottom: 4px; }
+ .discover-page .record-panel .eyebrow { margin-bottom: 6px; }
+ .discover-page .fighter-tags { display: none; }
+ .discover-page .style-stack { margin-top: 8px; }
+ .discover-page .dossier-notes > .notebook-label { display: none; }
+}
+@container (max-height: 400px) {
+ .discover-page .record-panel { display: none; }
+ .discover-page .fighter-bio, .discover-page .dossier-footer { display: none; }
+ .discover-page .dossier-heading h2 { font-size: 24px; }
+ .discover-page .dossier-heading { padding: 4px 10px; }
+ .discover-page .fighter-alias { font-size: 11px; }
+ .discover-page .dossier-content { padding-top: 12px; gap: 3px 10px; }
+ .discover-page .swipe-actions { margin-top: 10px; }
+}
+
+.discover-page .dossier-heading h2, .discover-page .dossier-heading .fighter-alias { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.discover-page .fighter-facts dd { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+@media (max-height: 500px) {
+ .app-layout:has(.discover-page) .app-header { min-height: 52px; padding-top: 0; padding-bottom: 0; }
+ .app-layout:has(.discover-page) .brand { font-size: 24px; }
+ .app-layout:has(.discover-page) .brand span { display: none; }
+ .app-layout:has(.discover-page) .main-nav a { min-height: 48px; padding-top: 3px; padding-bottom: 3px; }
+ .discover-page .dossier-portrait-column .style-stack { display: none; }
+ .discover-page .dossier-heading { padding: 3px 10px; }
+ .discover-page .dossier-content { grid-template-rows: minmax(0, 1fr) 44px; }
+ .discover-page .portrait-panel { min-height: 0; }
+ .discover-page .dossier-notes .text-action { margin: 0; }
+}
+@media (max-height: 500px) { .discover-page .dossier-portrait-column { grid-row: 1 / 3; } .discover-page .dossier-info { grid-column: 2; grid-row: 1; } .discover-page .dossier-notes { grid-column: 2; grid-row: 2; } }

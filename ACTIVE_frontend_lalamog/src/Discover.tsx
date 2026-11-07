@@ -92,7 +92,7 @@ export function Discover({ preview = false }: { preview?: boolean }) {
           }}>
           {Math.abs(dragX) > 20 && <span className={`swipe-stamp ${dragX > 0 ? 'stamp-like' : 'stamp-pass'}`} aria-hidden="true">{dragX > 0 ? 'LIKE' : 'PASS'}</span>}
           <div className="notebook-binding" aria-hidden="true"/>
-          <div className="notebook-index"><span>Lalamog / Scouting notes</span><span>Fighter file</span></div>
+
           <header className="dossier-heading fighter-details"><div><h2 className="fighter-name">{fighterName(profile)}</h2>{profile.fighterName && profile.nickname && <p className="fighter-alias">“{profile.nickname}”</p>}</div><span className="location-label"><Icon name="pin"/>{profile.location || 'Location not added'}</span></header>
           <div className="dossier-content"><div className="dossier-portrait-column"><div className="portrait-panel" onMouseLeave={() => setHoverIntel(false)}><Avatar profile={profile} large/><button className="intel-button" onMouseEnter={() => { if (matchMedia('(hover: hover)').matches) setHoverIntel(true); }} onFocus={() => setHoverIntel(true)} onBlur={() => setHoverIntel(false)} onKeyDown={event => { if (event.key === 'Escape') { setHoverIntel(false); event.stopPropagation(); } }} onClick={() => { setHoverIntel(false); setIntel(true); }}><Icon name="info"/>Fight intel</button>
             {hoverIntel && !dragging && <aside className="intel-hover"><strong>Public Lalamog record</strong><p>{preview && profile.userId === 'demo-miko' ? '8 wins · 2 losses · 1 draw' : 'Results and verified titles are not available yet.'}</p><small>Tap for the full profile.</small></aside>}

@@ -40,10 +40,10 @@ export function PageHeading({ eyebrow, title, children }: { eyebrow: string; tit
 }
 export function StyleStack({ value }: { value: string }) {
   const { keys, legacy } = parseStyles(value);
-  return <div className="style-stack" aria-label="Fighting styles">{keys.map(key => {
+  return <div className="style-stack" aria-label="Fighting styles">{keys.slice(0, 3).map(key => {
     const style = fightingStyles.find(s => s.key === key)!;
     return <div className={`style-badge style-${key}`} key={key}><span className="style-emblem"><Icon name={style.icon}/></span><span>{style.label}</span></div>;
-  })}{legacy.map(label => <div className="style-badge" key={label}><span className="style-emblem"><Icon name="fist"/></span><span>{label}</span></div>)}
+  })}{legacy.slice(0, Math.max(0, 3 - keys.length)).map(label => <div className="style-badge" key={label}><span className="style-emblem"><Icon name="fist"/></span><span>{label}</span></div>)}
     {!keys.length && !legacy.length && <p className="muted">No styles added yet.</p>}</div>;
 }
 export interface FightRecord { wins: number; losses: number; draws: number }

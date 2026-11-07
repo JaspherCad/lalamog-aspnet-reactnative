@@ -54,6 +54,10 @@ namespace Lalamog.Api.Services
             }
             profile.Nickname = request.Nickname.Trim();
             profile.Bio = (request.Bio ?? string.Empty).Trim();
+            if (request.FightingStyle.Split(new[] { '|', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length > 3)
+            {
+                throw new ApiException(400, "Choose up to three fighting styles.");
+            }
             profile.FightingStyle = request.FightingStyle.Trim();
             profile.ExperienceLevel = request.ExperienceLevel;
             profile.Location = (request.Location ?? string.Empty).Trim();

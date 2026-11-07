@@ -104,3 +104,11 @@ context exports, six invalid-path rejection cases, helper parse checks, Git arti
 checks and whitespace checks passed. Details:
 [agent workflow](../features/AGENT_WORKFLOW.md#latest-work-record). No application
 source, database, service configuration, accounts or volumes changed in this audit.
+
+2026-11-07 follow-up: removed swipe index row; profile picker and API limit highlighted styles to three. Existing stored selections preserved; badges show at most three. Over-limit existing selections require deselection before save. Dynamic swipe grid fits one to three styles. Photo intel control hidden; lower profile action remains.
+
+Follow-up verification: frontend build, isolated backend build (zero warnings/errors), seven notebook/swipe browser checks and the three-style save/reload/disabled-fourth-choice browser case passed. Knowledge and whitespace checks passed. Initial backend build hit the running API executable lock; separate output succeeded. Live API validation/SQL tests were not rerun; restart the normal API to load server validation.
+
+2026-11-07 viewport swipe follow-up: Discover shell fits 100dvh between header and navigation. Removed visible heading/intro/choice strip/caption/site footer on this route. Choice announcements remain accessible. Notebook and actions flex to available height; compact heights omit secondary record measurements/rating and clamp bio, with full details in profile dialog. No other route shell changes.
+
+Viewport verification: production build passed; browser geometry checks at 320x568, 360x640, 375x812, 390x844, 844x390 and 1440x900 confirmed document height equals viewport and actions fit above navigation. Visual review caught short-landscape style overlap; compact landscape now reduces header and omits style badges (full styles remain in profile dialog). Preview keeps its fictional-data notice. Earlier long-page screenshot assertions are historical; full regression suite was not rerun for this layout.

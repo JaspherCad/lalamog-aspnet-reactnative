@@ -61,11 +61,11 @@ for (const width of [360, 375, 390, 1440]) {
     const details = (await page.locator('.dossier-info').boundingBox())!;
     expect(portrait.x + portrait.width).toBeLessThan(details.x);
     expect(Math.abs(portrait.y - details.y)).toBeLessThan(2);
-    for (const action of ['Fight intel', 'Like', 'Pass']) {
+    for (const action of ['View profile & history', 'Like', 'Pass']) {
       expect((await page.getByRole('button', { name: action, exact: true }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
-    await page.getByRole('button', { name: 'Fight intel', exact: true }).click();
+    await page.getByRole('button', { name: 'View profile & history', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -114,20 +114,21 @@ test('left drag passes, keyboard like reveals a match, reduced motion keeps cont
   await page.getByRole('button', { name: 'Keep swiping' }).click(); await expect(page.getByText('You’re all caught up.')).toBeVisible();
 });
 
-test('five styles save and reload through current API; chat arranges a fight for that exact pair', async ({ page }) => {
+test('three styles save and reload through current API; chat arranges a fight for that exact pair', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 900 }); const state = await fixture(page); await page.goto('/profile');
   await page.getByLabel('Fighter name (unique)').fill('Jae-The-Reaper');
   await page.getByLabel('Alias', { exact: true }).fill('Crow');
-  for (const label of ['Streetfighting', 'Submission (BJJ)', 'Wrestling', 'Martial Artist']) await page.getByRole('checkbox', { name: label, exact: true }).check();
+  for (const label of ['Streetfighting', 'Wrestling']) await page.getByRole('checkbox', { name: label, exact: true }).check();
+  await expect(page.getByRole('checkbox', { name: 'Martial Artist', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Save profile' }).click();
   await expect(page.getByRole('status')).toHaveText('Profile saved.');
-  expect(state.saved[0].fightingStyle).toBe('streetfighting|kickboxing|bjj|wrestling|martial');
+  expect(state.saved[0].fightingStyle).toBe('streetfighting|kickboxing|wrestling');
   expect(String(state.saved[0].fightingStyle).length).toBeLessThanOrEqual(50);
   expect(state.saved[0].fighterName).toBe('Jae-The-Reaper'); expect(state.saved[0].nickname).toBe('Crow');
-  await page.reload(); await expect(page.getByRole('checkbox', { name: 'Martial Artist', exact: true })).toBeChecked();
+  await page.reload(); await expect(page.getByRole('checkbox', { name: 'Wrestling', exact: true })).toBeChecked();
   await expect(page.getByLabel('Alias', { exact: true })).toHaveValue('Crow');
   await expect(page.getByLabel('Fighter name (unique)')).toHaveValue('Jae-The-Reaper');
-  for (const [style, color] of [['streetfighting', 'rgb(98, 105, 104)'], ['kickboxing', 'rgb(60, 102, 45)'], ['martial', 'rgb(107, 69, 147)'], ['wrestling', 'rgb(48, 92, 151)'], ['bjj', 'rgb(155, 53, 49)']]) {
+  for (const [style, color] of [['streetfighting', 'rgb(98, 105, 104)'], ['kickboxing', 'rgb(60, 102, 45)'], ['wrestling', 'rgb(48, 92, 151)']]) {
     await expect(page.locator(`.profile-summary .style-${style} .style-emblem`)).toHaveCSS('background-color', color);
   }
   await page.screenshot({ path: 'test-results/redesign-profile.png', fullPage: true });
