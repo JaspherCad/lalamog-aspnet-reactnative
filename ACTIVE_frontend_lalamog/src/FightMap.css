@@ -1,0 +1,102 @@
+/* A viewport map only on /map. Embedded profile/venue pickers keep their layout. */
+.app-layout:has(.fight-map-page) {
+  height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+}
+.app-layout:has(.fight-map-page) .app-header { flex-shrink: 0; }
+.app-layout:has(.fight-map-page) .site-footer { display: none; }
+.app-layout:has(.fight-map-page) .app-main {
+  flex: 1; min-height: 0; max-width: none; width: 100%; padding: 0 0 calc(68px + env(safe-area-inset-bottom));
+}
+.app-main:has(.fight-map-page) > div { height: 100%; }
+.fight-map-page { height: 100%; width: 100%; min-height: 0; position: relative; isolation: isolate; background: #e0dfd3; }
+.fight-map-page > .location-map { position: absolute; inset: 0; }
+.fight-map-page .map-canvas { height: 100%; width: 100%; border: 0; }
+.fight-map-page .map-floating-top {
+  position: absolute; top: 16px; left: 12px; right: 12px; z-index: 2;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; pointer-events: none;
+}
+.fight-map-page .map-title-card,
+.fight-map-page .map-top-actions > button,
+.fight-map-page .map-floating-bottom > button {
+  box-shadow: 2px 3px 0 #191b1826, 0 3px 12px #191b181a;
+}
+.fight-map-page .map-title-card {
+  min-width: 0; max-width: 330px; padding: 10px 12px; background: var(--paper-light);
+  border: 1px solid #8f866f; pointer-events: auto;
+}
+.fight-map-page .map-title-card .eyebrow { display: block; font-size: 9px; letter-spacing: .09em; margin-bottom: 4px; }
+.fight-map-page .map-title-card h1 { font-size: 26px; letter-spacing: -.03em; margin-bottom: 4px; }
+.fight-map-page .map-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; font-size: 11px; line-height: 1.4; }
+.fight-map-page .map-key { font-size: 14px; }
+.fight-map-page .gym-key { color: #a33622; }
+.fight-map-page .private-key { color: #45683d; margin-left: 3px; }
+.fight-map-page .venue-marker:not(.public-gym-marker) { color: #45683d; }
+.fight-map-page .map-top-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; pointer-events: auto; }
+.fight-map-page .map-top-actions > button { min-height: 44px; padding: 8px 10px; font-size: 13px; gap: 6px; }
+.fight-map-page .map-top-actions .icon { width: 20px; height: 20px; }
+.fight-map-page .map-filter-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; }
+.fight-map-page .map-floating-bottom {
+  position: absolute; bottom: 34px; left: 12px; right: 60px; z-index: 2;
+  display: flex; align-items: stretch; gap: 8px; pointer-events: none;
+}
+.fight-map-page .map-floating-bottom > button { pointer-events: auto; min-height: 56px; padding: 8px 10px; gap: 8px; font-size: 14px; }
+.fight-map-page .map-floating-bottom > button > span { display: block; text-align: left; }
+.fight-map-page .map-floating-bottom small { display: block; font-size: 10px; font-weight: 400; }
+.fight-map-page .map-floating-bottom .icon { width: 21px; height: 21px; }
+.fight-map-page .leaflet-bottom.leaflet-right { bottom: 26px; }
+.fight-map-page .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; color: var(--ink); background: var(--paper-light); }
+.fight-map-page .leaflet-control-zoom a:hover { background: var(--paper); }
+.fight-map-page .leaflet-control-attribution { font: 10px/1.6 Barlow, sans-serif; background: #fcf8eaeF; max-width: 100%; }
+.fight-map-page .map-load-notice,
+.fight-map-page .map-tile-error {
+  position: absolute; z-index: 2; left: 12px; right: 12px; top: 132px;
+  width: fit-content; max-width: calc(100% - 24px); margin: 0;
+  padding: 6px 10px; background: var(--paper-light); border: 1px solid #8f866f; font-size: 12px;
+}
+.fight-map-page .map-load-notice .text-action { min-height: 44px; margin-left: 8px; }
+.fight-map-page .map-tile-error { top: auto; bottom: 104px; }
+.fight-map-page .map-layer-option { flex-direction: row; align-items: center; padding: 12px; border: 1px solid var(--line); gap: 12px; }
+.fight-map-page .map-layer-option small { display: block; font-weight: 400; color: var(--muted); }
+.fight-map-page .map-venue-list { margin-bottom: 16px; }
+.fight-map-page .map-venue { padding: 14px; box-shadow: none; }
+.fight-map-page .map-venue strong { font: 700 21px var(--display); }
+.fight-map-page .map-venue span { font-size: 14px; font-weight: 400; }
+.fight-map-page .map-venue small { font-size: 12px; font-weight: 400; }
+.fight-map-page .map-venue .icon { width: 18px; height: 18px; }
+.fight-map-page .paper-dialog { overscroll-behavior: contain; }
+
+@media (min-width: 700px) {
+  .app-layout:has(.fight-map-page) .app-main { padding: 0; }
+  .fight-map-page .map-floating-top { top: 24px; left: 24px; right: 24px; }
+  .fight-map-page .map-title-card { padding: 14px 18px; max-width: 400px; }
+  .fight-map-page .map-title-card h1 { font-size: 34px; }
+  .fight-map-page .map-scope { font-size: 13px; }
+  .fight-map-page .map-top-actions { flex-direction: row; }
+  .fight-map-page .map-floating-bottom { left: 24px; bottom: 32px; }
+  .fight-map-page .map-floating-bottom > button { padding: 12px 18px; font-size: 16px; }
+  .fight-map-page .map-floating-bottom small { font-size: 12px; }
+  .fight-map-page .map-load-notice { top: 150px; left: 24px; }
+}
+@media (max-width: 359px) {
+  .fight-map-page .map-floating-top { left: 8px; right: 8px; gap: 6px; }
+  .fight-map-page .map-title-card { padding: 8px; }
+  .fight-map-page .map-title-card h1 { font-size: 23px; }
+  .fight-map-page .map-title-card .eyebrow { display: none; }
+  .fight-map-page .map-floating-bottom { left: 8px; gap: 6px; }
+  .fight-map-page .map-floating-bottom > button { padding: 8px; font-size: 12px; }
+  .fight-map-page .map-floating-bottom .icon { display: none; }
+}
+@media (max-height: 500px) {
+  .app-layout:has(.fight-map-page) .app-header { min-height: 52px; padding-top: 0; padding-bottom: 0; }
+  .app-layout:has(.fight-map-page) .brand { font-size: 24px; }
+  .app-layout:has(.fight-map-page) .brand span { display: none; }
+  .app-layout:has(.fight-map-page) .main-nav a { min-height: 48px; padding-top: 3px; padding-bottom: 3px; }
+  .fight-map-page .map-floating-top { top: 8px; left: 8px; right: 8px; }
+  .fight-map-page .map-title-card { padding: 6px 10px; }
+  .fight-map-page .map-title-card .eyebrow { display: none; }
+  .fight-map-page .map-title-card h1 { font-size: 23px; margin: 0; }
+  .fight-map-page .map-floating-bottom { bottom: 24px; left: 8px; }
+  .fight-map-page .map-floating-bottom > button { min-height: 44px; padding: 4px 10px; }
+  .fight-map-page .map-floating-bottom small { display: none; }
+  .fight-map-page .map-load-notice { top: 84px; }
+}

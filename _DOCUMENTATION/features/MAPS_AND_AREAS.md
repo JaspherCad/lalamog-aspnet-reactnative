@@ -1,5 +1,10 @@
 # Maps, Azure address lookup and Philippine areas
 
+2026-11-08 current map UI: `/map` is a viewport-fitted Leaflet surface with
+floating paper controls and modal lists/filters/details. No page scroll is
+needed; long popup content scrolls within its dialog. See the current
+[full-screen map](#full-screen-map-presentation) contract below.
+
 2026-11-07 permission-container update: Public gym reads use visitor_canViewGyms: anonymous requests check the reserved VISITOR container; authenticated requests check their assigned-role union. Published-owner eligibility uses owner_canManageGyms, regardless of role title. Reverse lookup remains authenticated user_canMap. See [role permissions](ROLE_PERMISSIONS.md).
 
 2026-11-07 current: Gym Booking MVP supersedes the earlier Map venue name and admin publication API: Gym/Gyms and Fight.GymId preserve all existing venue IDs and geography. Anonymous /api/gyms and public /gyms/:id and /map show registered venues; owner APIs manage listings/requests. /api/maps retains only protected reverse lookup. Explicit geographic models remain unchanged. Current contracts/privacy/model and checks: [gym booking](GYM_BOOKING.md). Earlier Map/MapId source paths and routes below are historical.
@@ -98,6 +103,79 @@ Refresh deliberately: verify the next PSA release's terms/counts/codes/ancestry/
 - Web `LocationPicker.tsx`: cascading region → province/independent city → city/municipality → locally filtered barangay; reset children when parents change. `LocationMap.tsx`: click/drag pin, tile-error/manual fallback, visible attribution, cleanup. GPS only on explicit action with denied/timeout fallback; coordinate inputs remain usable.
 - `ProfileEditor.tsx` and `Fights.tsx` accept structured areas and optional pins. `FightMap.tsx` combines shared gym API pins/details with participant-authorized private pins, private status filtering and arrangement links. It displays no emergency contacts.
 
+## Full-screen map presentation
+
+Implemented 2026-11-08. Sources: `ACTIVE_frontend_lalamog/src/FightMap.tsx`,
+`FightMap.css`, shared `LocationMap.tsx` and `ui.tsx` native Modal; checks in
+`ACTIVE_frontend_lalamog/tests/maps.spec.ts`. Styling is scoped to
+`.fight-map-page` and the containing shell using `:has`; other routes and
+embedded location pickers retain their own dimensions. The map fills the
+available `100dvh` layout between the app header and mobile navigation, with
+no site footer, page heading, external venue list or vertical page scroll.
+Safe-area padding keeps mobile navigation separate from map controls.
+
+Floating **Public map** title/legend, **Filters**, **About this map**,
+**Browse gyms** and (when permitted) **Private pins** use the existing paper,
+red and ink design. The filter dialog toggles public/private layers and the
+existing private status filter; Reset restores both layers/all statuses.
+Lists remain browseable when a layer is hidden. Gym lists open existing
+details/history/booking links; private list entries and round pins open a
+private details dialog with the correct match's arrangements link. Diamonds
+are public gyms; green circles are private locations. There is no automatic
+GPS, geocoding, ranking or nearby-distance claim.
+
+The map stays mounted while a popup opens/closes, retaining pan and zoom.
+Native dialogs support Escape, focus containment and scrollable long lists;
+chained list-to-details dialogs return focus to the corresponding floating
+list button. Marker-opened details restore marker focus where available.
+`LocationMap`'s optional `fullscreen` presentation moves zoom to bottom-right
+and attribution to bottom-left, with marker-fit padding for the overlays.
+A ResizeObserver invalidates Leaflet size without panning on viewport resize;
+the observer and Leaflet instance clean up on unmount.
+
+Gym and private requests have independent loading/error/retry states. The
+base map remains available while locations load; failed tiles offer the
+list/address fallback. Empty public/private lists have clear messages. Private
+requests/controls/pins require the session's existing scheduling permission;
+changing actor/permission clears old private rows. Data routes, DTOs, consent,
+CSRF and public/private boundaries are unchanged. Do not add participant IDs,
+waivers, contacts or profile pins to public lists or tooltips.
+
+Recovery: restore `FightMap.tsx` and `FightMap.css` together with the shared
+fullscreen/resize changes in `LocationMap.tsx`. Normal embedded-picker styles
+remain in `styles.css`; never apply the viewport shell to those forms. No
+backend restart, migration, dependency, local-data reset or map-provider change
+is needed. Detailed current verification is in the latest work record.
+
+### Reproduce and improve this design
+
+The owner approved this direction on 2026-11-08. Preserve these foundations
+when iterating: the map is the main surface, the page does not scroll, actions
+float, long content scrolls only within dialogs, closing a popup retains the
+map position, and private information remains participant-only. Source files
+and tests above are the reproducible implementation; ignored screenshots are
+visual QA artifacts rather than source backups.
+
+From the repository root, start the normal frontend/API using the local
+development guide, then visit `/map`. For deterministic verification:
+
+```powershell
+Set-Location ACTIVE_frontend_lalamog
+npm run build
+$env:LALAMOG_WEB_URL = 'http://localhost:5173'
+$env:LALAMOG_BROWSER_CHANNEL = 'msedge'
+node node_modules/@playwright/test/cli.js test tests/maps.spec.ts
+```
+
+The browser suite supplies its own API/tile fixtures; it does not write to SQL
+or call map providers. Recheck the six documented viewport sizes, long lists,
+filter reset, pin/list details, Escape/focus return, attribution, anonymous
+access and failed tiles/listings after changing overlays or shell sizing.
+Next possible improvements (not implemented or required for this task): a
+physical-device/200% zoom audit and usability review of overlay density. Nearby
+or geographic search needs its own backend/query contract; do not imply it
+already exists or silently enable GPS while polishing this presentation.
+
 ## Privacy, migration and compatibility
 
 Nested `mapLocation`: nullable `regionCode`, `provinceCode`, `cityCode`, `barangayCode`, `psgcVersion`, `latitude`, `longitude`. Paired finite WGS84 latitude/longitude with ranges Â±90/Â±180; 0,0 valid. A structured selection requires region/city/barangay and matching optional province. Coordinates may be used without areas; no point-in-boundary verification.
@@ -135,6 +213,33 @@ Official API reference: [Azure reverse geocoding](https://learn.microsoft.com/en
 Recovery: restore the service, response DTO, inline named client, web types/UI and provider fixtures together. Keep Maps:AzureMapsApiKey private and restart the API after rebuilding; clearing/restarting the process also clears its old cache. Manual text/catalog/map controls work during a provider outage. No database migration, volume reset, media change or legacy edit is required.
 
 ## Latest work record and verification
+
+2026-11-08 / viewport map: implemented the owner's full-screen mobile-map
+direction with floating controls, modal public/private lists, filters and pin
+details. No page-scroll requirement; popup content remains scrollable. Added
+independent request states, focus restoration and Leaflet resize handling.
+Initial visual QA found attribution sharing the zoom container could overlap
+the lower actions; attribution now has its own bottom-left position, verified
+by geometry assertions. The initial new filter test used an exact accessible
+name that changed when the active-filter indicator appeared; its locator now
+accepts that descriptive state. No backend/data changes were required.
+Final verification: TypeScript/Vite production build passed. All nine cases in
+`tests/maps.spec.ts` passed in installed Edge against local Vite 5193 (47.9s),
+using controlled API/tile fixtures and no database writes or provider calls.
+Existing profile/manual/GPS-denial/address-lookup regressions passed alongside
+public gym histories, private pin filtering and the new viewport/popup cases.
+Screen geometry passed at 320x568, 360x640, 375x812, 390x844, 844x390 and
+1440x900: document matches viewport, map fills the available surface, 44px
+controls fit, and attribution does not overlap the actions. A 24-gym list scrolls
+inside its modal; Escape restores focus and map position, list-to-details has
+one dialog, layer reset works, and anonymous visits never request private fights.
+Failed gym listings/tiles retain retry/list/manual-address access. Mobile
+320/375px, landscape 844px and desktop 1440px screenshots were visually reviewed.
+Knowledge validation passed (56 Markdown files, 564 local targets, 14 guides);
+`git diff --check` passed. Full backend/SQL/storage suites, live GPS/provider
+tests, physical-device gestures and a comprehensive accessibility/200% zoom audit
+were not rerun for this presentation-only task. No required implementation
+remains; next action is owner review at `/map`.
 
 2026-11-07 / Azure Maps replacement: implemented at the owner's explicit request. The former adapter discarded all but five address parts; the new response retains complete Azure features plus compatible fields and match metadata. The configured key was verified with one deliberate public Rizal Park vicinity lookup; Azure returned one Address feature with street number/name, neighborhood, locality, postalCode and adminDistricts. The updated local API was restarted from the isolated verified build; health passed. A second public-place lookup through localhost:5173/api/maps/reverse, using a separate fictional demo cookie/CSRF session, returned Azure Maps with an Address/High result and complete features. The smoke session logged out; no profile/venue data was changed. No private coordinates or provider payload were written to documentation. Fresh verification: isolated .NET solution build and 18 provider/protected-API cases passed; 16 map privacy/catalog/service-composition cases passed (34 targeted backend checks total). Frontend TypeScript/Vite build and all six map browser cases passed. Mobile detail labels/values stack to prevent word splitting; the production rebuild and all six map fixtures passed again. Visual review also found that the pre-existing schedule fieldset rule squeezed the location picker into two nested columns on desktop; the picker now spans the form with a single outer column. The final production build and focused review/edit/save fixture passed with the desktop-width assertion; final 375/1440px screenshots were reviewed. The initial restricted restore failed to reach NuGet; the permitted rerun built successfully, with a cached NU1900 vulnerability-feed warning in the test project. No package versions were changed. Final knowledge validation passed (55 Markdown files, 506 local targets, 13 registered feature guides); git diff --check passed.
 

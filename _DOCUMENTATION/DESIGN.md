@@ -1,6 +1,14 @@
 # LALAMOG — Design system and interaction direction
 
-Updated: 2026-11-02 (Asia/Manila). Status: **visual/interaction foundation implemented; full map/result/video target remains proposed**.
+Owner revision 2026-11-08, implemented for `/map`: the map is the viewport's
+main surface between header and navigation, with no vertical page scrolling.
+Title/legend, Filters, About and browse actions float on it. Lists, filters and
+pin details use accessible native dialogs; long popup content may scroll.
+Keep the map mounted under popups and preserve visible attribution/zoom, manual
+list alternatives and privacy. This supersedes the inline map/list and proposed
+map bottom-sheet geometry below. Current scope/checks: [maps](features/MAPS_AND_AREAS.md#full-screen-map-presentation).
+
+Updated: 2026-11-08 (Asia/Manila). Status: **swipe notebook and viewport public-gym/private-pin map implemented; competitive results/video targets remain proposed**.
 
 Owner revision 2026-11-07, implemented for **swipe/Discover only**: a police
 field-notebook presentation supersedes the flat dossier treatment on this

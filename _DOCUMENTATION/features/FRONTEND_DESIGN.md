@@ -1,5 +1,12 @@
 # Mobile-first fighter dossier design
 
+2026-11-08 current map presentation: `/map` fills the screen between app header
+and navigation. Floating paper title/legend, filters, info and browse buttons
+open native dialogs for lists and details; the page has no vertical scroll.
+`src/FightMap.css` scopes this layout to the map, while shared `LocationMap.tsx`
+handles Leaflet resizing. Existing provider/privacy contracts remain unchanged.
+Full behavior, recovery and checks: [maps](MAPS_AND_AREAS.md#full-screen-map-presentation).
+
 2026-11-07 current swipe presentation: Discover and its fictional `/preview`
 use a CSS field notebook with spiral binding, taped Polaroid portrait on the
 left, ruled fighter details on the right and full-width field notes below.
@@ -56,6 +63,13 @@ Run: frontend `npm run build`; set `LALAMOG_WEB_URL` to the running preview, opt
 No current APIs for public competitive records, measurements, opponent reviews/aggregates, badges, rankings or video. Public gym maps/history are implemented separately. Show honest unavailable/empty states; seeded visual examples must be explicitly labeled and separate from real accounts. `RecordPanel` in `ui.tsx` uses one proportional W/L/D bar plus cm/kg and opponent-rating stars/score/count; its separate `FighterStats` view type is not an extension of the backend Profile DTO. Only preview Miko has sample stats (178 cm, 76 kg, 4/5 from 8 reviews). Rating meter green = average/5, red = remaining scale; unknown is neutral.
 
 ## Latest work record
+
+- 2026-11-08 / full-screen map: replaced inline heading/filter/list layout with
+  a viewport map and floating controls. Public gyms and private pins have popup
+  lists; filters, about and private/gym details open over the same mounted map.
+  Paper surfaces, labeled actions, Escape/focus behavior, zoom and attribution
+  remain. Loading/error/retry/empty and tile-failure fallbacks are retained.
+  Current verification and limits: [maps](MAPS_AND_AREAS.md#latest-work-record-and-verification).
 
 - 2026-11-07 / FE-01 swipe notebook: implemented the owner's police-notebook
   reference using `src/Discover.tsx` and scoped `src/Discover.css`. Portrait,

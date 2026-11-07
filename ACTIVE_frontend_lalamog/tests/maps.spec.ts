@@ -106,14 +106,20 @@ test('fight pin saves with manual address and appears on the private filtered ma
   await expect(page.getByText('Fight arranged.', { exact: false })).toBeVisible();
   expect(state.saved[0]).toMatchObject({ address: 'Keep this manual address', mapLocation: { latitude: 14.65, longitude: 121.05, barangayCode: '1381300082' } });
   await page.getByRole('link', { name: 'Map', exact: true }).press('Enter');
-  await expect(page.getByRole('heading', { name: 'Your fight map', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Public map', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /^Private pins/ }).click();
   await expect(page.locator('.map-venue')).toHaveCount(2);
   await page.getByRole('button').filter({ hasText: 'New manual venue' }).press('Enter');
   await expect(page.getByRole('link', { name: 'Open selected fight' })).toHaveAttribute('href', '/sessions?matchId=7');
   await expect(page.getByText('Hidden emergency contact', { exact: false })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^Filters/ }).click();
   await page.getByLabel('Fight status', { exact: true }).selectOption('completed');
+  await page.getByRole('button', { name: 'Show map', exact: true }).click();
+  await page.getByRole('button', { name: /^Private pins/ }).click();
   await expect(page.locator('.map-venue')).toHaveCount(1);
   await expect(page.locator('.map-venue')).toContainText('Earlier venue');
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('link', { name: 'OpenStreetMap', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await page.screenshot({ path: 'test-results/map-private-375.png', fullPage: true, animations: 'disabled' });
@@ -244,6 +250,7 @@ test('public gym pins open accessible details and safe fight history at mobile a
     await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   }
   failDetails = true;
+  await page.getByRole('button', { name: /^Browse gyms/ }).click();
   await page.locator('.public-gym').filter({ hasText: 'Demo Antipolo Gym 2' }).press('Enter');
   await expect(page.getByRole('dialog')).toContainText('Gym details unavailable.');
   failDetails = false;
@@ -251,6 +258,87 @@ test('public gym pins open accessible details and safe fight history at mobile a
   await expect(page.getByRole('dialog', { name: 'Demo Antipolo Gym 2' })).toBeVisible();
   await page.getByRole('button', { name: 'Close dialog' }).press('Enter');
   gyms[2].fights = [];
+  await page.getByRole('button', { name: /^Browse gyms/ }).click();
   await page.locator('.public-gym').filter({ hasText: 'Demo Antipolo Gym 3' }).press('Enter');
   await expect(page.getByRole('dialog')).toContainText('No completed fights yet.');
+});
+
+test('full-screen map fits phones, landscape and desktop; floating popups preserve the map', async ({ page }) => {
+  await fixture(page);
+  const gyms = Array.from({ length: 24 }, (_, index) => ({
+    id: index + 1, name: `Public gym ${index + 1}`, address: 'Public venue address', latitude: 14.58 + index * .001,
+    longitude: 121.18 + index * .001, isDemo: true, areaPath: [], fights: [], description: 'A fictional venue',
+    contactInformation: '', sessionPrice: 500, sessionDurationMinutes: 60, coverUrl: '',
+  }));
+  await page.route('**/api/gyms', route => route.fulfill({ json: gyms }));
+  await page.route(/\/api\/gyms\/\d+$/, route => route.fulfill({ json: gyms[0] }));
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  for (const [width, height] of [[320, 568], [360, 640], [375, 812], [390, 844], [844, 390], [1440, 900]]) {
+    await page.setViewportSize({ width, height }); await page.goto('/map');
+    await expect(page.locator('.public-gym-marker')).toHaveCount(24);
+    const map = page.getByRole('region', { name: 'Public gyms and your private fight locations map' });
+    const bounds = (await map.boundingBox())!;
+    const surface = (await page.locator('.fight-map-page').boundingBox())!;
+    expect(bounds.width).toBeCloseTo(width, 0); expect(bounds.height).toBeCloseTo(surface.height, 0);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(height + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const browse = page.getByRole('button', { name: /^Browse gyms/ });
+    const zoom = page.getByRole('button', { name: 'Zoom in', exact: true });
+    for (const target of [browse, zoom, page.getByRole('button', { name: /^Filters/ })]) {
+      const box = (await target.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44); expect(box.y + box.height).toBeLessThanOrEqual(surface.y + surface.height);
+    }
+    const browseBox = (await page.locator('.map-floating-bottom').boundingBox())!;
+    const zoomBox = (await zoom.boundingBox())!;
+    expect(browseBox.x + browseBox.width).toBeLessThanOrEqual(zoomBox.x);
+    const attribution = (await page.locator('.leaflet-control-attribution').boundingBox())!;
+    expect(attribution.y).toBeGreaterThanOrEqual(browseBox.y + browseBox.height);
+    await expect(page.getByRole('link', { name: 'OpenStreetMap', exact: true })).toBeVisible();
+    await page.screenshot({ path: `test-results/fullscreen-map-${width}.png`, animations: 'disabled' });
+    const pane = page.locator('.leaflet-map-pane'); const position = await pane.getAttribute('style');
+    await browse.click();
+    const list = page.getByRole('dialog', { name: 'Public gyms', exact: true });
+    await expect(list.locator('.map-venue')).toHaveCount(24);
+    await list.locator('.map-venue').last().scrollIntoViewIfNeeded();
+    await expect(list.locator('.map-venue').last()).toBeInViewport();
+    await page.keyboard.press('Escape'); await expect(browse).toBeFocused();
+    expect(await pane.getAttribute('style')).toBe(position);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(height + 1);
+  }
+  await page.getByRole('button', { name: /^Browse gyms/ }).click();
+  await page.locator('.map-venue').first().click(); await expect(page.getByRole('dialog', { name: 'Public gym 1' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await page.keyboard.press('Escape'); await expect(page.getByRole('button', { name: /^Browse gyms/ })).toBeFocused();
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  await page.getByRole('checkbox', { name: /Public gyms/ }).uncheck();
+  await page.getByRole('checkbox', { name: /Your private pins/ }).uncheck();
+  await page.getByRole('button', { name: 'Show map', exact: true }).click();
+  await expect(page.locator('.venue-marker')).toHaveCount(0);
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  await page.getByRole('button', { name: 'Reset filters' }).click();
+  await page.keyboard.press('Escape'); await expect(page.locator('.venue-marker')).toHaveCount(25);
+  expect(errors).toEqual([]);
+});
+
+test('anonymous map keeps private data unrequested and exposes recoverable gym/tiles failure in popups', async ({ page }) => {
+  await fixture(page);
+  let privateReads = 0; let fail = true;
+  page.on('request', request => { if (new URL(request.url()).pathname === '/api/fights') privateReads++; });
+  await page.route('**/api/auth/me', route => route.fulfill({ status: 401, json: { title: 'Sign in' } }));
+  await page.route('**/api/gyms', route => fail ? route.fulfill({ status: 503, json: { title: 'Listings unavailable.' } }) : route.fulfill({ json: [] }));
+  await page.route('https://tile.openstreetmap.org/**', route => route.abort());
+  await page.goto('/map');
+  await expect(page.getByRole('button', { name: /^Private pins/ })).toHaveCount(0);
+  await expect(page.locator('.map-tile-error')).toContainText('Browse the location lists');
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  await expect(page.getByLabel('Fight status', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^Browse gyms/ }).click();
+  await expect(page.getByRole('dialog')).toContainText('Listings unavailable.');
+  fail = false; await page.getByRole('button', { name: 'Retry public gyms' }).click();
+  await expect(page.getByRole('dialog')).toContainText('No public gyms yet.');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'About this map', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('does not request your GPS');
+  expect(privateReads).toBe(0);
 });

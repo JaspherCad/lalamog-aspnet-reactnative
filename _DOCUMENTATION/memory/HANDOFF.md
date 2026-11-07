@@ -1,10 +1,31 @@
 # Current handoff
 
-Updated: 2026-11-07 (Asia/Manila). [Change log](CHANGELOG.md).
+Updated: 2026-11-08 (Asia/Manila). [Change log](CHANGELOG.md).
 
 ## Current implementation and next action
 
-Latest task: swipe-only police field notebook implemented. `Discover.tsx` and
+Latest task: `/map` viewport UI implemented in `FightMap.tsx`, new scoped
+`FightMap.css` and shared `LocationMap.tsx` fullscreen/resize support. Floating
+title/filters/about and public/private browse buttons open dialogs; the page
+fits between app header/navigation without vertical scrolling. Long modal lists
+scroll internally. Public/private permissions, APIs and existing booking flow
+remain unchanged. Current behavior, recovery and final verification:
+[maps](../features/MAPS_AND_AREAS.md#full-screen-map-presentation).
+No backend restart, schema/data change or deployment is required.
+Final map verification: production build and all nine map browser fixtures
+passed (Edge, 47.9s). Six viewports from 320x568 to 1440x900 plus short landscape
+fit without page scroll; popup scrolling/focus, layers/private status, public
+history and offline/anonymous privacy checks passed. Mobile, landscape and
+desktop screenshots reviewed. Knowledge validation (56 files, 564 local targets,
+14 guides) and whitespace checks passed. Backend/SQL/storage/live GPS and full
+accessibility/200% zoom audits were not rerun. Next: owner visual review; no
+required implementation remains for this task.
+Owner approved the map direction on 2026-11-08. The maps guide now includes a
+reproduction recipe, the visual/interaction rules to preserve, regression
+checks and clearly labeled future improvements. Documentation is saved in the
+repository; this task did not commit or push it.
+
+Preceding task: swipe-only police field notebook implemented. `Discover.tsx` and
 new scoped `Discover.css` show a taped portrait left, light ruled facts/record
 right, CSS spiral binding and typed field notes below. Other modules keep their
 existing presentation. Build and all 11 design browser fixtures passed in Edge;

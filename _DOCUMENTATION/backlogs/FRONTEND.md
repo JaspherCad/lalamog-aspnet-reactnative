@@ -1,5 +1,11 @@
 # Frontend backlog: mobile-first browser experience
 
+2026-11-08 / FE-04 map presentation: viewport-fitted `/map`, floating paper
+controls and popup filters/public gyms/private pins/details implemented.
+Existing permission/provider/privacy contracts retained; no page scrolling.
+Current checks and recovery: [maps](../features/MAPS_AND_AREAS.md#full-screen-map-presentation).
+Distance/geographic filtering remains outside this presentation slice.
+
 2026-11-07 current: Gym Booking MVP implemented: public directory/map/details/history, owner gym editor/covers/booking decisions, private/gym arrangement choice, optional publication consent and admin controls. Mobile/public/full-flow verification and limits: [gym booking](../features/GYM_BOOKING.md).
 
 2026-11-07 / FE-04 public gyms: shared diamond pins open details/history dialogs alongside private fight pins. Loading/retry/empty history, Enter/Escape and 360/375/390/1440px fixtures passed; final build and all seven map tests passed. Admin management screen and geographic/ranking filters remain future work. [Maps](../features/MAPS_AND_AREAS.md).

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, errorText } from './api';
 import { LocationMap } from './LocationMap';
-import { Modal, PageHeading } from './ui';
+import { Icon, Modal } from './ui';
 import { GymCover, GymHistory, price } from './Gyms';
 import type { Fight, Gym, Session } from './types';
+import './FightMap.css';
 
 export function FightMap({ session }: { session: Session | null }) {
   const canViewPrivate = !!session && !!session.permissions?.includes('user_canSchedule');
@@ -17,33 +18,57 @@ export function FightMap({ session }: { session: Session | null }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [params] = useSearchParams();
+  const [privateError, setPrivateError] = useState('');
+  const [privateLoading, setPrivateLoading] = useState(false);
+  const [showGyms, setShowGyms] = useState(true);
+  const [showPrivate, setShowPrivate] = useState(true);
+  const [panel, setPanel] = useState<'gyms' | 'private' | 'filters' | 'about' | 'fight' | null>(params.has('fightId') && canViewPrivate ? 'fight' : null);
+  const gymsButton = useRef<HTMLButtonElement>(null);
+  const privateButton = useRef<HTMLButtonElement>(null);
+  const pinOpener = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setPrivateError(''); setFights([]);
+    setPrivateLoading(canViewPrivate);
     void api<Gym[]>('/gyms', { signal: controller.signal }).then(setGyms)
       .catch(err => { if (!controller.signal.aborted) setError(errorText(err)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     if (canViewPrivate) void api<Fight[]>('/fights', { signal: controller.signal }).then(setFights)
-      .catch(err => { if (!controller.signal.aborted) setError(errorText(err)); });
+      .catch(err => { if (!controller.signal.aborted) setPrivateError(errorText(err)); })
+      .finally(() => { if (!controller.signal.aborted) setPrivateLoading(false); });
     return () => controller.abort();
-  }, [reload, session?.userId]);
+  }, [reload, session?.userId, canViewPrivate]);
   const pinned = useMemo(() => fights.filter(fight => fight.gymId == null && fight.mapLocation?.latitude != null && fight.mapLocation.longitude != null && (filter === 'all' || fight.status === filter)), [fights, filter]);
   // Negative marker keys separate shared gym IDs from private fight IDs.
-  const markers = useMemo(() => [...gyms.map(gym => ({ id: -gym.id, latitude: gym.latitude, longitude: gym.longitude, label: gym.name, isPublic: true })),
-    ...pinned.map(fight => ({ id: fight.id, latitude: fight.mapLocation!.latitude!, longitude: fight.mapLocation!.longitude!, label: fight.location }))], [pinned, gyms]);
-  const selected = pinned.find(fight => fight.id === selectedId || (selectedId == null && fight.id === Number(params.get('fightId')))) || pinned[0];
-  return <section><PageHeading eyebrow="Your places. Your stories." title={canViewPrivate ? "Your fight map" : "Gym map"}><Link className="button-link secondary" to="/gyms">Browse gyms</Link></PageHeading>
-    <p className="muted">Explore public gym pins and their fight history. Your private session pins are visible only to you and your opponent.</p>
-    {canViewPrivate && <label className="map-filter">Your private fight status<select value={filter} onChange={e => { setFilter(e.target.value); setSelectedId(null); }} aria-label="Fight status"><option value="all">All fights</option>{['scheduled', 'confirmed', 'completed', 'canceled'].map(status => <option key={status}>{status}</option>)}</select></label>}
-    {error && <div role="alert" className="error">{error} <button className="secondary" onClick={() => setReload(value => value + 1)}>Retry map locations</button></div>}
-    {loading ? <p role="status">Loading fight locations…</p> : <div className="fight-map-layout"><div className="panel"><LocationMap value={(selectedId != null || params.has('fightId')) ? selected?.mapLocation || {} : {}} markers={markers} onSelect={id => id < 0 ? setGymId(-id) : setSelectedId(id)}/>
-      {!markers.length && <p>No pinned venues yet. Choose a map pin when arranging your next fight; existing text addresses are unchanged.</p>}</div>
-      <div className="map-venue-list"><h2>Public gyms</h2>{!gyms.length && <p>No public gyms yet.</p>}{gyms.map(gym => <button className="panel map-venue public-gym" key={`gym-${gym.id}`} onClick={() => setGymId(gym.id)}><strong>{gym.name}</strong><span>{gym.address}</span><small>{gym.isDemo ? 'Fictional demo gym · ' : ''}View details &amp; fights</small></button>)}
-        {canViewPrivate && <h2>Your private pins</h2>}{pinned.map(fight => <button className={`panel map-venue ${selected?.id === fight.id ? 'is-selected' : ''}`} key={fight.id} onClick={() => setSelectedId(fight.id)}><strong>{fight.location}</strong><span>{fight.address}</span><small>{new Date(fight.scheduledAt).toLocaleString()} · {fight.status}</small></button>)}
-        {selected && <Link className="button-link" to={`/sessions?matchId=${selected.matchId}`}>Open selected fight</Link>}
-        {!!fights.filter(fight => fight.mapLocation?.latitude == null).length && <p className="small muted">Some fights have a text address only. <Link to="/sessions">View all your fights</Link>.</p>}</div>
-    </div>}
-    {gymId != null && <GymDetails key={gymId} id={gymId} onClose={() => setGymId(null)}/>}
+  const markers = useMemo(() => [...(showGyms ? gyms.map(gym => ({ id: -gym.id, latitude: gym.latitude, longitude: gym.longitude, label: gym.name, isPublic: true })) : []),
+    ...(canViewPrivate && showPrivate ? pinned.map(fight => ({ id: fight.id, latitude: fight.mapLocation!.latitude!, longitude: fight.mapLocation!.longitude!, label: fight.location })) : [])], [pinned, gyms, showGyms, showPrivate, canViewPrivate]);
+  const selected = canViewPrivate ? pinned.find(fight => fight.id === (selectedId ?? Number(params.get('fightId')))) : undefined;
+  function choosePin(id: number) {
+    pinOpener.current = panel === 'gyms' ? gymsButton.current : panel === 'private' ? privateButton.current : document.activeElement as HTMLElement;
+    if (id < 0) { setPanel(null); setGymId(-id); }
+    else { setSelectedId(id); setPanel('fight'); }
+  }
+  function closePin() {
+    setGymId(null); setPanel(null);
+    requestAnimationFrame(() => {
+      if (pinOpener.current?.isConnected) pinOpener.current.focus();
+      else gymsButton.current?.focus();
+    });
+  }
+  return <section className="fight-map-page" aria-label="Explore gym and fight locations">
+    <LocationMap fullscreen value={showPrivate && selected ? selected.mapLocation || {} : {}} markers={markers} onSelect={choosePin}/>
+    <div className="map-floating-top">
+      <div className="map-title-card"><span className="eyebrow">Your places. Your stories.</span><h1>Public map</h1><span className="map-scope"><span className="map-key gym-key" aria-hidden="true">◆</span>Public gyms{canViewPrivate && <><span className="map-key private-key" aria-hidden="true">●</span>Your private pins</>}</span></div>
+      <div className="map-top-actions"><button className="secondary" aria-haspopup="dialog" onClick={() => setPanel('filters')}><Icon name="map"/>Filters{(!showGyms || (canViewPrivate && (!showPrivate || filter !== 'all'))) && <span className="map-filter-dot" aria-label="Filters active"/>}</button><button className="secondary icon-button" aria-label="About this map" aria-haspopup="dialog" onClick={() => setPanel('about')}><Icon name="info"/></button></div>
+    </div>
+    {(loading || privateLoading || error || privateError) && <div className="map-load-notice" role={error || privateError ? 'alert' : 'status'}>{loading || privateLoading ? 'Loading locations…' : 'Some locations could not load.'}{(error || privateError) && <button className="text-action" onClick={() => setReload(value => value + 1)}>Retry map locations</button>}</div>}
+    <div className="map-floating-bottom"><button ref={gymsButton} aria-haspopup="dialog" onClick={() => setPanel('gyms')}><Icon name="discover"/><span>Browse gyms<small>{loading ? 'Loading…' : `${gyms.length} public ${gyms.length === 1 ? 'gym' : 'gyms'}`}</small></span></button>{canViewPrivate && <button ref={privateButton} className="secondary" aria-haspopup="dialog" onClick={() => setPanel('private')}><Icon name="pin"/><span>Private pins<small>{privateLoading ? 'Loading…' : `${pinned.length} ${filter === 'all' ? 'locations' : filter}`}</small></span></button>}</div>
+    {panel === 'filters' && <Modal title="Map filters" onClose={() => setPanel(null)}><p>Choose the pins shown on your map.</p><label className="map-layer-option"><input type="checkbox" checked={showGyms} onChange={event => setShowGyms(event.target.checked)}/><span><strong>Public gyms</strong><small>Shared venues and completed fight history.</small></span></label>{canViewPrivate && <><label className="map-layer-option"><input type="checkbox" checked={showPrivate} onChange={event => setShowPrivate(event.target.checked)}/><span><strong>Your private pins</strong><small>Only sessions you take part in.</small></span></label><label>Your private fight status<select disabled={!showPrivate} value={filter} onChange={event => { setFilter(event.target.value); setSelectedId(null); }} aria-label="Fight status"><option value="all">All fights</option>{['scheduled', 'confirmed', 'completed', 'canceled'].map(status => <option key={status}>{status}</option>)}</select></label></>}<div className="dialog-actions"><button onClick={() => setPanel(null)}>Show map</button><button className="secondary" onClick={() => { setShowGyms(true); setShowPrivate(true); setFilter('all'); setSelectedId(null); }}>Reset filters</button></div></Modal>}
+    {panel === 'about' && <Modal title="About this map" onClose={() => setPanel(null)}><p>Explore public gym pins and their completed fight history. Your private session pins are visible only to you and your opponent.</p><p>Diamond pins are public gyms. Round pins are your private locations. Tap a pin or browse the lists for details.</p><p className="small muted">The map does not request your GPS location. Public gym pins are venue locations, not fighters’ home locations.</p></Modal>}
+    {panel === 'gyms' && <Modal title="Public gyms" onClose={() => setPanel(null)}><p className="muted">Choose a gym for details and fight history.</p>{loading ? <p role="status">Loading public gyms…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary" onClick={() => setReload(value => value + 1)}>Retry public gyms</button></div> : <><div className="map-venue-list">{!gyms.length && <p>No public gyms yet. Check back for new venues.</p>}{gyms.map(gym => <button className="panel map-venue public-gym" key={gym.id} onClick={() => choosePin(-gym.id)}><strong>{gym.name}</strong><span>{gym.address}</span><small>{gym.isDemo ? 'Fictional demo gym · ' : ''}View details &amp; fights <Icon name="arrow"/></small></button>)}</div><Link className="text-action" to="/gyms">Open gym directory <Icon name="arrow"/></Link></>}</Modal>}
+    {panel === 'private' && canViewPrivate && <Modal title="Your private pins" onClose={() => setPanel(null)}><p className="muted">{filter === 'all' ? 'Your pinned private arrangements.' : `Showing ${filter} private arrangements.`}</p>{privateLoading ? <p role="status">Loading your private pins…</p> : privateError ? <div role="alert"><p>{privateError}</p><button className="secondary" onClick={() => setReload(value => value + 1)}>Retry private pins</button></div> : <div className="map-venue-list">{!pinned.length && <p>No private pins for this filter. Choose a pin when arranging a fight, or change the status filter.</p>}{pinned.map(fight => <button className={`panel map-venue ${selected?.id === fight.id ? 'is-selected' : ''}`} key={fight.id} onClick={() => choosePin(fight.id)}><strong>{fight.location}</strong><span>{fight.address}</span><small>{new Date(fight.scheduledAt).toLocaleString()} · {fight.status}</small></button>)}</div>}{!!fights.filter(fight => fight.mapLocation?.latitude == null).length && <p className="small muted">Some fights have a text address only. <Link to="/sessions">View all your fights</Link>.</p>}</Modal>}
+    {panel === 'fight' && canViewPrivate && <Modal title={selected?.location || 'Private fight location'} onClose={closePin}>{privateLoading ? <p role="status">Loading your private fight…</p> : selected ? <><span className="corner-label">Private session</span><p>{selected.address}</p><p>{new Date(selected.scheduledAt).toLocaleString()} · {selected.status}</p><Link className="button-link" to={`/sessions?matchId=${selected.matchId}`}>Open selected fight</Link></> : <p>This pin is not available for the current filter. Choose another private pin.</p>}</Modal>}
+    {gymId != null && <GymDetails key={gymId} id={gymId} onClose={closePin}/>}
   </section>;
 }
 

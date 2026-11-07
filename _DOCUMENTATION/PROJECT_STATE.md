@@ -1,6 +1,6 @@
 # Current project state
 
-Updated: 2026-11-07 (Asia/Manila). Current source, feature guides and dated
+Updated: 2026-11-08 (Asia/Manila). Current source, feature guides and dated
 verification establish this inventory. Earlier rollout records live in the
 [change log](memory/CHANGELOG.md); [handoff](memory/HANDOFF.md) owns continuation.
 
@@ -19,7 +19,7 @@ gym; completion records attendance/history without a winner or ranking.
 | Permission containers | FIGHTER, ADMIN, GYM_OWNER and anonymous VISITOR; current SQL permission unions, custom containers and resource checks; [roles](features/ROLE_PERMISSIONS.md) |
 | Profiles/discovery/matching | Unique fighter names, aliases, five styles, matching-permission eligibility, canonical mutual matches; [profiles](features/PROFILES_AND_DISCOVERY.md), [matching](features/MATCHING.md) |
 | Private chat | Participant-authorized REST with three-second active refresh/cursor recovery; [chat](features/CHAT.md) |
-| Gyms and public directory/map | Multiple owner venues, cover/details/pin/price/duration, publication and admin moderation; [gym booking](features/GYM_BOOKING.md) |
+| Gyms and public directory/map | Multiple owner venues, cover/details/pin/price/duration, publication and admin moderation; viewport map with floating controls/modal lists and details; [gym booking](features/GYM_BOOKING.md), [maps](features/MAPS_AND_AREAS.md) |
 | Private fights and gym bookings | Match membership, quote snapshots, owner decisions, overlap-safe approval, two waivers, cancellation and completion; [gym booking](features/GYM_BOOKING.md), [sessions](features/SESSIONS_AND_WAIVERS.md) |
 | Public completed gym history | Anonymous entries; identities require both fighter consents, with withdrawal; private arrangements excluded |
 | Philippine geography | Explicit Regions/Provinces/Cities/Barangays with named FKs; no recursive area model. Local PSA selectors and optional private pins; [maps](features/MAPS_AND_AREAS.md) |
