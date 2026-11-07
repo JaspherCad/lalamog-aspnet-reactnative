@@ -53,3 +53,6 @@ ACTIVE_frontend_lalamog/*.tsbuildinfo
 ACTIVE_frontend_lalamog/test-results/
 ACTIVE_frontend_lalamog/playwright-report/
 !ACTIVE_backend_lalamog/packages.lock.json
+
+# Generated backend test reports (retain locally, exclude from Git).
+tests/**/TestResults/

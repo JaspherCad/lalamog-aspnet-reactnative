@@ -2,7 +2,7 @@
 
 2026-11-04 instruction update: owner explicitly moved sample data into static Data/DatabaseSeeder.cs called from the short Development startup scope. Root/backend/bootstrap/engineering guidance now permits this while retaining inline configuration. It supersedes older no-seeder/inline-callback rules below. No helper-script implementation changed.
 
-Status: implemented repository workflow. Updated: 2026-11-03 (Asia/Manila).
+Status: implemented repository workflow. Updated: 2026-11-07 (Asia/Manila).
 Scope: project instructions, knowledge navigation, and context helpers.
 Application behavior is unchanged. Verification for this task is recorded below.
 
@@ -86,6 +86,32 @@ registration do not prove that guidance matches source or was read by a host.
    not app tests or proof of agent compliance.
 
 ## Latest work record
+
+2026-11-07 / pre-push knowledge audit: synchronized current state, architecture,
+API/data contracts, auth/session/map guides, feature index and root/bootstrap
+routing for the delivered Gym Booking MVP and permission containers. Removed
+retired current-model/routes and stale in-progress claims; retained historical
+migration/recovery evidence. Current handoff is concise and preserves the
+normal-database incident, verified-backup chronology and KEEP decision.
+
+Roles remain permission containers with reserved anonymous VISITOR; explicit
+geography, owner decisions, quotes and consent are now discoverable through the
+correct guides. The existing protocol requires agents to maintain these in the
+same task. No background updater, Git hook, scheduled task or new infrastructure
+was installed. scripts/gitignore now excludes generated backend TestResults so
+local reports stay out of commits; existing private/runtime ignore rules remain.
+Application suites were not rerun for this documentation/ignore-only audit.
+Verification for this documentation/ignore-only audit: knowledge validation
+passed (56 Markdown files, 551 local targets, 14 guides in both routers).
+Context exports passed: default 14 sections; workflow plus gym/role guides 17;
+deduplicated guides 16; all guides 28. Six invalid absolute/outside/index/
+directory/non-Markdown/missing paths failed before packet output. Both helper
+scripts parsed. Git artifact checks confirmed reports/private runtime files are
+excluded and new source/migrations/guides remain visible; documentation/new-source
+whitespace and git diff --check passed. No remaining work for this audit.
+External URLs/heading fragments and arbitrary host compliance are not validated.
+
+### Earlier static-seeder work (historical)
 
 - 2026-11-04 / seeder rule revision: synchronized root/backend/bootstrap/engineering and feature/startup guidance with the owner's static DatabaseSeeder request. Configuration remains inline; older seeding rules are explicitly superseded. Application tests: all 61 passed. Knowledge/context-export checks recorded in the current handoff; exporter/checker source unchanged.
 

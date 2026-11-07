@@ -3,7 +3,7 @@ import { api, errorText } from './api';
 import { LocationMap } from './LocationMap';
 import type { AreaOption, MapLocation, ReverseGeocodeResult } from './types';
 
-export function LocationPicker({ value, onChange, purpose, onAddressSelected }: { value: MapLocation; onChange: (value: MapLocation) => void; purpose: 'profile' | 'venue'; onAddressSelected?: (address: string) => void }) {
+export function LocationPicker({ value, onChange, purpose, onAddressSelected }: { value: MapLocation; onChange: (value: MapLocation) => void; purpose: 'profile' | 'venue' | 'gym'; onAddressSelected?: (address: string) => void }) {
   const current = useRef(value); current.current = value;
   const [regions, setRegions] = useState<AreaOption[]>([]);
   const [provinces, setProvinces] = useState<AreaOption[]>([]);
@@ -78,8 +78,8 @@ export function LocationPicker({ value, onChange, purpose, onAddressSelected }: 
     }, () => { setLocating(false); setError('Location permission was denied or timed out. You can still use the map or enter coordinates.'); }, { timeout: 10000, maximumAge: 60000 });
   }
   const visibleBarangays = barangays.filter(area => area.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase()) || area.code === value.barangayCode);
-  return <fieldset className="location-picker"><legend>{purpose === 'profile' ? 'Your area and private pin' : 'Venue area and map pin'}</legend>
-    <p className="small muted">{purpose === 'profile' ? 'Your public card shows the city. Your barangay and exact pin are private.' : 'Only you and your matched partner can see this venue pin.'} Select an area and place the pin yourself. You can look up a suggested address or enter it manually.</p>
+  return <fieldset className="location-picker"><legend>{purpose === 'profile' ? 'Your area and private pin' : purpose === 'gym' ? 'Gym area and public pin' : 'Venue area and map pin'}</legend>
+    <p className="small muted">{purpose === 'profile' ? 'Your public card shows the city. Your barangay and exact pin are private.' : purpose === 'gym' ? 'This gym address and pin will be public when you publish the listing.' : 'Only you and your matched partner can see this venue pin.'} Select an area and place the pin yourself. You can look up a suggested address or enter it manually.</p>
     <div className="form-grid">
       <label>Region<select aria-label="Region" value={value.regionCode || ''} onChange={e => onChange({ ...value, regionCode: e.target.value || null, provinceCode: null, cityCode: null, barangayCode: null, psgcVersion: null })}>
         <option value="">Use text location only</option>{regions.map(area => <option key={area.code} value={area.code}>{area.name}</option>)}
@@ -91,7 +91,7 @@ export function LocationPicker({ value, onChange, purpose, onAddressSelected }: 
         <option value="">Choose a city / municipality</option>{cities.map(area => <option key={area.code} value={area.code}>{area.name}</option>)}
       </select></label>}
       {value.cityCode && <div className="barangay-field"><label>Find a barangay<input aria-label="Find a barangay" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Filter by name"/></label>
-        <label>Barangay<select aria-label="Barangay" value={value.barangayCode || ''} required onChange={e => onChange({ ...value, barangayCode: e.target.value || null, psgcVersion: null })}>
+        <label>Barangay<select aria-label="Barangay" value={value.barangayCode || ''} required={purpose !== 'gym'} onChange={e => onChange({ ...value, barangayCode: e.target.value || null, psgcVersion: null })}>
           <option value="">Choose a barangay</option>{visibleBarangays.map(area => <option key={area.code} value={area.code}>{area.name}</option>)}
         </select></label></div>}
     </div>

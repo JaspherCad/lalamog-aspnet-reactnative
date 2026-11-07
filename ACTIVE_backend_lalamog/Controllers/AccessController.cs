@@ -17,6 +17,10 @@ public class AccessController : ApiController
         _access = access;
     }
 
+    [HttpGet("users")]
+    public async Task<ActionResult<List<AccessUserResponse>>> Users(CancellationToken cancellationToken)
+    { return Ok(await _access.ListUsersAsync(cancellationToken)); }
+
     [HttpGet("system-features")]
     public async Task<ActionResult<List<SystemFeatureResponse>>> Features(CancellationToken cancellationToken)
     {

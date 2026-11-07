@@ -3,8 +3,12 @@ namespace Lalamog.Api.Models;
 public class Fight
 {
     public long Id { get; set; }
+    public long? GymId { get; set; }
+    public Gym? Gym { get; set; }
     public long MatchId { get; set; }
     public FighterMatch Match { get; set; } = null!;
+    public decimal? QuotedPrice { get; set; }
+    public int? SessionDurationMinutes { get; set; }
     public DateTimeOffset ScheduledAt { get; set; }
     public string Location { get; set; } = "";
     public string Address { get; set; } = "";

@@ -1,10 +1,8 @@
-# Training sessions, waivers, and emergency contacts
+# Fights, gym bookings, waivers and emergency contacts
 
-2026-11-02 address-lookup follow-up: choose a public-place pin → Find address → review → Use this address. Suggestion copies into editable venue address (300-character existing limit), saved by existing schedule endpoint. Provider failures do not block manual scheduling or overwrite drafts; changing pin discards stale suggestions. New POST /api/maps/reverse is cookie/CSRF protected; no schema change. See [maps guide](MAPS_AND_AREAS.md).
-
-2026-11-02 latest work: optional MapLocation added to schedule/fight DTOs and Fight with nullable additive migration. Manual venue/address still required; structured area/pin optional and validated. Fights UI embeds LocationPicker; /map shows only the current participant-authorized fight list, with status filtering and arrangement links. Map UI does not render emergency contacts. Participant SQL roundtrip/outsider 404 passed within all 43 backend tests; map fixture coverage passed. Existing time/waiver/contact/concurrency rules unchanged. See [maps guide](MAPS_AND_AREAS.md).
-
-Status: implemented baseline audited 2026-10-28; UI redesigned 2026-11-02. User-facing name is now Fights; existing `/sessions` browser path and Fight/fights entities/API remain compatible.
+Updated: 2026-11-07. Implemented private arrangements and owner-approved gym
+bookings use the same Fight model. [Gym booking](GYM_BOOKING.md) owns the full
+venue, quote, owner-action and public-history specification.
 
 ## Source map
 
@@ -12,22 +10,24 @@ Status: implemented baseline audited 2026-10-28; UI redesigned 2026-11-02. User-
 
 ## State machine
 
-| Current state | Action | Conditions | Result |
+| State | Action | Conditions / actor | Result |
 | --- | --- | --- | --- |
-| none | propose | member; future instant; nonblank venue/address; no unfinished session | scheduled |
-| scheduled | confirm self | before scheduled time; accepted=true; emergency name/phone | scheduled after first; confirmed after both |
-| confirmed | update own confirmation | before scheduled time; same validation | confirmed |
-| scheduled or confirmed | cancel | member; nonblank reason | canceled |
-| confirmed | complete | member; scheduled time reached | completed |
-| canceled or completed | confirm/cancel/complete | terminal | 409 |
-
-Cancellation has no future-only check in the current service. Completion records no winner, result, Elo, review, media, or stats. Do not restore those legacy fields as an accidental bug fix.
+| none | propose private | match participant; future instant; venue/address; no unfinished fight | scheduled |
+| none | request gym | participant; published eligible gym/current quote; future instant | pending_approval |
+| pending_approval | approve | owning gym manager; future start; no approved overlap | scheduled |
+| pending_approval | decline | owning gym manager; nonblank private reason | canceled |
+| scheduled | confirm self | participant; before start; accepted waiver and own contact | scheduled after first, confirmed after both |
+| confirmed | update own confirmation | participant; before start; same validation | confirmed |
+| pending_approval/scheduled/confirmed | cancel | participant or owning gym manager; reason | canceled |
+| confirmed private | complete | participant; scheduled time reached | completed |
+| confirmed gym | complete | owning gym manager; booked end reached | completed |
+| saved confirmation | change publication consent | that participant; independent from waiver; permitted after completion | updated consent |
 
 ## Rules and privacy
 
-Each match has at most one scheduled/confirmed session; the SQL filtered unique index and serializable transaction enforce it under concurrency. Canceled/completed sessions release the slot. Each participant's confirmation is a separate `(FightId, UserId)` row, so one acceptance cannot overwrite the other's contact.
+Each match has at most one pending_approval/scheduled/confirmed fight; the SQL filtered unique index and serializable transaction enforce it under concurrency. Canceled/completed sessions release the slot. Each participant's confirmation is a separate `(FightId, UserId)` row, so one acceptance cannot overwrite the other's contact.
 
-All list/detail/mutation access is participant-only, including emergency contacts. The current FightResponse returns both participants' contacts to either member. Do not leak them into discovery/public maps/events/notifications. Public events would require a separate sanitized contract and explicit visibility flow.
+All `/api/fights` list/detail/mutation access is participant-only, including emergency contacts. FightResponse returns both participants' contacts to either member. Public gym history uses a separate sanitized DTO and both participants' publication consent; private sessions are never published by that projection.
 
 Scheduling input is browser local date/time; the frontend converts to an ISO instant, server normalizes to UTC, and display converts locally. Service time comes from `TimeProvider` so tests advance time without waiting. Preserve offsets and test midnight/date boundaries.
 
@@ -47,6 +47,13 @@ UI currently uses refresh for partner/session state changes. Durable notificatio
 
 
 ## Latest work record
+
+2026-11-07: private/gym transitions, quotes, overlapping/adjacent approvals,
+waiver privacy, completion timing and publication consent/withdrawal passed
+in the 85-case backend run and isolated full booking browser demo. Current
+rollout and coverage limits are in [handoff](../memory/HANDOFF.md).
+
+### Earlier verification (historical)
 
 - 2026-11-02 / simple setup/test data: default SQL retries are inline in Program.cs and both scheduling concurrency tests pass in the full 34-case backend run. Inline seeding adds scheduled/confirmed/completed/canceled examples, past confirmed completion and participant-only fictional waiver/contact records; one unfinished fight per match is preserved. No FightService options layer or business-rule changes. Scenarios/results: [local development](LOCAL_DEVELOPMENT.md).
 

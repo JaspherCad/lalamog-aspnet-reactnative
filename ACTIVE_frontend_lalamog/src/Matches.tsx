@@ -22,7 +22,7 @@ function Conversation({ match, session }: { match: Match; session: Session }) {
     void api<Fight[]>('/fights', { signal: controller.signal }).then(values => setFights(values.filter(f => f.matchId === match.id))).catch(err => { if (!controller.signal.aborted) setFightError(errorText(err)); });
     return () => controller.abort();
   }, [match.id]);
-  const currentFight = fights?.find(f => ['scheduled', 'confirmed'].includes(f.status));
+  const currentFight = fights?.find(f => ['pending_approval', 'scheduled', 'confirmed'].includes(f.status));
   function merge(incoming: Message[]) {
     setMessages(current => [...new Map([...current, ...incoming].map(m => [m.id, m])).values()].sort((a, b) => a.id - b.id));
   }
@@ -82,7 +82,7 @@ function Conversation({ match, session }: { match: Match; session: Session }) {
     <p className="connection-status" role="status"><span className={`connection-dot ${syncStatus === 'Updates every 3 seconds' ? 'is-live' : ''}`}/>{syncStatus} · Private conversation</p>
     <div className="conversation-fight"><div><p className="eyebrow">{currentFight ? 'Your next round' : 'Another story to tell'}</p><h3>{currentFight ? currentFight.location : 'Make it a match.'}</h3><p className="small">{currentFight ? `${new Date(currentFight.scheduledAt).toLocaleString()} · ${currentFight.status}` : fightError ? 'Could not check your arrangements. Open your fights to retry.' : 'Choose a place and time together.'}</p></div>
       <Link className="button-link" to={`/sessions?matchId=${match.id}`}>{currentFight || fightError || fights === null ? 'View your fights' : 'Start the Match'}<Icon name="arrow"/></Link>
-      {!!fights?.filter(f => !['scheduled', 'confirmed'].includes(f.status)).length && <Link className="text-action" to={`/sessions?matchId=${match.id}`}>Previous fights <Icon name="arrow"/></Link>}</div>
+      {!!fights?.filter(f => !['pending_approval', 'scheduled', 'confirmed'].includes(f.status)).length && <Link className="text-action" to={`/sessions?matchId=${match.id}`}>Previous fights <Icon name="arrow"/></Link>}</div>
     {error && <p role="alert" className="error">{error}</p>}
     <div className="message-list" role="log" aria-label="Conversation" aria-live="polite">
       {olderAvailable && <button className="link" disabled={olderBusy} onClick={() => void older()}>Load older messages</button>}

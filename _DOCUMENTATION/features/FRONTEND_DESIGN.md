@@ -1,18 +1,41 @@
 # Mobile-first fighter dossier design
 
+2026-11-07 current swipe presentation: Discover and its fictional `/preview`
+use a CSS field notebook with spiral binding, taped Polaroid portrait on the
+left, ruled fighter details on the right and full-width field notes below.
+This is a swipe-only skin; other modules retain their existing presentation.
+Public gym directory/map capabilities are owned by [gym booking](GYM_BOOKING.md)
+and [maps](MAPS_AND_AREAS.md); older private-map-only notes below are historical.
+
+2026-11-07: navigation and booking actions use session permissions without role-name fallbacks. Owner/admin dashboards load only their permitted sections. The ownership picker uses server-derived canManageGyms; reserved VISITOR is excluded from account-role assignment. See [role permissions](ROLE_PERMISSIONS.md).
+
+2026-11-07 current: Gym MVP adds anonymous gym directory/details/map, owner multi-gym editor/cover/booking dashboard, role-aware signup/navigation and a small admin screen. Existing paper styles, explicit GPS, manual location, REST chat and mobile controls remain. A gym-specific location picker permits city-only ancestry and clearly labels the published pin as public. Latest browser/visual evidence: [gym booking](GYM_BOOKING.md).
+
 2026-11-07 address-provider revision: LocationPicker uses explicit Azure Maps lookup with an expandable available-address breakdown, loading/error/review states, visible provider/privacy notice, and optional copy-to-editable venue address. Profile public city/official barangay selection stay untouched. Pin changes abort stale lookups. No automatic geocoding; provider/schema/recovery evidence in [maps guide](MAPS_AND_AREAS.md).
 
 2026-11-02 latest work: LocationPicker/LocationMap/FightMap extend the paper UI with private profile/venue pins, local cascading PSA selectors, explicit optional GPS, manual fallback, status-filtered participant map and attribution. App /map placeholder replaced; public publication/results remain deferred. Production build and map/profile/chat fixture regressions passed; mobile 375 px and desktop 1440 px map screenshots inspected. Automated tiles are intercepted. Backend persistence/privacy verified in SQL tests; see [maps guide](MAPS_AND_AREAS.md).
 
-Status: implemented UI redesign against existing APIs; public map/result/video services remain planned; basic private maps are implemented. Updated/verified 2026-11-02. Related: FE-01/06, [design](../DESIGN.md), [brief](../DESIGN_BRIEF.md).
+Status: implemented UI against existing APIs, including public gym maps and private participant maps. Results/video remain planned. Swipe notebook updated/verified 2026-11-07. Related: FE-01/06, [design](../DESIGN.md), [brief](../DESIGN_BRIEF.md).
 
 ## Purpose and implementation plan
 
-Existing React DOM/Vite app now uses shared paper surfaces, clean controls/icons, dossier discovery gestures and consistent auth/profile/inbox/fight screens. Cookie/CSRF, message recovery and scheduling APIs are retained. `/preview` is an unauthenticated, explicitly fictional interactive design preview; no API mutation is made there. `/map` now shows private participant venues; public map publication remains deferred. No deployment or database reset.
+Existing React DOM/Vite app uses shared paper surfaces, clean controls/icons, notebook discovery gestures and consistent auth/profile/inbox/fight screens. Cookie/CSRF, message recovery and scheduling APIs are retained. `/preview` is an unauthenticated, explicitly fictional interactive design preview; no API mutation is made there. `/map` shows public gyms and authorized private participant venues; gym-history publication follows the current gym guide. No deployment or database reset.
 
 ## Source map and contracts
 
 Active frontend: `src/App.tsx`, `Discover.tsx`, `ui.tsx`, `fightingStyles.ts`, `ProfileEditor.tsx`, `Matches.tsx`, `Fights.tsx`, `styles.css`, `vite-env.d.ts` and `src/assets/`. Original paper/fictional portrait JPEGs, local Barlow fonts/license and asset prompts/provenance are bundled. One paper image is reused; texture toggle demonstrates functional solid-color fallback. No icon package or new runtime dependency.
+
+`src/Discover.css`, imported by `Discover.tsx`, owns the notebook skin. Every
+selector is scoped beneath `.discover-page`, including its intel/match dialogs;
+shared styles/components and other routes keep their original defaults. CSS
+gradients draw 24px notebook rules, red margins, tape and spiral binding; no new
+image/font/dependency is required. Courier New/Courier supplies typed metadata,
+aliases and notes; red newspaper fighter names and colored style icons remain.
+At 340px and wider the portrait and details stay side by side, with field notes
+below. Below 340px the columns stack for readable long text. Photo backplates
+tilt; live text, photo and controls stay level. Fight intel and decision buttons
+have at least 44px targets. The texture toggle removes the shared image texture;
+CSS notebook rules remain decorative and functional without it.
 
 `fightingStyles.ts` is the sole compatibility adapter: supported keys `streetfighting|kickboxing|bjj|wrestling|martial` total 47 characters, fitting the existing 50-character `fightingStyle` wire/SQL field. UI selects 1–5 distinct styles; supported legacy labels are recognized, unfamiliar text survives until deliberately replaced. Empty recognized selections fail before save. This is string serialization, not a new server collection DTO or schema migration. Future collection APIs must migrate this encoding/legacy values together.
 
@@ -30,9 +53,37 @@ Run: frontend `npm run build`; set `LALAMOG_WEB_URL` to the running preview, opt
 
 ## Known gaps
 
-No current APIs for public records, measurements, opponent reviews/aggregates, badges, rankings, map or video. Show honest unavailable/empty states; seeded visual examples must be explicitly labeled and separate from real accounts. `RecordPanel` in `ui.tsx` now uses one proportional W/L/D bar plus cm/kg and opponent-rating stars/score/count; its separate `FighterStats` view type is not an extension of the backend Profile DTO. Only preview Miko has sample stats (178 cm, 76 kg, 4/5 from 8 reviews). Rating meter green = average/5, red = remaining scale; unknown is neutral.
+No current APIs for public competitive records, measurements, opponent reviews/aggregates, badges, rankings or video. Public gym maps/history are implemented separately. Show honest unavailable/empty states; seeded visual examples must be explicitly labeled and separate from real accounts. `RecordPanel` in `ui.tsx` uses one proportional W/L/D bar plus cm/kg and opponent-rating stars/score/count; its separate `FighterStats` view type is not an extension of the backend Profile DTO. Only preview Miko has sample stats (178 cm, 76 kg, 4/5 from 8 reviews). Rating meter green = average/5, red = remaining scale; unknown is neutral.
 
 ## Latest work record
+
+- 2026-11-07 / FE-01 swipe notebook: implemented the owner's police-notebook
+  reference using `src/Discover.tsx` and scoped `src/Discover.css`. Portrait,
+  styles and experience tag sit left; labeled availability/experience and a
+  light ruled record panel sit right. Field notes and profile/history action
+  span the bottom. CSS-only binding, tape, photo backplate and highlighting
+  give the dossier feel without implying criminal status or adding public data.
+  Like/Pass, gestures, server acknowledgment, retry, mutual reveal and private
+  conversation navigation retain their existing behavior.
+- Verification: TypeScript/Vite production build passed; all 11 cases in
+  `tests/redesign.spec.ts` passed in Edge against isolated local Vite 5193 with
+  controlled API fixtures (47.9s). Checks cover 360/375/390/1440px left/right
+  geometry, 44px action targets, no overflow, texture fallback, intel/Escape,
+  failed/slow choices, duplicate guard, canceled/vertical/left/keyboard gestures,
+  reduced motion, profile/auth/chat/scheduling regressions, and long text/five
+  styles/missing portrait at 320/360/390px on a 568px-high screen. Mobile 375px
+  and desktop 1440px screenshots visually reviewed. Initial browser attempt hit
+  a misconfigured temporary Vite root (404); corrected launcher before the pass.
+  No live API/SQL/storage suites, physical device/keyboard or comprehensive
+  accessibility/200% zoom audit were run for this presentation-only task.
+  Knowledge validation passed (56 Markdown files, 558 local targets, 14 registered
+  guides), and repository `git diff --check` passed.
+- Recovery: restore `Discover.tsx` and `Discover.css` together. Keep shared
+  `ui.tsx`/style defaults and all existing API/privacy contracts. Preview records
+  stay fictional; unavailable live records remain honest. No remaining required
+  implementation for this task; owner visual review is next.
+
+- 2026-11-07 / public gym map: public diamond pins and shared paper details dialog with area breadcrumbs, date/status history, demo labels and loading/error/retry/empty states. Enter/Escape and 360/375/390/1440px fixtures passed in the seven-case map suite; 375/1440px images reviewed. Frontend production build passed. Model/privacy/runtime evidence: [maps](MAPS_AND_AREAS.md).
 
 - 2026-11-07 / Azure address details: replaced the Nominatim notice with Azure Maps, added an expandable available-field breakdown and readable mobile labels, and kept the venue picker full-width in the desktop schedule grid. Existing map tile provider, private pins, explicit lookup/review/edit and stale-response handling remain. Current verification and recovery are owned by [maps](MAPS_AND_AREAS.md).
 

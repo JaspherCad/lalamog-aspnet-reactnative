@@ -53,6 +53,23 @@ The existing browser core expects another discovery card after liking. An isolat
 
 ## Role and feature authorization
 
+Current permission-container checks also include PermissionContainerTests and
+PermissionContainerMigrationTests: arbitrary role grants, immediate revocation,
+anonymous VISITOR boundaries, rejected account assignment and preserving role
+renames. GymBookingTests/GymCoverTests/GymMvpMigrationTests cover owner isolation,
+booking states/quotes/overlap, consent and storage. Latest application results
+are dated in the [handoff](../memory/HANDOFF.md); editing docs does not rerun them.
+
+Frontend permissions.spec.ts uses controlled responses for navigation and
+independent dashboard capabilities. gym-booking.spec.ts requires an isolated
+LalamogTests_GymBrowser database plus verified API PID and explicit URL override;
+do not run its data-writing flow against the normal database. Its SQL binding
+preflight must pass before signup. See [gym booking](../features/GYM_BOOKING.md)
+for demo/recovery and [role permissions](../features/ROLE_PERMISSIONS.md) for
+current role defaults. Generated backend TestResults and browser reports remain
+local ignored artifacts; do not add them to commits.
+
+
 RolePermissionTests checks admin-only access, signup defaults, current-cookie changes, multiple roles, stacked policies, invalid selections and CSRF. RolePermissionMigrationTests upgrades populated SQL and checks preserved account/hash data, initial User assignment, composite uniqueness and revoked assignments surviving repeated static seeding. DatabaseSeederTests also preserves edited role descriptions and removed grants. See [role permissions](../features/ROLE_PERMISSIONS.md) for actual results and isolated-build prerequisites.
 
 ## Avatar Blob Storage checks

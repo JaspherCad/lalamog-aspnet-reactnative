@@ -40,6 +40,12 @@ namespace Lalamog.Api.Data
             get { return Set<Fight>(); }
         }
 
+        public DbSet<Gym> Gyms { get { return Set<Gym>(); } }
+        public DbSet<MapRegion> Regions { get { return Set<MapRegion>(); } }
+public DbSet<MapProvince> Provinces { get { return Set<MapProvince>(); } }
+public DbSet<MapCity> Cities { get { return Set<MapCity>(); } }
+public DbSet<MapBarangay> Barangays { get { return Set<MapBarangay>(); } }
+
         public DbSet<FightConfirmation> FightConfirmations
         {
             get { return Set<FightConfirmation>(); }
@@ -151,9 +157,48 @@ namespace Lalamog.Api.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             var fight = model.Entity<Fight>();
+            var region = model.Entity<MapRegion>();
+            region.Property(nameof(MapRegion.Code)).HasMaxLength(10);
+            region.HasIndex(nameof(MapRegion.Code)).IsUnique();
+            region.Property(nameof(MapRegion.Name)).HasMaxLength(200);
+            var province = model.Entity<MapProvince>();
+            province.Property(nameof(MapProvince.Code)).HasMaxLength(10);
+            province.HasIndex(nameof(MapProvince.Code)).IsUnique();
+            province.Property(nameof(MapProvince.Name)).HasMaxLength(200);
+            var city = model.Entity<MapCity>();
+            city.Property(nameof(MapCity.Code)).HasMaxLength(10);
+            city.HasIndex(nameof(MapCity.Code)).IsUnique();
+            city.Property(nameof(MapCity.Name)).HasMaxLength(200);
+            var barangay = model.Entity<MapBarangay>();
+            barangay.Property(nameof(MapBarangay.Code)).HasMaxLength(10);
+            barangay.HasIndex(nameof(MapBarangay.Code)).IsUnique();
+            barangay.Property(nameof(MapBarangay.Name)).HasMaxLength(200);
+            province.HasOne<MapRegion>(nameof(MapProvince.Region)).WithMany(nameof(MapRegion.Provinces)).HasForeignKey(nameof(MapProvince.RegionId)).OnDelete(DeleteBehavior.Restrict);
+            city.HasOne<MapProvince>(nameof(MapCity.Province)).WithMany(nameof(MapProvince.Cities)).HasForeignKey(nameof(MapCity.ProvinceId)).OnDelete(DeleteBehavior.Restrict);
+            city.HasOne<MapRegion>(nameof(MapCity.Region)).WithMany(nameof(MapRegion.IndependentCities)).HasForeignKey(nameof(MapCity.RegionId)).OnDelete(DeleteBehavior.Restrict);
+            city.ToTable(ConfigureCityTable);
+            barangay.HasAlternateKey(nameof(MapBarangay.Id), nameof(MapBarangay.CityId));
+            barangay.HasOne<MapCity>(nameof(MapBarangay.City)).WithMany(nameof(MapCity.Barangays)).HasForeignKey(nameof(MapBarangay.CityId)).OnDelete(DeleteBehavior.Restrict);
+            var map = model.Entity<Gym>();
+            map.Property(nameof(Gym.Slug)).HasMaxLength(80);
+            map.HasIndex(nameof(Gym.Slug)).IsUnique();
+            map.Property(nameof(Gym.Name)).HasMaxLength(200);
+            map.Property(nameof(Gym.Address)).HasMaxLength(300);
+            map.HasOne<MapCity>(nameof(Gym.City)).WithMany(nameof(MapCity.Gyms)).HasForeignKey(nameof(Gym.CityId)).OnDelete(DeleteBehavior.Restrict);
+            map.HasOne<MapBarangay>(nameof(Gym.Barangay)).WithMany(nameof(MapBarangay.Gyms)).HasForeignKey(nameof(Gym.BarangayId), nameof(Gym.CityId)).HasPrincipalKey(nameof(MapBarangay.Id), nameof(MapBarangay.CityId)).OnDelete(DeleteBehavior.Restrict);
+            map.HasOne<AppUser>(nameof(Gym.Owner)).WithMany().HasForeignKey(nameof(Gym.OwnerUserId)).OnDelete(DeleteBehavior.Restrict);
+            map.Property(nameof(Gym.Description)).HasMaxLength(2000);
+            map.Property(nameof(Gym.ContactInformation)).HasMaxLength(300);
+            map.Property(nameof(Gym.SessionPrice)).HasPrecision(10, 2);
+            map.Property(nameof(Gym.Version)).IsRowVersion();
+            fight.Property(nameof(Fight.QuotedPrice)).HasPrecision(10, 2);
+            fight.HasIndex(nameof(Fight.GymId), nameof(Fight.ScheduledAt));
+            map.ToTable(ConfigureMapTable);
+            fight.HasOne<Gym>(nameof(Fight.Gym)).WithMany(nameof(Gym.Fights)).HasForeignKey(nameof(Fight.GymId))
+                .OnDelete(DeleteBehavior.Restrict);
             fight.HasOne<FighterMatch>(nameof(Fight.Match)).WithMany().HasForeignKey(nameof(Fight.MatchId))
                 .OnDelete(DeleteBehavior.Restrict);
-            fight.HasIndex(nameof(Fight.MatchId)).IsUnique().HasFilter("[Status] IN ('scheduled', 'confirmed')");
+            fight.HasIndex(nameof(Fight.MatchId)).IsUnique().HasFilter("[Status] IN ('pending_approval', 'scheduled', 'confirmed')");
             fight.Property(nameof(Fight.Location)).HasMaxLength(200);
             fight.Property(nameof(Fight.Address)).HasMaxLength(300);
             fight.Property(nameof(Fight.Status)).HasMaxLength(20);
@@ -195,8 +240,20 @@ namespace Lalamog.Api.Data
 
         private static void ConfigureFightTable(TableBuilder<Fight> table)
         {
+            table.HasCheckConstraint("CK_Fight_SharedVenue", "[GymId] IS NULL OR ([Location] = '' AND [Address] = '' AND [RegionCode] IS NULL AND [ProvinceCode] IS NULL AND [CityCode] IS NULL AND [BarangayCode] IS NULL AND [PsgcVersion] IS NULL AND [Latitude] IS NULL AND [Longitude] IS NULL)");
             table.HasCheckConstraint("CK_Fight_Coordinates", "([Latitude] IS NULL AND [Longitude] IS NULL) OR ([Latitude] IS NOT NULL AND [Longitude] IS NOT NULL AND [Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180)");
-            table.HasCheckConstraint("CK_Fight_Status", "[Status] IN ('scheduled', 'confirmed', 'canceled', 'completed')");
+            table.HasCheckConstraint("CK_Fight_Status", "[Status] IN ('pending_approval', 'scheduled', 'confirmed', 'canceled', 'completed')");
+        }
+
+        private static void ConfigureCityTable(TableBuilder<MapCity> table)
+        {
+            table.HasCheckConstraint("CK_City_Parent", "([ProvinceId] IS NOT NULL AND [RegionId] IS NULL) OR ([ProvinceId] IS NULL AND [RegionId] IS NOT NULL)");
+        }
+
+        private static void ConfigureMapTable(TableBuilder<Gym> table)
+        {
+            table.HasCheckConstraint("CK_Gym_Details", "[SessionPrice] >= 0 AND [SessionDurationMinutes] BETWEEN 30 AND 240 AND ([IsPublished] = 0 OR [OwnerUserId] IS NOT NULL)");
+            table.HasCheckConstraint("CK_Map_Coordinates", "[Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180");
         }
     }
 }

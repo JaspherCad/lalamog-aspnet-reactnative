@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Lalamog.Api.DTOs;
+using Lalamog.Api.Authorization;
 using Lalamog.Api.Interfaces;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,13 @@ namespace Lalamog.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IAccessService _access;
         private readonly IAntiforgery _antiforgery;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery)
+        public AuthController(IAuthService authService, IAntiforgery antiforgery, IAccessService access)
         {
             _authService = authService;
+            _access = access;
             _antiforgery = antiforgery;
         }
 
@@ -47,11 +50,18 @@ namespace Lalamog.Api.Controllers
 
         [Authorize]
         [HttpGet("me")]
-        public ActionResult<AuthResponse> Me()
+        public async Task<ActionResult<AuthResponse>> Me(CancellationToken cancellationToken)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var response = new AuthResponse { UserId = Guid.Parse(userId) };
-            return Ok(response);
+            return Ok(await _access.SessionAsync(Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), cancellationToken));
+        }
+
+        [Authorize(Policy = ApplicationPermissions.Owner_EnableFighter)]
+        [HttpPost("enable-fighter")]
+        public async Task<ActionResult<AuthResponse>> EnableFighter(CancellationToken cancellationToken)
+        {
+            Guid actor = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            await _access.EnableFighterAsync(actor, cancellationToken);
+            return Ok(await _access.SessionAsync(actor, cancellationToken));
         }
 
         [Authorize]

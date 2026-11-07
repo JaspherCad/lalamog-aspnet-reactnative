@@ -12,11 +12,7 @@ namespace Lalamog.Api.Controllers;
 public class MapsController : ApiController
 {
     private readonly IReverseGeocodingService _geocoding;
-
-    public MapsController(IReverseGeocodingService geocoding)
-    {
-        _geocoding = geocoding;
-    }
+    public MapsController(IReverseGeocodingService geocoding) { _geocoding = geocoding; }
 
     [HttpPost("reverse")]
     public async Task<ActionResult<ReverseGeocodeResponse>> Reverse(ReverseGeocodeRequest request, CancellationToken cancellationToken)

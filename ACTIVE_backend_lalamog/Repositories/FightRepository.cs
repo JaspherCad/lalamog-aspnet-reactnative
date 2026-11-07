@@ -18,6 +18,7 @@ namespace Lalamog.Api.Repositories
         {
             var query = from fight in _db.Fights
                             .Include(nameof(Fight.Match))
+                            .Include(nameof(Fight.Gym))
                             .Include(nameof(Fight.Confirmations))
                         where fight.Id == id
                         select fight;
@@ -28,6 +29,7 @@ namespace Lalamog.Api.Repositories
         {
             var query = from fight in _db.Fights.AsNoTracking()
                             .Include(nameof(Fight.Match))
+                            .Include(nameof(Fight.Gym))
                             .Include(nameof(Fight.Confirmations))
                         where fight.Match.User1Id == userId || fight.Match.User2Id == userId
                         orderby fight.Id descending
@@ -39,7 +41,7 @@ namespace Lalamog.Api.Repositories
         {
             var query = from fight in _db.Fights
                         where fight.MatchId == matchId
-                           && (fight.Status == "scheduled" || fight.Status == "confirmed")
+                           && (fight.Status == "pending_approval" || fight.Status == "scheduled" || fight.Status == "confirmed")
                         select fight;
             return query.AnyAsync(cancellationToken);
         }

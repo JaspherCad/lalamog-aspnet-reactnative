@@ -78,6 +78,21 @@ public class AreaService : IAreaService
         return Require(cityCode, "city").Name;
     }
 
+    public List<PhilippineArea> GetPath(string code)
+    {
+        if (!_areas.TryGetValue(code, out PhilippineArea? area))
+        {
+            throw new ApiException(400, "Choose an area from the Philippine catalog.");
+        }
+        var path = new List<PhilippineArea>();
+        while (area != null)
+        {
+            path.Insert(0, area);
+            area = area.ParentCode == null ? null : _areas[area.ParentCode];
+        }
+        return path;
+    }
+
     public void Validate(MapLocation location)
     {
         if (location.Latitude.HasValue != location.Longitude.HasValue)

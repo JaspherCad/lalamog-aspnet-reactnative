@@ -26,6 +26,10 @@ namespace Lalamog.Api.Repositories
         public Task<List<FighterProfile>> DiscoverAsync(Guid userId, CancellationToken cancellationToken)
         {
             var query = from profile in _db.Profiles.AsNoTracking()
+                        where (from link in _db.UserRoles
+                               join grant in _db.RoleSystemFeatures on link.RoleId equals grant.RoleId
+                               where link.UserId == profile.UserId && grant.SystemFeature.Code == Lalamog.Api.Authorization.ApplicationPermissions.User_Match
+                               select link).Any()
                         where profile.UserId != userId
                         where !(from swipe in _db.Swipes
                                 where swipe.SwiperId == userId && swipe.TargetId == profile.UserId

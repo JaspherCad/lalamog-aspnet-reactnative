@@ -23,21 +23,21 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
     {
         using IServiceScope scope = _app.Services.CreateScope();
         AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(2, await db.Roles.CountAsync());
-        Assert.Equal(8, await db.SystemFeatures.CountAsync());
-        Assert.Equal(8, await db.RoleSystemFeatures.CountAsync());
-        Assert.Equal(22, await db.UserRoles.CountAsync());
-        Assert.Equal(21, await db.Users.CountAsync());
-        Assert.Equal(21, await db.Profiles.CountAsync());
+        Assert.Equal(4, await db.Roles.CountAsync());
+        Assert.Equal(13, await db.SystemFeatures.CountAsync());
+        Assert.Equal(20, await db.RoleSystemFeatures.CountAsync());
+        Assert.Equal(23, await db.UserRoles.CountAsync());
+        Assert.Equal(22, await db.Users.CountAsync());
+        Assert.Equal(22, await db.Profiles.CountAsync());
         Assert.Equal(11, await db.Swipes.CountAsync());
         Assert.Equal(5, await db.Matches.CountAsync());
         Assert.Equal(10, await db.Messages.CountAsync());
-        Assert.Equal(6, await db.Fights.CountAsync());
-        Assert.Equal(9, await db.FightConfirmations.CountAsync());
+        Assert.Equal(10, await db.Fights.CountAsync());
+        Assert.Equal(17, await db.FightConfirmations.CountAsync());
 
         var users = await db.Users.Include(u => u.Profile).ToListAsync();
         var profileService = scope.ServiceProvider.GetRequiredService<IProfileService>();
-        foreach (var user in users)
+        foreach (var user in users.Where(u => u.Email != "owner.seed@example.test"))
         {
             Assert.True(PasswordHashing.Verify(user.PasswordHash, "Lalamog123!Test"));
             Assert.False(string.IsNullOrWhiteSpace(user.Profile.FighterName));
@@ -54,8 +54,8 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
         }
         var fights = await db.Fights.Include(f => f.Match).Include(f => f.Confirmations).ToListAsync();
         Assert.Equal(1, fights.Count(f => f.Status == "scheduled"));
-        Assert.Equal(2, fights.Count(f => f.Status == "confirmed"));
-        Assert.Equal(2, fights.Count(f => f.Status == "completed"));
+        Assert.Equal(3, fights.Count(f => f.Status == "confirmed"));
+        Assert.Equal(5, fights.Count(f => f.Status == "completed"));
         Assert.Equal(1, fights.Count(f => f.Status == "canceled"));
         foreach (var fight in fights)
         {
@@ -102,12 +102,16 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
             }
         }
 
+        var editedGym = await (from gym in db.Gyms where gym.Slug == "demo-antipolo-gym-1" select gym).SingleAsync();
+        editedGym.Name = "Keep gym edit"; editedGym.SessionPrice = 777; editedGym.IsPublished = false;
+        var ownerGrant = await (from grant in db.RoleSystemFeatures where grant.Role.Name == "GYM_OWNER" && grant.SystemFeature.Code == ApplicationPermissions.Owner_ManageBookings select grant).SingleAsync();
+        db.RoleSystemFeatures.Remove(ownerGrant);
         alex.Profile.Bio = "Edited after seeding; keep this.";
         var canceled = fights.Single(f => f.Location == "Seed QC weekend court");
         canceled.Status = "canceled";
         canceled.CancellationReason = "Changed during a test.";
-        var adminRole = await (from role in db.Roles where role.Name == "Admin" select role).SingleAsync();
-        var uploadGrant = await (from grant in db.RoleSystemFeatures where grant.SystemFeature.Code == ApplicationPermissions.User_Upload select grant).SingleAsync();
+        var adminRole = await (from role in db.Roles where role.Name == "ADMIN" select role).SingleAsync();
+        var uploadGrant = await (from grant in db.RoleSystemFeatures where grant.Role.Name == "FIGHTER" && grant.SystemFeature.Code == ApplicationPermissions.User_Upload select grant).SingleAsync();
         db.RoleSystemFeatures.Remove(uploadGrant);
         db.UserRoles.Remove(await (from assignment in db.UserRoles where assignment.UserId == alex.Id && assignment.RoleId == adminRole.Id select assignment).SingleAsync());
         adminRole.Description = "Keep this role edit.";
@@ -120,20 +124,23 @@ public class DatabaseSeederTests : IClassFixture<ApiFixture>
 
         await DatabaseSeeder.SeedAsync(db);
         await DatabaseSeeder.SeedAsync(db);
-        Assert.Equal(21, await db.Users.CountAsync());
-        Assert.Equal(21, await db.Profiles.CountAsync());
+        Assert.Equal(22, await db.Users.CountAsync());
+        Assert.Equal(22, await db.Profiles.CountAsync());
         Assert.Equal(11, await db.Swipes.CountAsync());
         Assert.Equal(5, await db.Matches.CountAsync());
         Assert.Equal(10, await db.Messages.CountAsync());
-        Assert.Equal(9, await db.FightConfirmations.CountAsync());
+        Assert.Equal(17, await db.FightConfirmations.CountAsync());
         Assert.Equal(originalFightIds, await db.Fights.OrderBy(f => f.Id).Select(f => f.Id).ToArrayAsync());
         Assert.Equal(originalHash, (await db.Users.FindAsync(alex.Id))!.PasswordHash);
         Assert.Equal("Edited after seeding; keep this.", (await db.Profiles.FindAsync(alex.Id))!.Bio);
         Assert.Equal("canceled", (await db.Fights.FindAsync(canceled.Id))!.Status);
-        Assert.False(await (from grant in db.RoleSystemFeatures where grant.SystemFeatureId == uploadId select grant).AnyAsync());
+        Assert.False(await (from grant in db.RoleSystemFeatures where grant.Role.Name == "FIGHTER" && grant.SystemFeatureId == uploadId select grant).AnyAsync());
         Assert.False(await (from assignment in db.UserRoles where assignment.UserId == alex.Id && assignment.RoleId == adminId select assignment).AnyAsync());
         Assert.Equal("Keep this role edit.", (await db.Roles.FindAsync(adminId))!.Description);
-        Assert.Equal(8, await db.SystemFeatures.CountAsync());
-        Assert.Equal(2, await db.Roles.CountAsync());
+        Assert.Equal(13, await db.SystemFeatures.CountAsync());
+        Assert.Equal(4, await db.Roles.CountAsync());
+        var preservedGym = (await db.Gyms.FindAsync(editedGym.Id))!;
+        Assert.Equal("Keep gym edit", preservedGym.Name); Assert.Equal(777, preservedGym.SessionPrice); Assert.False(preservedGym.IsPublished);
+        Assert.False(await (from grant in db.RoleSystemFeatures where grant.Role.Name == "GYM_OWNER" && grant.SystemFeature.Code == ApplicationPermissions.Owner_ManageBookings select grant).AnyAsync());
     }
 }

@@ -7,5 +7,6 @@ public class FightConfirmation
     public Guid UserId { get; set; }
     public string EmergencyContactName { get; set; } = "";
     public string EmergencyContactPhone { get; set; } = "";
+    public bool AllowPublicIdentity { get; set; }
     public DateTimeOffset AcceptedAt { get; set; }
 }

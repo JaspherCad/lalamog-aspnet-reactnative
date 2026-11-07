@@ -71,6 +71,11 @@ IAuthReqs and Handlers are accessible because of AddAuthorizationBuilder
 
  */
 builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(ApplicationPermissions.Visitor_ViewGyms, policy => policy
+        .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Visitor_ViewGyms)))
+    .AddPolicy(ApplicationPermissions.Owner_EnableFighter, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Owner_EnableFighter)))
     .AddPolicy(ApplicationPermissions.User_View, policy => policy
         .RequireAuthenticatedUser()
         .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.User_View)))
@@ -92,6 +97,15 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(ApplicationPermissions.User_Map, policy => policy
         .RequireAuthenticatedUser()
         .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.User_Map)))
+    .AddPolicy(ApplicationPermissions.Admin_ManageMaps, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Admin_ManageMaps)))
+    .AddPolicy(ApplicationPermissions.Owner_ManageGyms, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Owner_ManageGyms)))
+    .AddPolicy(ApplicationPermissions.Owner_ManageBookings, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Owner_ManageBookings)))
     .AddPolicy(ApplicationPermissions.Admin_ManageAccess, policy => policy
         .RequireAuthenticatedUser()
         .AddRequirements(new SystemFeatureRequirement(ApplicationPermissions.Admin_ManageAccess)));
@@ -141,6 +155,8 @@ builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IMatchingRepository, MatchingRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IFightRepository, FightRepository>();
+builder.Services.AddScoped<IGymRepository, GymRepository>();
+builder.Services.AddScoped<IGymService, GymService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();

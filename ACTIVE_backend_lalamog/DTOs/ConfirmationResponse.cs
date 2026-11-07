@@ -2,6 +2,7 @@ namespace Lalamog.Api.DTOs
 {
     public class ConfirmationResponse
     {
+        public bool AllowPublicIdentity { get; set; }
         public Guid UserId { get; set; }
 
         public string EmergencyContactName { get; set; } = string.Empty;

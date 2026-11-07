@@ -38,6 +38,10 @@ namespace Lalamog.Api.Controllers
             return Ok(response);
         }
 
+        [HttpPost("{id:long}/publication")]
+        public async Task<ActionResult<FightResponse>> Publication(long id, PublicationRequest request, CancellationToken cancellationToken)
+        { return Ok(await _fightService.PublicationAsync(ActorId, id, request, cancellationToken)); }
+
         [HttpPost("{id:long}/confirm")]
         public async Task<ActionResult<FightResponse>> Confirm(long id, ConfirmRequest request, CancellationToken cancellationToken)
         {

@@ -116,6 +116,12 @@ public class NativeUserMigrationTests : IClassFixture<ApiFixture>
                 newAccountId = (await registered.Content.ReadFromJsonAsync<AuthResponse>())!.UserId;
             }
 
+            // The new gym schema correctly refuses a lossy rollback with owned listings.
+            // This isolated identity test then removes only its fictional demo ownership
+            // to continue exercising the older account/password rollback contract.
+            var guarded = await Assert.ThrowsAsync<SqlException>(() => migrator.MigrateAsync(previousMigration));
+            Assert.Equal(51020, guarded.Number);
+            await db.Database.ExecuteSqlRawAsync("UPDATE Gyms SET IsPublished=0,OwnerUserId=NULL WHERE IsDemo=1");
             await migrator.MigrateAsync(previousMigration);
             await using (var check = new SqlConnection(connectionString))
             {

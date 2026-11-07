@@ -1,5 +1,7 @@
 # Server-derived avatars, local Azurite and demo portraits
 
+2026-11-07 current: Gym MVP adds one ID-derived gym cover per venue using existing validation and private Azure/Azurite storage: gyms/{gymId}/cover. No cover metadata is stored in SQL. /api/gyms/{id}/cover enforces publication/owner/booking-participant visibility; generic /api/media refuses gym paths. Owner uploads replace atomically; missing images use a frontend placeholder. Real Azurite replacement/restart/outage/visibility checks are in GymCoverTests. Avatar behavior is unchanged. See [gym booking](GYM_BOOKING.md).
+
 Status: implemented and locally verified, 2026-11-06. The owner confirmed local Azurite for testing and requested removal of the avatar database field.
 
 ## No avatar metadata in SQL

@@ -2,51 +2,105 @@
 
 Updated: 2026-11-07 (Asia/Manila). [Change log](CHANGELOG.md).
 
-## Completed: Azure Maps reverse lookup
+## Current implementation and next action
 
-2026-11-07 owner-selected Azure Maps replaces Nominatim using the existing Maps:AzureMapsApiKey. Key remains in the server-only subscription-key header; HTTP provider logging is disabled. Named HttpClient/configuration remain directly inline in Program.cs. POST /api/maps/reverse keeps existing address fields and returns street number/postcode/country code, type/confidence/match codes and every complete cloned Azure GeoJSON feature. Exact coordinate precision, conservative pacing/cache/cooldown and safe manual fallback remain. Leaflet/OSM tiles, local PSGC selection, private pins, cookies/CSRF/feature access and venue editing/persistence are unchanged.
+Latest task: swipe-only police field notebook implemented. `Discover.tsx` and
+new scoped `Discover.css` show a taped portrait left, light ruled facts/record
+right, CSS spiral binding and typed field notes below. Other modules keep their
+existing presentation. Build and all 11 design browser fixtures passed in Edge;
+360/375/390/1440px geometry, 44px actions and long-content/missing-photo fallback
+down to 320px checked. Mobile/desktop screenshots reviewed. No live SQL/storage,
+physical device or full accessibility/200% zoom audit was rerun. No required
+implementation remains; next action is owner visual review at `/preview` or
+authenticated Discover. Recovery and full evidence:
+[frontend design](../features/FRONTEND_DESIGN.md#latest-work-record).
+Knowledge validation passed (56 Markdown files, 558 local targets, 14 registered
+guides); repository whitespace checks passed.
 
-Web LocationPicker names Azure Maps and adds expandable available address details. Pin movement cancels obsolete requests; no automatic geocoding. No new package, schema, migration, data reset or Azure resource/tier was added. Maps:NominatimUrl is unused; no fallback calls to Nominatim.
+Gym Booking MVP and permission-container follow-up remain implemented and locally
+verified by the preceding work below. No commit or push was performed; preserve
+the existing unrelated source and documentation changes.
 
-Fresh checks: 18 provider/protected API tests plus 16 map privacy/catalog/service-composition tests passed (34 targeted backend checks). Frontend build and all six map fixtures passed. Visual review identified cramped mobile labels; final CSS stacks labels/values below 600px. The production rebuild and all six fixtures passed again. Desktop visual review found an inherited schedule fieldset rule squeezing the picker; the final scoped style makes it span the form with one outer column. The final production build and focused review/edit/save fixture passed, including a desktop-width assertion; final 375/1440px screenshots were reviewed. Initial restricted package restore could not reach NuGet; the permitted rerun built and tested successfully, with a cached test-project NU1900 vulnerability-feed warning. Package versions are unchanged. Full backend/avatar and browser core/restart suites, live device GPS and production deployment were not rerun.
+Current authoritative guides:
 
-Live checks: the configured Azure key returned one public-place Address result; the updated normal API was then restarted from `.cache/azure-maps-build/bin/Lalamog.Api/debug/Lalamog.Api.dll` with normal backend content root/Development settings. API health is ok at localhost:5080 and Vite remains at localhost:5173. A separate fictional demo login/CSRF session successfully called the proxied reverse endpoint and received Azure Maps, Address/High confidence and full features. The smoke session logged out; no profile/session/venue rows were edited. Current local process/log references are ignored under `.cache/azure-maps-api.*`. Normal future launches still use scripts/dev.ps1 or dotnet run.
+- [Gym booking](../features/GYM_BOOKING.md): models, routes, states, ownership,
+  prices, cover storage, demo and public consent.
+- [Role permissions](../features/ROLE_PERMISSIONS.md): FIGHTER, ADMIN, GYM_OWNER,
+  reserved anonymous VISITOR; current SQL permission unions and custom roles.
+- [Maps](../features/MAPS_AND_AREAS.md): explicit named geography and Azure Maps
+  lookup. No recursive persistence or retired admin venue scheduling flow.
+- [Project state](../PROJECT_STATE.md), [API](../API_CONTRACTS.md) and
+  [data model](../DATA_MODEL.md): current cross-feature summaries.
 
-Owning memory: [maps guide](../features/MAPS_AND_AREAS.md). API contracts, architecture/state, provider decision ADR-018, startup references, indexes, frontend/profile guides and backlogs were synchronized. The documentation-only provider change in ENGINEERING/AGENTS records the owner's explicit override to the former no-payment-only reverse choice. No required implementation remains for this task; refresh the browser and use Find address for this pin.
+Users can hold many roles; roles contain many permissions via the existing two
+junction tables. Role names do not authorize operations. Ownership, membership,
+waiver privacy and time/state rules still apply. VISITOR has no user assignment;
+only the public-gym permission is evaluated anonymously. Private policies require
+authentication even if VISITOR receives an accidental private grant. Frontend
+navigation and independent owner/admin sections use actual permissions.
 
-## Earlier completed: no-column avatars and fifteen discovery candidates
+## Application verification (preceding implementation work)
 
-Owner confirmed no avatar database field and local Azurite testing. The active model/schema now has no AvatarKey or AvatarBlobName. C# derives `/api/media/avatars/{userId}` and Blob path `avatars/{userId:N}/current` from existing UserId. Private Blob storage is streamed through the public avatar API. Owner routes use no-store; upload responses add a transient server-generated refresh query. No image reference, URL or bytes are saved to SQL.
+- Full backend: 85 passed, zero skipped (3m14s), including SQL/Azurite, ownership,
+  custom roles, overlap/adjacency concurrency, consent and populated migrations.
+- Final five permission cases passed again after readability/query edits.
+- Frontend production build and EF pending-model check passed.
+- Browser: 20 permission/map/mobile-layout checks passed; two isolated real
+  owner/fighter/admin booking cases passed, including waivers, completion,
+  consent withdrawal, private option, owner decisions and Fighter opt-in.
+- Browser layouts covered 360/375/390/1440px; prior public/owner screenshots were
+  reviewed. The ready-server demo rerun passed after an initial launcher-readiness
+  failure; that failed attempt made no product writes.
 
-ProfileService/ProfileRepository transfer old AvatarKey/AvatarBlobName images byte-for-byte before clearing the matching references. Conditional writes preserve existing current objects; originals remain. Missing media/outage blocks transfer, and ServerDerivedAvatars refuses to drop outstanding references. Configuration/startup remain inline; only Development migrates schema and calls static DatabaseSeeder.SeedAsync(db). Other real environments transfer on startup before explicit schema migration, without demo seeding. Testing invokes transfer explicitly. Down restores an empty nullable column; old-binary rollback requires matching backups/reverse transfer.
+These are dated application results; this final Markdown audit did not rerun
+SQL/browser application suites. Physical GPS, new SQL container restart, cloud
+storage/deployment and production operations remain outside these checks.
+No workers, queues, ranking or online payments were introduced.
 
-Uploads retain decoding/re-encoding, size/type/CSRF/feature checks and atomically replace storage content without SQL profile saves. Known fictional seed accounts resolve bundled defaults; missing real-account pictures use the existing frontend initials fallback.
+## Running app, data preservation and recovery
 
-## Seed and normal runtime
+Normal API/frontend remain at localhost:5080/5173. The permission upgrade followed
+a new verified COPY_ONLY/CHECKSUM backup. Live same-origin anonymous gym access,
+owner login/permission isolation, own gym/booking projections, CSRF and logout
+passed. SQL session metadata verified binding to Lalamog and the latest migration.
+Normal counts remained 27 accounts, 28 assignments, 5 gyms and 11 fights.
 
-21 fictional users total: original six plus fifteen discovery-only additions. Omar, Pia, Rafa, Tala and Yuri extend the previous ten. All fifteen additions have zero seeded incoming/outgoing swipes or matches; existing real choices remain saved. On a fresh database Ana is also unconnected and Alex sees sixteen cards. The current normal application gives Alex fifteen cards, including all fifteen additions; existing discovery exclusions were preserved.
+Important earlier rollout incident: the first gym practice launcher accidentally
+used the normal database because of PowerShell connection-builder adapter
+behavior. Its preserving migration retained prior data but added five fictional
+accounts, two gyms, one match and one fight. The first task backup was verified
+**after** discovery; never claim it preceded that initial normal upgrade. Cleanup
+review rejected deletion, and the owner explicitly chose **Keep the demo
+additions**. No cleanup ran. Later practice launches use explicit connection
+setters and a generated database/Blob container with SQL-process preflight before
+writes. Practice API/frontend are stopped; practice data is retained. Ignored
+runtime/backup/test metadata lives under .cache/. Do not expose its contents.
 
-All 21 synthetic Open Pravatar portraits are bundled with source/licence/hash manifest and publish inclusion. No external portrait requests occur during startup/rendering. [Local development](../features/LOCAL_DEVELOPMENT.md) owns account details and totals.
+Fresh-seed counts differ from normal retained data: 22 accounts/profiles, 3 gyms,
+5 matches, 10 fights, 4 roles, 13 permissions, 20 grants and 23 user-role links.
+Preserve default-role IDs/grants, venue/fight links, media, passwords and legacy
+references. No volume reset, row cleanup or baseline regeneration is authorized.
 
-Docker Desktop and Compose SQL/Azurite are now running; Azurite 3.37.0 is healthy on loopback 10000 with its persistent volume. Created and RESTORE VERIFYONLY-checked a COPY_ONLY/CHECKSUM SQL backup before starting the normal Development API. The existing database was transferred/migrated/seeded successfully. API and frontend remain running at localhost:5080 and localhost:5173 under normal local settings (frontend and same-origin API proxy checked); process/log references are ignored under .cache/avatar-dev-api.*. Refresh Discover in the existing frontend.
+## Demo access
 
-Live checks: health 200, native cookie/CSRF login/logout, all fifteen new candidate DTOs and image responses, SQL absence of both avatar columns, and all fifteen accounts with zero incoming/outgoing swipes or matches. No test swipes were made against normal data. No volumes, uploads, private settings, old keys or legacy sources were reset/deleted.
+Fictional seed accounts share Lalamog123!Test. owner.seed@example.test owns the
+three gyms; alex.seed@example.test has FIGHTER + ADMIN; miko.seed@example.test is
+Alex's existing free match. The owner can immediately complete the seeded past
+confirmed gym booking. Production time rules remain intact. Full walkthrough:
+[gym booking](../features/GYM_BOOKING.md).
 
-## Earlier verification (2026-11-06)
+## Knowledge audit and Git preparation
 
-- Full solution build: zero warnings/errors.
-- Four initial targeted SQL checks passed.
-- Full backend regression: 64 passed, zero skipped, 1 minute 6 seconds. Includes added actual Development populated-avatar startup/restart test.
-- Full suite used isolated local npm Azurite 3.37.0 on 10010 while the first container download completed. A separate byte/MIME persistence probe passed across that emulator's process restart; generated test container removed.
-- Compose Azurite integration also passed with LALAMOG_RESTART_AZURITE=1 (one case, 10 seconds), covering private access, upload/read, host/emulator persistence and storage failures. Only the Azurite container was restarted.
-- Publish succeeded; all 21 source/published portrait hashes and manifest match.
-- EF reports no pending model changes. Knowledge checker and git diff --check passed.
-- Temporary port-10010 emulator stopped after testing. Compose and the normal API remain running.
+The final documentation audit corrected stale in-progress status, retired
+Map/MapArea/routes, old auth response fields, private-only status summaries and
+role counts. The root/router/index now direct agents to current owning guides;
+history stays explicitly dated or in existing work records. Agent maintenance is
+a mandatory same-task workflow, not a background watcher or universal host hook.
 
-Browser/UI automation, real cloud deployment and full backup-restore drill were not rerun. Backup integrity verification was run. Test SQL databases/Blob containers were generated and isolated; normal data was preserved.
-
-## Earlier memory and next action (2026-11-06)
-
-No required implementation remains. Refresh Discover to use the running API and fifteen fresh candidates. Grace-period staging/orphan cleanup, cloud deployment and broader backup/restore remain separate backlog work.
-
-Owning guides: [media](../features/MEDIA_STORAGE.md), [profiles/discovery](../features/PROFILES_AND_DISCOVERY.md), [local development](../features/LOCAL_DEVELOPMENT.md). API/data/architecture/state/decisions/backlogs/root scopes reflect no SQL avatar metadata. Native AppUser/cookies/CSRF/REST chat and match/session invariants remain; RabbitMQ/Redis are provisioned infrastructure only.
+Generated backend TestResults are now excluded by scripts/gitignore, alongside
+existing ignored private config, uploads, runtime and browser artifacts. Reports
+are retained locally. Knowledge validation passed (56 files, 551 local targets, 14 registered guides);
+context exports, six invalid-path rejection cases, helper parse checks, Git artifact
+checks and whitespace checks passed. Details:
+[agent workflow](../features/AGENT_WORKFLOW.md#latest-work-record). No application
+source, database, service configuration, accounts or volumes changed in this audit.

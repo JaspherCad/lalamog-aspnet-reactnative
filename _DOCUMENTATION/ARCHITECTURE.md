@@ -1,32 +1,32 @@
 # Architecture and source map
 
-2026-11-07 reverse lookup revision: MapsController -> IReverseGeocodingService/singleton ReverseGeocodingService -> named HttpClient AzureMaps -> Azure reverseGeocode 2026-01-01. Direct Maps:AzureMapsApiKey header configuration stays inline in Program.cs; no key in browser, query string or HTTP logs. Shared pacing/cache and complete cloned GeoJSON features replace the old Nominatim formatter. No new packages/SQL changes. [Maps guide](features/MAPS_AND_AREAS.md) owns current details; earlier Nominatim notes below are historical.
-
-2026-11-04 static-seeder revision: Program.cs keeps configuration/registrations inline and a short Development startup scope that migrates then calls static Data/DatabaseSeeder.SeedAsync(db). Seed contents now live once in Data/DatabaseSeeder.cs; the old inline-callback statements below are historical. No schema/API behavior change. [Current flow](features/LOCAL_DEVELOPMENT.md).
-
-2026-11-04: explicit controller feature policies -> generalized SystemPermissionHandler -> IAccessService/AccessService -> IAccessRepository/AccessRepository -> SQL UserRole/RoleSystemFeature joins. Native AppUser supports many roles; policies use the union of current grants without cookie permission claims. The admin access controller uses the same service/repository boundary. Registration/policy configuration remains inline in Program.cs; sample data now lives in static Data/DatabaseSeeder.cs. See [role permissions](features/ROLE_PERMISSIONS.md).
-
-2026-11-02 Development boot: immediately after Build, Program.cs creates a scoped AppDbContext and awaits Database.MigrateAsync before mapping/listening. This runs existing migrations and the inline UseAsyncSeeding callback, enabling a fresh Compose data volume with plain dotnet run. No initializer service/options helper; non-Development environments retain explicit migrations.
-
-2026-11-02 reverse lookup: MapsController → IReverseGeocodingService/singleton ReverseGeocodingService → named HttpClient Nominatim. Shared gate/cache protect the free provider; explicit lookup only. Settings/registrations remain inline in Program.cs, replaceable URL in appsettings.json. No SQL write or new configuration layer.
-
-2026-11-02 maps: `AreasController → IAreaService/AreaService → bundled Data/Reference/psgc-2026-q3.json` serves cached names/codes without upstream calls. React LocationPicker/LocationMap use local lookup + Leaflet/OSM; manual addresses, optional GPS. Profile/Fight services validate private MapLocation before domain repositories persist it. FightMap uses existing participant-only routes. Area catalog remains local; explicit geocoding is described above. No API key/config wrapper; all registrations remain inline in Program.cs. See [maps](features/MAPS_AND_AREAS.md).
-
-Audited 2026-10-28. Current implementation unless explicitly marked planned.
+Updated: 2026-11-07. Active product: React DOM/TypeScript/Vite browser app,
+.NET 10/EF Core SQL Server API, one horizontal backend project. Controllers →
+interface-based services → domain repositories; C# owns business decisions.
 
 ```text
-Browser: React DOM + TypeScript + Vite build
-  -> Vite :5173 (native development)
-     /api/* and /health -> ASP.NET Core
-     other routes       -> SPA index.html fallback
-ASP.NET Core: Controllers -> Services -> domain repositories -> EF Core -> SQL Server
-                                     -> IFileStorage -> AzureBlobStorage -> private Azure/Azurite blobs
-                                                        -> LocalFileStorage -> staging/legacy import
-Cookie authentication encryption -> framework-default DataProtection behavior (no custom persistence setup)
-RabbitMQ / Redis containers: provisioned, no application integration
-Existing UserId -> DtoMapper builds /api/media/avatars/{userId} -> avatars/{userId:N}/current in Blob Storage; no avatar metadata in SQL
-Planned: SQL outbox -> RabbitMQ -> idempotent notification consumer
+Browser → cookie/CSRF API → Controllers → Services → domain Repositories → SQL
+                                     → IFileStorage → private Blob/Azurite
+                                     → explicit Azure Maps address lookup
 ```
+
+Roles are permission containers: AppUser → UserRole → Role → RoleSystemFeature
+→ SystemFeature. The server checks current SQL permission unions and additional
+resource ownership/participation rules. VISITOR is anonymous public-gym access,
+not an account. [Authorization](features/ROLE_PERMISSIONS.md).
+
+GymsController/AdminGymsController → IGymService/GymService →
+IGymRepository/GymRepository → Gyms and explicit Regions/Provinces/Cities/Barangays.
+FightService retains one Fight model for private arrangements or gym bookings;
+owners decide requests, fighters submit their own waivers, and completion/history
+preserve consent boundaries. No recursive MapArea or separate booking state
+machine. [Gym booking](features/GYM_BOOKING.md), [data model](DATA_MODEL.md).
+
+Startup/configuration remains inline in Program.cs. Development startup awaits
+MigrateAsync and static DatabaseSeeder.SeedAsync before serving. REST chat keeps
+its three-second refresh; owner/admin screens use explicit refresh and fetch only
+permitted sections. RabbitMQ/Redis are provisioned only; there are no application
+queues, background jobs, SignalR, online payments or ranking calculations.
 
 ## Ownership
 
@@ -34,7 +34,7 @@ Planned: SQL outbox -> RabbitMQ -> idempotent notification consumer
 | --- | --- |
 | `ACTIVE_backend_lalamog/Program.cs` | Configuration/DI, native cookie authentication, rate limits, built-in middleware |
 | `Controllers/` | Routes, binding, caller identity, HTTP responses |
-| `DTOs/` | Request validation and public response records |
+| `DTOs/` | Request validation and response classes |
 | `Services/` | Domain rules; auth, profiles, matching, chat, sessions, image adapter |
 | `Interfaces/` | Business service interfaces, area-catalog service, domain repository interfaces and file storage; one interface per file, no generic repository |
 | `Interfaces/IFileStorage.cs` | Save/open/delete image seam |
@@ -45,6 +45,7 @@ Planned: SQL outbox -> RabbitMQ -> idempotent notification consumer
 | `ACTIVE_frontend_lalamog/src/App.tsx` | Auth shell, routes, discovery, shared avatar |
 | `ACTIVE_frontend_lalamog/src/api.ts`, `types.ts` | Same-origin HTTP/CSRF and JSON types |
 | `ACTIVE_frontend_lalamog/src/ProfileEditor.tsx`, `Matches.tsx`, `Fights.tsx` | Profile, chat/matches, session UI |
+| `ACTIVE_frontend_lalamog/src/Gyms.tsx`, `OwnerGyms.tsx`, `Admin.tsx` | Public gym details, owner capabilities and admin moderation |
 | `ACTIVE_frontend_lalamog/src/styles.css` | Responsive layout, form/focus styling, reduced motion |
 | `ACTIVE_frontend_lalamog/vite.config.ts` | Native same-origin HTTP proxy; `ACTIVE_frontend_lalamog/nginx.conf` remains an optional packaging reference |
 | `infrastructure/compose.yaml`, `scripts/` | Local reproducibility and persistent infrastructure |
@@ -55,7 +56,7 @@ Shared maintained Markdown lives in `_DOCUMENTATION/`, with root `AGENTS.md` and
 
 The backend remains a single horizontal N-tier project. Controllers inject business service interfaces; AuthService uses IUserRepository plus native PasswordHashing and HTTP cookie sign-in; conversation/session services inject `IMatchingService` for membership. `Program.cs` registers scoped interface/implementation pairs. DTOs are explicit property-based classes in individual `DTOs/` files, replacing the former combined Contracts file. `Services/DtoMapper.cs` maps profiles, messages and sessions without exposing EF entities through chat transport. Request validation and JSON fields remain stable.
 
-Startup configuration and middleware use inline callbacks in `Program.cs` (owner direction, 2026-11-02); no configuration-only C# files or named startup setup methods remain. EF tools use that same application host. Elsewhere, authored constructors, methods, callbacks and transactional operations use explicit bodies. Repositories use LINQ query syntax; EF configuration uses nameof property/navigation names and named table callbacks. A model/snapshot comparison and SQL concurrency tests verified no schema/business-rule change. Generated migrations are unchanged. Full evidence and recovery: [backend structure](features/BACKEND_STRUCTURE.md).
+Startup configuration and middleware use inline callbacks in `Program.cs` (owner direction, 2026-11-02); no configuration-only C# files or named startup setup methods remain. EF tools use that same application host. Elsewhere, authored constructors, methods, callbacks and transactional operations use explicit bodies. Repositories use LINQ query syntax; EF configuration uses nameof property/navigation names and named table callbacks. Current schema changes and preserving migrations are recorded in the data-model and owning feature guides. Full evidence and recovery: [backend structure](features/BACKEND_STRUCTURE.md).
 
 SQL is authoritative for identity, matches, messages, and sessions. C# services own decisions; SQL enforces structural invariants. No business triggers or stored procedures. The transaction runner uses SQL Server's execution strategy, clears tracked state, runs serializable work, saves, and commits. Matching reads participant directions in deterministic canonical order.
 

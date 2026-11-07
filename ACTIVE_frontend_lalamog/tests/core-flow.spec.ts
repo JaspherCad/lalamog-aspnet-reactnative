@@ -11,7 +11,7 @@ test('two browsers can register, edit profiles, match, chat live, and confirm/ca
   for (const page of [a, b]) page.on('pageerror', error => errors.push(error.message));
 
   async function register(page: Page, name: string, email: string) {
-    await page.goto('/');
+    await page.goto('/login');
     await page.getByRole('button', { name: 'New here? Create an account' }).click();
     await page.getByLabel('Fighter name (unique)').fill(name.replace(/\s+/g, '-'));
     await page.getByLabel('Alias', { exact: true }).fill(name);

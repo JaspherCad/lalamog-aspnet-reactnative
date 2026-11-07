@@ -1,6 +1,6 @@
 # LALAMOG knowledge home
 
-Updated: 2026-11-03 (Asia/Manila). Shared knowledge for frontend, backend,
+Updated: 2026-11-07 (Asia/Manila). Shared knowledge for frontend, backend,
 infrastructure, tests, tools, design, and legacy comparison lives here.
 Start with [root AGENTS.md](../AGENTS.md), then use the
 [question router](CODEX_BOOTSTRAP.md). Read the relevant branch, not the whole vault.
@@ -12,6 +12,7 @@ Start with [root AGENTS.md](../AGENTS.md), then use the
 | Which guide/source answers this question? | [CODEX_BOOTSTRAP](CODEX_BOOTSTRAP.md), [repository map](REPOSITORY_MAP.md) |
 | How do we engineer changes? | [ENGINEERING](ENGINEERING.md), [scope guides](#scope-guides) |
 | What is live, planned, deferred, or historical? | [Project state](PROJECT_STATE.md), [feature index](features/README.md) |
+| Gym booking and permission-container behavior | [Gym booking](features/GYM_BOOKING.md), [role permissions](features/ROLE_PERMISSIONS.md) |
 | How does the application fit together? | [Architecture](ARCHITECTURE.md), [domain rules](DOMAIN_RULES.md) |
 | HTTP routes and transport/privacy contracts | [API contracts](API_CONTRACTS.md) |
 | Entities, relationships, indexes, migrations | [Data model](DATA_MODEL.md) |

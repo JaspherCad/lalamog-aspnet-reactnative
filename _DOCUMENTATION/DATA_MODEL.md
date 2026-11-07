@@ -1,32 +1,61 @@
 # SQL data model and migration memory
 
-2026-11-06: ServerDerivedAvatars removes the avatar column after guarded storage transfer. Current FighterProfile contains no avatar metadata; C# derives API/storage paths from UserId. Existing references are copied byte-for-byte before clearing/removal; missing images block the upgrade. Down restores a nullable column without references; old-binary rollback needs backups/reverse transfer. See [media storage](features/MEDIA_STORAGE.md).
+Updated: 2026-11-07. SQL Server is the supported provider. Current source:
+Models/, Data/AppDbContext.cs and active migrations under ACTIVE_backend_lalamog/.
+Historical PostgreSQL/SQLite/Identity examples do not define this schema.
 
-Historical 2026-11-05: Migrations/20261104085551_AvatarBlobNames renames Profiles.AvatarKey to AvatarBlobName without rewriting/dropping values; Down renames it back. The string (max 100) is an object name only. Image bytes, full URLs, credentials and SAS tokens stay out of SQL; C# builds public avatar URLs. Existing-reference populated upgrade/rollback is covered by NativeUserMigrationTests. Source/recovery and demo defaults: [media storage](features/MEDIA_STORAGE.md).
-
-2026-11-04: additive Migrations/20261104073722_RoleSystemFeatures adds Roles, SystemFeatures, UserRoles and RoleSystemFeatures. Role names/feature codes are unique; join tables have composite primary keys and restrictive foreign keys. AppUser IDs/passwords and all product data are retained. Initial inline seeding backfills existing accounts with User once; subsequent runs preserve changed grants. Model, upgrade and recovery details: [role permissions](features/ROLE_PERMISSIONS.md).
-
-2026-11-02 map upgrade: `Migrations/20261102074948_PhilippineMapLocations.cs` adds seven nullable fields each to FighterProfile and Fight: RegionCode/ProvinceCode/CityCode/BarangayCode (max 10), PsgcVersion (max 16), Latitude/Longitude (double). SQL pair/range checks require both coordinates or neither (±90/±180); 0,0 is valid. No existing text/data is rewritten. Applied to local Lalamog after verified COPY_ONLY/CHECKSUM backup; populated SQL upgrade test preserves old text/null map fields. PSA catalog is versioned JSON reference data, not DbSets/seeding. See [maps guide](features/MAPS_AND_AREAS.md).
-
-2026-11-02 native account upgrade: `Migrations/20261102063804_NativeAppUsers.cs` creates AppUsers and copies existing IDs/emails/hashes/lockout values, retargets foreign keys and renames old framework tables to unmapped RetiredAuth* recovery archives. Active model/snapshot contains no Identity types. All seven models have separate Models/*.cs files. Upgrade/old-password login/metadata preservation/rollback with new accounts/re-upgrade passed against populated isolated SQL. Applied to local Lalamog after a verified COPY_ONLY/CHECKSUM backup; repeated EF update seeded no duplicates. Existing account/password preservation and Development HTTP flows verified. Details: [authentication](features/AUTHENTICATION.md).
-
-Audited 2026-10-28. Source: `Models/` (one model per .cs file), `Data/AppDbContext.cs`, and active EF migrations. SQL Server is the supported provider; old PostgreSQL/PostGIS and SQLite scaffolds do not define the active schema.
-
-| Entity | Key / relationships | Invariants |
+| Entity | Key / relationships | Current invariants |
 | --- | --- | --- |
-| AppUser | GUID ID, one FighterProfile, rowversion | Native password hash, normalized email unique filtered index, failed-login count/lockout; no Identity inheritance |
-| Role | int ID; unique Name (50), Description (200) | Many users and many system features |
-| SystemFeature | int ID; unique Code (80), Description (200) | Canonical feature choices for explicit policies |
-| UserRole | composite (UserId, RoleId) PK/FKs | One assignment per user/role; restrictive deletion |
-| RoleSystemFeature | composite (RoleId, SystemFeatureId) PK/FKs | One grant per role/feature; restrictive deletion |
-| FighterProfile | UserId PK/FK | unique normalized fighter name 50; non-unique nickname/alias 50, bio 500, style 50, location/availability 200; no avatar metadata; experience 1–3 |
-| Swipe | long ID; SwiperId/TargetId FKs | unique ordered actor/target pair; no self; direction like/pass |
-| FighterMatch | long ID; User1Id/User2Id FKs | unique pair; no self; service canonicalizes using ordinal GUID `D` strings |
-| ChatMessage | long ID; MatchId/SenderId FKs | content 2000; index `(MatchId, Id)` for cursor history |
-| Fight | long ID; MatchId FK | filtered unique MatchId while status scheduled/confirmed; allowed statuses; rowversion |
-| FightConfirmation | composite `(FightId, UserId)` PK | one acceptance per participant; emergency name 100/phone 40, AcceptedAt |
+| AppUser | GUID; one FighterProfile | Native password/lockout, rowversion, unique normalized email; no Identity inheritance |
+| Role / SystemFeature | Integer IDs; unique Name/Code | Roles contain permissions; operation authorization uses their current union |
+| UserRole | Composite (UserId, RoleId) | Many-to-many user assignments; restrictive FKs |
+| RoleSystemFeature | Composite (RoleId, SystemFeatureId) | Many-to-many permission grants; restrictive FKs |
+| FighterProfile | UserId PK/FK | Unique normalized fighter name, non-unique alias, styles/experience; optional private geography/pin; no avatar metadata |
+| Swipe | Long ID; actor/target FKs | Unique directed pair, no self, like/pass |
+| FighterMatch | Long ID; two user FKs | Unique canonical pair; no self; ordinal GUID ordering in C# |
+| ChatMessage | Long ID; MatchId/SenderId | Content max 2000; cursor index (MatchId,Id); participant checks |
+| MapRegion / MapProvince / MapCity / MapBarangay | Integer IDs, unique PSGC codes; named parent FKs | Tables Regions/Provinces/Cities/Barangays; city has exactly one ProvinceId or independent RegionId; no recursion |
+| Gym | Long ID; OwnerUserId, CityId, optional BarangayId | Unique Slug; barangay must belong to city; owner/details/address/pin/PHP pair price/duration/publication/rowversion; unclaimed imports unpublished |
+| Fight | Long ID; MatchId, optional GymId | One unfinished per match across pending_approval/scheduled/confirmed; rowversion; nullable quoted price/duration; gym venue facts are not duplicated on Fight |
+| FightConfirmation | Composite (FightId,UserId) | One participant waiver/contact; optional AllowPublicIdentity defaults false; membership enforced by service |
 
-Many user/match relationships use Restrict deletion. Do not introduce cascades without reviewing messages, sessions, privacy, and retention requirements. SQL's no-self constraint does not itself prove canonical pair ordering; the service must retain that rule. Confirmation membership and session transitions are service rules.
+```text
+AppUser ──< UserRole >── Role ──< RoleSystemFeature >── SystemFeature
+AppUser ──< Gym ──< Fight >── FighterMatch
+Fight ──< FightConfirmation >── AppUser
+Region ──< Province ──< City ──< Barangay
+Region ──< Independent City; City ──< Gym; Barangay ──< Gym (optional)
+```
+
+Role keys are FIGHTER, ADMIN, GYM_OWNER and reserved anonymous VISITOR. VISITOR
+has no account assignment. Fresh defaults: 4 roles, 13 permissions, 20 grants
+and 23 user-role assignments. [Permission model](features/ROLE_PERMISSIONS.md).
+
+Private fights have no GymId and retain participant-only venue fields. Gym
+bookings snapshot the pair price and duration; pending requests do not reserve
+capacity. Approved intervals cannot overlap; adjacent intervals are allowed.
+The owner completes confirmed gym fights after the session ends. Public completed
+history reveals names/avatars only with both consents; contacts/waivers stay
+participant-only. [Gym booking](features/GYM_BOOKING.md).
+
+## Preserving upgrade sequence
+
+PublicGymMaps introduced Maps/recursive MapAreas historically. ExplicitMapGeography
+replaced that hierarchy with the four named tables. GymBookingMvp renamed Maps
+to Gyms and Fight.MapId to GymId in place, added ownership/quotes/consent, and
+expanded status/index constraints. PermissionContainers then renamed default
+role rows in place without changing IDs, descriptions, assignments or grants.
+Static seeding introduces the two new permissions/default grants once and
+preserves later revocations. Do not recreate the retired Map/MapArea model or
+admin-only venue scheduling endpoints.
+
+ServerDerivedAvatars removed SQL image metadata only after guarded transfer;
+missing media blocks that upgrade. Both avatar and gym-cover paths are derived
+from entity IDs. GymBookingMvp Down refuses owned gyms/pending requests rather
+than silently losing data. Back up and verify before normal upgrades; old-binary
+rollback requires matching SQL/storage recovery. Preserve RetiredAuth* archives
+and every migration directory. [Media](features/MEDIA_STORAGE.md),
+[maps](features/MAPS_AND_AREAS.md), [authentication](features/AUTHENTICATION.md).
 
 ## Migration chain
 

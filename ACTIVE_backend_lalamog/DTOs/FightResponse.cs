@@ -3,6 +3,9 @@ namespace Lalamog.Api.DTOs
     public class FightResponse
     {
         public long Id { get; set; }
+        public decimal? QuotedPrice { get; set; }
+        public int? SessionDurationMinutes { get; set; }
+        public long? GymId { get; set; }
 
         public long MatchId { get; set; }
 

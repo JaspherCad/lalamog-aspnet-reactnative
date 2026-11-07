@@ -1,5 +1,11 @@
 # Backend backlog: complete the local full stack
 
+2026-11-07 current: Gym Booking MVP implemented: explicit Gym ownership, role-safe signup, quote snapshots, owner approval/overlap concurrency, completion/public consent and real Blob covers. Ranking, online payments, multiple spaces and background notifications remain deferred. Current verification/demo: [gym booking](../features/GYM_BOOKING.md).
+
+2026-11-07 owner remodel: geography now uses explicit integer-ID Region/Province/City/Barangay models and ordinary foreign keys, with a preserving migration from the earlier recursive schema. Area ranking can use fixed SQL joins; scoring and fighter public representation remain separate future work. [Maps](../features/MAPS_AND_AREAS.md).
+
+2026-11-07 / BE-03 public gyms: normalized Maps/MapAreas, optional Fight.MapId, separate admin venue/schedule APIs and sanitized public history delivered. Three fictional demo gyms/fights seeded; all 79 backend tests including populated upgrade/rollback passed. Local migration applied after verified backup. Ranking/distance remain pending. [Maps](../features/MAPS_AND_AREAS.md).
+
 2026-11-07 / BE-03 provider revision: Azure Maps replaces Nominatim using the existing server-only key setting. Complete provider features, match quality and compatible address fields are returned, with exact coordinate precision, cached explicit calls, safe manual fallback and no schema change. Distance/radius remains pending. Verification and recovery: [maps guide](../features/MAPS_AND_AREAS.md).
 
 2026-11-06 / BE-01 owner follow-up: server-derived owner paths replace avatar metadata in SQL; guarded transfer retains old files and blocks missing-media data loss. Fifteen discovery-only additions bring demo users to 21. Local Azurite is the confirmed test target. All 64 backend tests, Compose Azurite persistence, build/model/publish/assets and live application upgrade/discovery checks passed. Normal API remains running after a verified SQL backup. Evidence/remaining cloud/restore limits are in [media storage](../features/MEDIA_STORAGE.md). Earlier dated evidence below is historical.

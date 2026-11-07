@@ -2,6 +2,17 @@
 
 Updated: 2026-11-02 (Asia/Manila). Status: **visual/interaction foundation implemented; full map/result/video target remains proposed**.
 
+Owner revision 2026-11-07, implemented for **swipe/Discover only**: a police
+field-notebook presentation supersedes the flat dossier treatment on this
+module. Keep the portrait left in a taped Polaroid frame, light ruled details
+right, spiral binding above, and full-width field notes beneath. Rules, red
+margins, tape and binding use CSS; typed metadata/aliases/notes use the local
+system Courier stack. Red newspaper names, style colors and clear Like/Pass
+language remain. Stack below 340px for readability. Other routes keep the shared
+design. Current implementation/checks: [frontend design](features/FRONTEND_DESIGN.md).
+Public gym maps/history now exist; older full map/result/video proposals below
+remain target/historical context, with current scope in [gym booking](features/GYM_BOOKING.md).
+
 Implementation checkpoint: [frontend design guide](features/FRONTEND_DESIGN.md). Shared paper/CSS/icons, mobile dossier gestures, match reveal, style stacks, auth/profile/inbox/chat/fight restyling and contextual arrangements now exist. Build and nine fixture browser cases passed; live SQL workflows were not rerun. `/preview` contains explicitly fictional records/titles; real accounts show unavailable record slots. `/map` is an honest empty state. A future collection DTO is not required for the current style UI: one adapter serializes five supported keys into the existing 50-character field without schema changes.
 
 Product authority: [DESIGN_BRIEF.md](DESIGN_BRIEF.md), plus the owner's latest direction: a textured, information-rich fighter-selection experience with stacked styles, green record bars and identity tags. Exactly five style categories; a fighter can select several. This revision supersedes the initial single-style, oversized-photo mockups. Older training-service language describes the existing code, not the target product.

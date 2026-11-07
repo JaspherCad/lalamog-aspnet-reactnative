@@ -15,6 +15,9 @@ namespace Lalamog.Api.DTOs
             Nickname = nickname;
         }
 
+        [RegularExpression("^(fighter|gymOwner)$")]
+        public string AccountType { get; set; } = "fighter";
+
         [Required]
         [EmailAddress]
         [MaxLength(254)]

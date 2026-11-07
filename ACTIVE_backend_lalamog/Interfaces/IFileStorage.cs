@@ -8,6 +8,8 @@ namespace Lalamog.Api.Interfaces
 
         Task<StoredFile> OpenAsync(string blobName, CancellationToken cancellationToken);
 
+        Task SetGymCoverAsync(long gymId, StoredFile photo, CancellationToken cancellationToken);
+
         Task SetAvatarAsync(Guid userId, StoredFile photo, bool onlyIfMissing, CancellationToken cancellationToken);
 
         Task DeleteAsync(string blobName, CancellationToken cancellationToken);

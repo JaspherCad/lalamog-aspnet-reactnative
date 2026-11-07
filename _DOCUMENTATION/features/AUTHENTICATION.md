@@ -1,12 +1,8 @@
 # Native account authentication and browser session
 
-2026-11-04 latest seeder revision: demo accounts/roles/features are now in static Data/DatabaseSeeder.cs, called after migration from the Development startup scope. Sample passwords, signup defaults, cookies, CSRF and grant preservation are unchanged. Earlier callback/location records below are historical; [local development](LOCAL_DEVELOPMENT.md) owns the current flow.
-
-2026-11-04 role-permission extension: AuthService also uses IAccessRepository to find the saved User role and persists its link with each new account/profile. Clients cannot select signup roles. Cookie claims/hash/lockout/CSRF remain unchanged; feature authorization reads current SQL grants on each protected request. Login/logout/session access does not require a feature grant. Custom application roles are separate from retired Identity metadata. See [role permissions](ROLE_PERMISSIONS.md) for sources, endpoints, seeding and verification.
-
-2026-11-02 SQL recovery clarification: active authentication is native AppUser email/password plus HttpOnly cookies. No active OAuth/OIDC/Google/Facebook setup/package was found; none needed removal. Fake seed emails remain inline in Program.cs and need no real mailbox. Reported SQL error 18456 was a separate database connection issue: missing Lalamog database plus a placeholder normal-run connection. Existing migrations/seeds and owner-approved local Development JSON restored normal health/cookie login/session/profile. Auth business code unchanged; see [local development](LOCAL_DEVELOPMENT.md).
-
-Status: implemented with plain AppUser, native password hashing and cookie authentication. Updated/verified 2026-11-02; full-suite limits below. ASP.NET Identity is removed from active application code and package references.
+Status: implemented. Updated: 2026-11-07. Native cookies/CSRF and password
+compatibility are preserved. Current permission/signup behavior is below;
+earlier dated verification records retain their original scope.
 
 ## Source map
 
@@ -20,7 +16,12 @@ Status: implemented with plain AppUser, native password hashing and cookie authe
 
 ## Current behavior and contracts
 
-Registration keeps the existing email/password/nickname/optional fighterName API. Passwords require 10–128 characters including uppercase, lowercase, a digit and a symbol. Email is normalized with invariant uppercase and protected by a SQL unique index; concurrent duplicate email attempts produce one account and a 400 for the duplicate. Fighter-name conflicts remain 409. Account and profile save together before sign-in.
+Registration accepts email/password/nickname/optional fighterName and accountType
+fighter (default) or gymOwner. It saves FIGHTER or GYM_OWNER with the account/profile;
+ADMIN self-assignment is rejected. Session/login/register return userId, roles
+and current SQL permission unions. POST /auth/enable-fighter requires
+owner_canEnableFighter and adds only FIGHTER. VISITOR has no account assignment.
+[Role/permission contracts](ROLE_PERMISSIONS.md). Passwords require 10–128 characters including uppercase, lowercase, a digit and a symbol. Email is normalized with invariant uppercase and protected by a SQL unique index; concurrent duplicate email attempts produce one account and a 400 for the duplicate. Fighter-name conflicts remain 409. Account and profile save together before sign-in.
 
 Passwords use built-in .NET PBKDF2-HMAC-SHA512 with 220,000 iterations, a random 16-byte salt and 32-byte derived key; verification compares bytes with FixedTimeEquals. The versioned binary representation remains compatible with existing saved password hashes (older version/PRF variants verified with independent test vectors). There is no Identity password hasher dependency and no plaintext password storage.
 
@@ -32,7 +33,7 @@ The built-in MVC AutoValidateAntiforgeryToken filter is now registered inline wi
 
 ## Migration, compatibility and recovery
 
-Apply the new migration explicitly with `dotnet ef database update` from the backend before running this version against an existing database. It was tested in isolated databases. The inline-seeding task applied it to the backed-up local Lalamog database and verified a repeat update without duplicates or changed original passwords; operational results are in handoff/local development. Development startup invokes MigrateAsync inline and then static DatabaseSeeder.SeedAsync so fresh local SQL volumes receive the schema, six fake accounts and default authorization data. Other environments use explicit migrations without automatic demo seeding.
+Apply the new migration explicitly with `dotnet ef database update` from the backend before running this version against an existing database. It was tested in isolated databases. The inline-seeding task applied it to the backed-up local Lalamog database and verified a repeat update without duplicates or changed original passwords; operational results are in handoff/local development. Development startup invokes MigrateAsync inline and then static DatabaseSeeder.SeedAsync so fresh local SQL volumes receive the schema, current fictional demo accounts and default authorization data. Other environments use explicit migrations without automatic demo seeding.
 
 The migration creates AppUsers, copies existing account IDs/emails/hashes/lockout values, and redirects profile/swipe/match/message/confirmation foreign keys. Old framework account/role/claim/login/token tables are renamed RetiredAuth* as unmapped recovery archives rather than discarded. No active model or service maps those tables. Null email/hash values in historical placeholder rows are preserved; normal registration supplies validated values. A conflicting old normalized email stops the unique-index upgrade transaction rather than silently merging accounts.
 
@@ -41,6 +42,13 @@ Rollback copies new/updated native accounts back into the archived old user tabl
 Recover AppUser, DbContext mapping, repository, password verification, cookie setup and migration/snapshot together. Do not restore Identity services or the combined Entities.cs file. Keep each model in its own named .cs file. Account email/hash/lockout metadata must stay out of public profile/message DTOs and logs.
 
 ## Verification and latest work record
+
+2026-11-07: permission-based signup/session/opt-in and owner isolation are
+covered in the 85-case backend run and two isolated full booking/admin browser
+cases. Default role keys are FIGHTER/ADMIN/GYM_OWNER/VISITOR; role names do not
+authorize operations. Current result/rollout detail: [handoff](../memory/HANDOFF.md).
+
+### Historical startup verification
 
 2026-11-04 / static-seeder revision: sample data now lives once in Data/DatabaseSeeder.cs. A short Development startup scope resolves AppDbContext, awaits MigrateAsync and calls DatabaseSeeder.SeedAsync(db) before serving. Duplicated EF callbacks were removed; configuration and the owner's authorization comments remain in Program.cs. Existing data/order and preservation of passwords/edits/grant removals are unchanged. Build zero warnings/errors, four targeted SQL cases and all 61 backend tests passed. No EF model change; normal volumes/database/API process were preserved. See [local development](LOCAL_DEVELOPMENT.md) for startup, source/recovery and verification.
 

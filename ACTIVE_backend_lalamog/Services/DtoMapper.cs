@@ -66,6 +66,7 @@ namespace Lalamog.Api.Services
                 confirmations.Add(new ConfirmationResponse
                 {
                     UserId = confirmation.UserId,
+                    AllowPublicIdentity = confirmation.AllowPublicIdentity,
                     EmergencyContactName = confirmation.EmergencyContactName,
                     EmergencyContactPhone = confirmation.EmergencyContactPhone,
                     AcceptedAt = confirmation.AcceptedAt
@@ -75,6 +76,9 @@ namespace Lalamog.Api.Services
             return new FightResponse
             {
                 Id = fight.Id,
+                GymId = fight.GymId,
+                QuotedPrice = fight.QuotedPrice,
+                SessionDurationMinutes = fight.SessionDurationMinutes,
                 MatchId = fight.MatchId,
                 User1Id = fight.Match.User1Id,
                 User2Id = fight.Match.User2Id,
@@ -86,12 +90,12 @@ namespace Lalamog.Api.Services
                     CityCode = fight.CityCode,
                     BarangayCode = fight.BarangayCode,
                     PsgcVersion = fight.PsgcVersion,
-                    Latitude = fight.Latitude,
-                    Longitude = fight.Longitude,
+                    Latitude = fight.Gym?.Latitude ?? fight.Latitude,
+                    Longitude = fight.Gym?.Longitude ?? fight.Longitude,
                 },
 
-                Location = fight.Location,
-                Address = fight.Address,
+                Location = fight.Gym?.Name ?? fight.Location,
+                Address = fight.Gym?.Address ?? fight.Address,
                 Status = fight.Status,
                 User1Confirmed = user1Confirmed,
                 User2Confirmed = user2Confirmed,

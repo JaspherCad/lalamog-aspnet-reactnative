@@ -29,6 +29,7 @@ namespace Lalamog.Api.Controllers
         [HttpGet("{**blobName}")]
         public async Task<IActionResult> Get(string blobName, CancellationToken cancellationToken)
         {
+            if (blobName.StartsWith("gyms/", StringComparison.Ordinal)) { return NotFound(); }
             StoredFile file = await _fileStorage.OpenAsync(blobName, cancellationToken);
             Response.Headers.CacheControl = blobName.StartsWith("avatars/", StringComparison.Ordinal)
                 ? "no-store" : "public,max-age=86400,immutable";

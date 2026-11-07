@@ -5,6 +5,7 @@ import { api, errorText, post } from './api';
 import type { Match, Profile } from './types';
 import { Avatar, fighterName, Icon, Modal, PageHeading, RecordPanel, StyleStack } from './ui';
 import demoPortrait from './assets/demo-fighter.jpg';
+import './Discover.css';
 
 const demoProfiles: Profile[] = [
   { userId: 'demo-miko', fighterName: 'Miko', nickname: 'Crow', bio: 'Here for a good story and another round. Let’s make it count.', fightingStyle: 'streetfighting|kickboxing|wrestling', experienceLevel: 2, location: 'Rizal', availability: 'Weekends', avatarUrl: demoPortrait },
@@ -76,7 +77,7 @@ export function Discover({ preview = false }: { preview?: boolean }) {
     } catch (err) { setError(errorText(err)); setMatch(null); }
   }
   return <section className="discover-page">
-    <PageHeading eyebrow="The next round starts with a connection" title="Discover"><button className="secondary refresh-button" disabled={busy || loading} onClick={() => void load()}><Icon name="refresh"/><span>Refresh</span></button></PageHeading>
+    <PageHeading eyebrow="The field notebook / Fighter files" title="Discover"><button className="secondary refresh-button" disabled={busy || loading} onClick={() => void load()}><Icon name="refresh"/><span>Refresh</span></button></PageHeading>
     <div className="discover-intro"><p>Choose your next match<span className="red-dot">.</span></p><span className="keyboard-hint">← Pass <span>/</span> Like →</span></div>
     {preview && <p className="preview-banner"><Icon name="info"/>Design preview · Fictional profiles and sample records. Choices aren’t saved. <Link to="/">Sign in</Link></p>}
     {notice && <p className="choice-notice" role="status">{notice}</p>}
@@ -90,14 +91,19 @@ export function Discover({ preview = false }: { preview?: boolean }) {
             if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); void swipe(event.key === 'ArrowRight' ? 'like' : 'pass'); }
           }}>
           {Math.abs(dragX) > 20 && <span className={`swipe-stamp ${dragX > 0 ? 'stamp-like' : 'stamp-pass'}`} aria-hidden="true">{dragX > 0 ? 'LIKE' : 'PASS'}</span>}
+          <div className="notebook-binding" aria-hidden="true"/>
+          <div className="notebook-index"><span>Lalamog / Scouting notes</span><span>Fighter file</span></div>
           <header className="dossier-heading fighter-details"><div><h2 className="fighter-name">{fighterName(profile)}</h2>{profile.fighterName && profile.nickname && <p className="fighter-alias">“{profile.nickname}”</p>}</div><span className="location-label"><Icon name="pin"/>{profile.location || 'Location not added'}</span></header>
-          <div className="dossier-content"><div className="portrait-panel" onMouseLeave={() => setHoverIntel(false)}><Avatar profile={profile} large/><button className="intel-button" onMouseEnter={() => { if (matchMedia('(hover: hover)').matches) setHoverIntel(true); }} onFocus={() => setHoverIntel(true)} onBlur={() => setHoverIntel(false)} onKeyDown={event => { if (event.key === 'Escape') { setHoverIntel(false); event.stopPropagation(); } }} onClick={() => { setHoverIntel(false); setIntel(true); }}><Icon name="info"/>Fight intel</button>
+          <div className="dossier-content"><div className="dossier-portrait-column"><div className="portrait-panel" onMouseLeave={() => setHoverIntel(false)}><Avatar profile={profile} large/><button className="intel-button" onMouseEnter={() => { if (matchMedia('(hover: hover)').matches) setHoverIntel(true); }} onFocus={() => setHoverIntel(true)} onBlur={() => setHoverIntel(false)} onKeyDown={event => { if (event.key === 'Escape') { setHoverIntel(false); event.stopPropagation(); } }} onClick={() => { setHoverIntel(false); setIntel(true); }}><Icon name="info"/>Fight intel</button>
             {hoverIntel && !dragging && <aside className="intel-hover"><strong>Public Lalamog record</strong><p>{preview && profile.userId === 'demo-miko' ? '8 wins · 2 losses · 1 draw' : 'Results and verified titles are not available yet.'}</p><small>Tap for the full profile.</small></aside>}
-            <span className="portrait-caption">{preview ? 'Fictional demo fighter' : 'Meet the person. Make the connection.'}</span></div>
-            <div className="dossier-info"><div className="fighter-tags">{preview ? <><span className="fighter-tag title-tag">Weekly fighter</span><span className="fighter-tag">Early member</span></> : <span className="fighter-tag"><Icon name="fist"/>{['', 'Beginner', 'Intermediate', 'Experienced'][profile.experienceLevel] || 'Fighter'}</span>}</div>
-              <StyleStack value={profile.fightingStyle}/><RecordPanel record={sampleRecord} stats={sampleStats}/>
-              <div className="fighter-facts"><span><Icon name="profile"/>{['', 'Beginner', 'Intermediate', 'Experienced'][profile.experienceLevel] || 'Experience not added'}</span><span><Icon name="calendar"/>{profile.availability || 'Ask in chat'}</span></div>
-              <p className="fighter-bio">“{profile.bio || 'Every connection has a story. Say hello when you match.'}”</p>
+            <span className="portrait-caption">{preview ? 'Fictional demo fighter' : 'Profile photograph'}</span></div>
+            <div className="fighter-tags">{preview ? <><span className="fighter-tag title-tag">Weekly fighter</span><span className="fighter-tag">Early member</span></> : <span className="fighter-tag"><Icon name="fist"/>{['', 'Beginner', 'Intermediate', 'Experienced'][profile.experienceLevel] || 'Fighter'}</span>}</div>
+            <StyleStack value={profile.fightingStyle}/></div>
+            <div className="dossier-info"><p className="notebook-label">01 / Fighter details</p>
+              <dl className="fighter-facts"><div><dt>Experience</dt><dd>{['', 'Beginner', 'Intermediate', 'Experienced'][profile.experienceLevel] || 'Not added'}</dd></div><div><dt>Available</dt><dd>{profile.availability || 'Ask in chat'}</dd></div></dl>
+              <RecordPanel record={sampleRecord} stats={sampleStats}/>
+            </div>
+            <div className="dossier-notes"><p className="notebook-label">02 / Field notes</p><p className="fighter-bio">“{profile.bio || 'Every connection has a story. Say hello when you match.'}”</p>
               <button className="text-action" onClick={() => setIntel(true)}>View profile & history <Icon name="arrow"/></button>
             </div></div>
           <footer className="dossier-footer"><span><span className="small-square"/> {preview ? 'Sample record · Demo data' : 'Mutual likes unlock your private conversation'}</span><span>NO. {String(profiles.length).padStart(2, '0')}</span></footer>

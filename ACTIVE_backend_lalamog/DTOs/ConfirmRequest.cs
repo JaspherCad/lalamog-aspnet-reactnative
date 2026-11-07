@@ -15,6 +15,7 @@ namespace Lalamog.Api.DTOs
             EmergencyContactPhone = emergencyContactPhone;
         }
 
+        public bool AllowPublicIdentity { get; set; }
         public bool Accepted { get; set; }
 
         [Required]

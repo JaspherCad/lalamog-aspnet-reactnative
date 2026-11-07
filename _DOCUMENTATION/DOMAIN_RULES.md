@@ -1,6 +1,8 @@
 # Shared domain rules and privacy boundaries
 
-Updated: 2026-11-03. This is a cross-feature index of existing invariants,
+2026-11-07 current: Gym MVP distinguishes private arrangements from owner-approved gym bookings. Public identity requires both independent participant consents; owners/admins cannot accept waivers or receive contacts through management projections. One approved session per gym interval; one unfinished Fight per match includes pending requests. Payment is at the gym; completion has no winner/ranking outcome. See [gym booking](features/GYM_BOOKING.md).
+
+Updated: 2026-11-07. This is a cross-feature index of existing invariants,
 derived from the owning feature guides and active architecture. It introduces
 no new policy or application behavior. Read current source/tests before edits.
 
@@ -23,7 +25,7 @@ broadening a DTO. See [profiles](features/PROFILES_AND_DISCOVERY.md),
 | --- | --- | --- |
 | Like/pass and mutual matching | Canonical pair ordering, retriable serializable work and SQL unique constraints prevent duplicate mutual matches | [Matching](features/MATCHING.md) |
 | Messages | Only match participants can read/send; REST history/cursors recover and deduplicate; active conversation refreshes every three seconds | [Chat](features/CHAT.md) |
-| Arrangements | Participant authorization, row-version concurrency and one unfinished session per match remain enforced | [Sessions](features/SESSIONS_AND_WAIVERS.md) |
+| Arrangements | Participant private/gym requests; owner decisions/completion; rowversion and one pending/scheduled/confirmed fight per match | [Sessions](features/SESSIONS_AND_WAIVERS.md) |
 | Waivers/contacts | Confirmations belong to the acting participant; emergency contacts remain participant-sensitive | [Sessions](features/SESSIONS_AND_WAIVERS.md) |
 | Cancel/complete | Follow current service transition/time rules; UI hiding does not authorize a write | [Sessions](features/SESSIONS_AND_WAIVERS.md) |
 | Time | Persist session instants in UTC and explicitly convert browser-local input/display | [Sessions](features/SESSIONS_AND_WAIVERS.md) |
@@ -52,7 +54,11 @@ Static DatabaseSeeder is parent-first, idempotent and preserves existing rows/ed
 passwords/custom avatars; it runs after inline Development migration. Migrations/seeding
 do not authorize destructive resets. See [local development](features/LOCAL_DEVELOPMENT.md).
 
-Results, ratings, video/montages, public demo map projections, Blob maintenance and
+Public gym history uses a separate id/date/status projection; private pins,
+waivers and contacts are never published. Full addresses describe venues,
+not official barangays/districts. See [maps](features/MAPS_AND_AREAS.md).
+
+Results, ratings, video/montages, Blob maintenance and
 broker notifications have planned/deferred portions. Inspect
 [project state](PROJECT_STATE.md), [backlog](BACKLOG.md) and the owning guide.
 Do not revive historical legacy/result rules to fill these gaps.

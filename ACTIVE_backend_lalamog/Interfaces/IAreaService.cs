@@ -10,5 +10,6 @@ public interface IAreaService
     List<AreaOption> Cities(string regionCode, string? provinceCode);
     List<AreaOption> Barangays(string cityCode);
     string CityName(string cityCode);
+    List<Lalamog.Api.Models.PhilippineArea> GetPath(string code);
     void Validate(MapLocation location);
 }

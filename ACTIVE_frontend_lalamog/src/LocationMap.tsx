@@ -3,9 +3,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MapLocation } from './types';
 
-export interface VenueMarker { id: number; latitude: number; longitude: number; label: string }
+export interface VenueMarker { id: number; latitude: number; longitude: number; label: string; isPublic?: boolean }
 const emptyMarkers: VenueMarker[] = [];
 const pinIcon = L.divIcon({ className: 'venue-marker', html: '<span aria-hidden="true">●</span>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const gymIcon = L.divIcon({ className: 'venue-marker public-gym-marker', html: '<span aria-hidden="true">◆</span>', iconSize: [32, 32], iconAnchor: [16, 16] });
 
 export function LocationMap({ value, onChange, markers = emptyMarkers, onSelect }: {
   value: MapLocation; onChange?: (value: MapLocation) => void; markers?: VenueMarker[]; onSelect?: (id: number) => void;
@@ -37,10 +38,14 @@ export function LocationMap({ value, onChange, markers = emptyMarkers, onSelect 
     const group = L.layerGroup().addTo(view);
     for (const point of markers) {
       const label = document.createElement('span'); label.textContent = point.label;
-      L.marker([point.latitude, point.longitude], { icon: pinIcon }).bindTooltip(label)
-        .on('click', () => latest.current.onSelect?.(point.id)).addTo(group);
+      L.marker([point.latitude, point.longitude], { icon: point.isPublic ? gymIcon : pinIcon, title: point.label, alt: point.label }).bindTooltip(label)
+        .on('click', () => latest.current.onSelect?.(point.id))
+        .on('keypress', (event: L.LeafletEvent) => {
+          const key = (event as L.LeafletKeyboardEvent).originalEvent;
+          if (key.key === 'Enter' || key.key === ' ') { key.preventDefault(); latest.current.onSelect?.(point.id); }
+        }).addTo(group);
     }
-    if (markers.length) view.fitBounds(L.latLngBounds(markers.map(point => [point.latitude, point.longitude])), { padding: [30, 30], maxZoom: 14, animate: false });
+    if (markers.length) view.fitBounds(L.latLngBounds(markers.map(point => [point.latitude, point.longitude])), { padding: [30, 30], maxZoom: 17, animate: false });
     return () => { group.remove(); };
   }, [markers]);
   useEffect(() => {

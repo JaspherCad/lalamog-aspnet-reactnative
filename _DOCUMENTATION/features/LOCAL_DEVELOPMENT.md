@@ -1,6 +1,16 @@
 # Basic startup, migrations and static test-data seeding
 
-Status: implemented. Updated: 2026-11-06. Fresh checks passed: zero-warning solution build, all 64 backend tests, Compose Azurite restart integration, EF model, publish/21 portrait hashes, knowledge/whitespace and live normal API discovery/media. Earlier results below are historical.
+Updated: 2026-11-07. Inline Program configuration and static DatabaseSeeder are
+the current startup contract. Development migrates/seeds before serving; other
+environments use explicit migrations without fictional account seeding.
+
+Fresh seed: 22 accounts/profiles (21 fighters and the demo owner), 4 roles,
+13 permissions, 20 grants, 23 user-role links, 3 gyms, 5 matches, 11 swipes,
+10 messages, 10 fights and 17 confirmations. Counts describe an isolated new
+database; normal SQL also retains the owner-approved demo additions. A seeded
+past confirmed gym booking permits immediate manual owner completion without
+weakening production time rules. [Gym booking](GYM_BOOKING.md),
+[permission defaults](ROLE_PERMISSIONS.md), [handoff](../memory/HANDOFF.md).
 
 ## Owner direction
 
@@ -88,7 +98,7 @@ All 21 fictional test accounts use **Lalamog123!Test**:
 | tala.seed@example.test | Seed-Tala / Ember | Kickboxing + Martial Artist / Muntinlupa | Discovery only; no seeded swipes/matches |
 | yuri.seed@example.test | Seed-Yuri / Drift | Wrestling + BJJ / Caloocan | Discovery only; no seeded swipes/matches |
 
-Fresh seed totals: 21 users, 21 complete profiles, 11 directed swipes, 5 mutual matches, 10 messages, 6 fights (scheduled/confirmed/completed/canceled), 9 participant confirmations. Profiles include bio, level, style, location and availability. Contact numbers/venue addresses are explicitly fictional. No avatar metadata is stored in SQL; the server derives image URLs/owner paths from UserId and resolves bundled defaults for known seed accounts. Custom uploads remain intact. Dates are UTC relative to first seed creation and are not shifted on reruns.
+Fresh seed totals are listed above. The current ten fights cover private/gym scenarios, with scheduled, confirmed, completed and canceled examples; pending requests are created through the booking flow; the owner-only seed is excluded from matching by permissions. Profiles include bio, level, style, location and availability. Contact numbers/venue addresses are explicitly fictional. No avatar metadata is stored in SQL; the server derives image URLs/owner paths from UserId and resolves bundled defaults for known seed accounts. Custom uploads remain intact. Dates are UTC relative to first seed creation and are not shifted on reruns.
 
 Fresh authorization totals: 2 roles, 8 system features, 22 user-role assignments and 8 role-feature grants. Existing installations may have additional real/test rows; the seeder preserves them.
 
@@ -108,6 +118,16 @@ For SQL 18456/4060, distinguish invalid credentials from a missing database. Exi
 Restore Program.cs's startup call and Data/DatabaseSeeder.cs together. Preserve existing data, migration history, credentials, uploads/keys and all LEGACY references. Source-only refactoring requires no new migration. Root AGENTS and central guides own the current rule; older inline-seed records below are historical. See [development](../runbooks/DEVELOPMENT.md), [authentication](AUTHENTICATION.md), [data model](../DATA_MODEL.md), and [testing](../runbooks/TESTING.md).
 
 ## Latest work record
+
+2026-11-07: Gym Booking MVP and permission-container startup passed isolated fresh
+startup, populated upgrade and seed-rerun checks in the 85-case backend run.
+Default-role keys are preserved in place; new default grants initialize once
+and later removals survive. The normal permission upgrade followed a verified
+backup and retained all account/venue/fight counts. Earlier gym-launcher incident
+and KEEP decision remain accurately recorded in [handoff](../memory/HANDOFF.md).
+This documentation audit did not rerun application tests or reset any volume.
+
+### Earlier avatar/discovery verification (historical)
 
 2026-11-06 / recovered avatar and discovery work: no SQL avatar column, user-ID image routes, guarded transfer before schema removal and five more discovery candidates (Omar, Pia, Rafa, Tala and Yuri). Fresh totals are 21 users/22 user-role links; all fifteen additions have no seeded interactions. Four targeted SQL cases and all 64 backend tests passed, including an added automatic populated-startup transfer/restart test. Compose Azurite integration passed across emulator restart; build/model/publish/assets/knowledge checks passed. After a verified COPY_ONLY/CHECKSUM SQL backup, normal Development startup transferred/migrated/seeded the existing database successfully. API and frontend are running at localhost:5080 and localhost:5173 with normal settings; frontend and same-origin API proxy checks passed; Alex has all fifteen added candidates and their portraits. Live SQL confirms zero swipes/matches for all fifteen and no avatar columns. Existing interactions remain saved. Refresh Discover; no reset is needed. Full evidence/limits: [media storage](MEDIA_STORAGE.md).
 

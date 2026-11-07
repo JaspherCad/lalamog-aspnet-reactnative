@@ -4,6 +4,8 @@ namespace Lalamog.Api.Interfaces
 {
     public interface IFightService
     {
+        Task<FightResponse> PublicationAsync(Guid actor, long id, PublicationRequest request, CancellationToken cancellationToken);
+
         Task<List<FightResponse>> ListAsync(Guid actor, CancellationToken cancellationToken);
 
         Task<FightResponse> GetAsync(Guid actor, long id, CancellationToken cancellationToken);

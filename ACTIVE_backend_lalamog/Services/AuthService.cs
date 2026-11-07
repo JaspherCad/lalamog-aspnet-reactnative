@@ -52,7 +52,10 @@ public class AuthService : IAuthService
             user.Profile.NormalizedFighterName = FighterNames.Normalize(name);
             user.Profile.FighterName = name;
         }
-        Role defaultRole = await _access.FindRoleAsync("User", CancellationToken.None)
+        if (request.AccountType != "fighter" && request.AccountType != "gymOwner")
+        { throw new ApiException(400, "Choose Fighter or Gym Owner."); }
+        string roleName = request.AccountType == "gymOwner" ? "GYM_OWNER" : "FIGHTER";
+        Role defaultRole = await _access.FindRoleAsync(roleName, CancellationToken.None)
             ?? throw new InvalidOperationException("The default User role has not been seeded.");
         user.UserRoles.Add(new UserRole { RoleId = defaultRole.Id });
         try
@@ -73,7 +76,7 @@ public class AuthService : IAuthService
         }
 
         await SignInAsync(user);
-        return new AuthResponse { UserId = user.Id };
+        return await _access.SessionAsync(user.Id, CancellationToken.None);
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -119,7 +122,7 @@ public class AuthService : IAuthService
                 throw InvalidLogin();
             }
             await SignInAsync(user);
-            return new AuthResponse { UserId = user.Id };
+            return await _access.SessionAsync(user.Id, CancellationToken.None);
         }
         throw InvalidLogin();
     }

@@ -23,3 +23,7 @@ Parse changed PowerShell and exercise positive/negative paths; see
 
 scripts/smoke.py is a legacy JWT/no-CSRF scaffold, not an active verification
 command. Keep legacy/source/data intact. Update owning memory and handoff.
+
+Before a Git handoff, preserve generated test reports locally and verify that
+scripts/gitignore excludes backend TestResults and existing private/runtime
+artifacts. Required source, migrations and new guides must remain visible to Git.

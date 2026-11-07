@@ -1,5 +1,7 @@
 # Shared engineering instructions
 
+2026-11-07 permission-container update: Role names are permission containers, not operation authorization. Use current assigned-role permission unions and preserve ownership/participant checks. Default role keys: FIGHTER, ADMIN, GYM_OWNER; reserved VISITOR controls deliberately public anonymous gym reads only. No privileged anonymous policies or client role-name fallbacks. See [role permissions](features/ROLE_PERMISSIONS.md).
+
 ## Non-negotiable startup preference
 
 Follow [the mandatory owner rule in AGENTS.md](../AGENTS.md#mandatory-owner-rule-basic-setup-inline-in-programcs). Keep configuration, registrations and middleware inline in Program.cs with the simplest built-in options that make existing features work. Owner revision 2026-11-04 moves seed data into one static Data/DatabaseSeeder.cs method, called with a scoped AppDbContext after inline MigrateAsync in Development startup. Do not recreate duplicated EF seeding callbacks or add seeder interfaces, initializer services, settings or configuration wrappers. This explicitly supersedes older inline-seed/no-seeder directions. Preserve CSRF/cookies/default SQL retries. Standard ignored appsettings.Development.json may hold local SQL values; no custom loader, OAuth or extra setup classes.
@@ -22,6 +24,8 @@ When code and docs disagree, inspect the active code and tests, report the discr
 4. For work spanning layers, write a small plan with acceptance checks and dependencies in the backlog or handoff. Proceed with ordinary reversible implementation choices. Ask only when missing information materially blocks work or a destructive/external action needs authorization.
 
 ## Backend
+
+- Owner geography preference (2026-11-07): explicit MapRegion/MapProvince/MapCity/MapBarangay models with ordinary one-to-many/many-to-one foreign keys. Do not restore recursive MapArea/self-parent persistence. Use explicit junction entities only for actual many-to-many relationships; no speculative junctions or ranking features. See [maps](features/MAPS_AND_AREAS.md).
 
 - Readability preference: explicit constructors, readonly injected fields, brace-delimited methods/control flow, individual property-based DTOs, individual interfaces and one model per Models/*.cs file (no combined Entities.cs). Keep startup settings and middleware inline in `Program.cs` with inline callbacks (owner direction, 2026-11-02); do not extract named setup methods or configuration-only C# files. Elsewhere, use named callbacks/transaction operations and LINQ query syntax instead of arrow/lambda syntax. Preserve generated migration history during behavior-preserving refactors and confirm no EF model drift; deliberate schema changes require a new migration and updated snapshot. The structure remains one horizontal N-tier project; see [backend structure](features/BACKEND_STRUCTURE.md).
 

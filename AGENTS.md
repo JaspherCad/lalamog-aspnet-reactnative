@@ -21,6 +21,7 @@ relevant source. Do not load the entire vault or legacy tree by default.
 | Profiles, fighter names, discovery, like/pass, mutual matches | [Profiles/discovery](_DOCUMENTATION/features/PROFILES_AND_DISCOVERY.md), [matching](_DOCUMENTATION/features/MATCHING.md) |
 | Private chat, polling, cursor recovery | [Chat](_DOCUMENTATION/features/CHAT.md) |
 | Scheduling, waivers, contacts, cancel/complete, concurrency | [Sessions](_DOCUMENTATION/features/SESSIONS_AND_WAIVERS.md), [domain rules](_DOCUMENTATION/DOMAIN_RULES.md) |
+| Gym ownership, public listings, bookings and owner decisions | [Gym booking](_DOCUMENTATION/features/GYM_BOOKING.md), [role permissions](_DOCUMENTATION/features/ROLE_PERMISSIONS.md) |
 | Maps, GPS, Philippine areas, suggested addresses | [Maps/areas](_DOCUMENTATION/features/MAPS_AND_AREAS.md) |
 | Photos, uploads, Blob/Azurite | [Media/storage](_DOCUMENTATION/features/MEDIA_STORAGE.md) |
 | RabbitMQ, outbox, notifications, Redis | [Background workflows](_DOCUMENTATION/features/BACKGROUND_WORKFLOWS.md), [infrastructure scope](_DOCUMENTATION/scopes/INFRASTRUCTURE.md) |

@@ -95,17 +95,17 @@ public class DevelopmentStartupTests
                 Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("/api/profiles/me", edit)).StatusCode);
                 using var scope = app.Services.CreateScope();
                 AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                Assert.Equal(21, await db.Users.CountAsync());
-                Assert.Equal(21, await db.Profiles.CountAsync());
+                Assert.Equal(22, await db.Users.CountAsync());
+                Assert.Equal(22, await db.Profiles.CountAsync());
                 Assert.Equal(5, await db.Matches.CountAsync());
-                Assert.Equal(6, await db.Fights.CountAsync());
+                Assert.Equal(10, await db.Fights.CountAsync());
                 Assert.Equal(11, await db.Swipes.CountAsync());
                 Assert.Equal(10, await db.Messages.CountAsync());
-                Assert.Equal(9, await db.FightConfirmations.CountAsync());
-                Assert.Equal(2, await db.Roles.CountAsync());
-                Assert.Equal(8, await db.SystemFeatures.CountAsync());
-                Assert.Equal(22, await db.UserRoles.CountAsync());
-                Assert.Equal(8, await db.RoleSystemFeatures.CountAsync());
+                Assert.Equal(17, await db.FightConfirmations.CountAsync());
+                Assert.Equal(4, await db.Roles.CountAsync());
+                Assert.Equal(13, await db.SystemFeatures.CountAsync());
+                Assert.Equal(23, await db.UserRoles.CountAsync());
+                Assert.Equal(20, await db.RoleSystemFeatures.CountAsync());
 
                 var discovery = (await client.GetFromJsonAsync<List<ProfileResponse>>("/api/profiles/discover"))!;
                 Assert.Equal(16, discovery.Count);
@@ -129,8 +129,8 @@ public class DevelopmentStartupTests
                 Assert.Equal("Keep this profile edit across restart", (await client.GetFromJsonAsync<ProfileResponse>("/api/profiles/me"))!.Bio);
                 using var scope = restarted.Services.CreateScope();
                 AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                Assert.Equal(21, await db.Users.CountAsync());
-                Assert.Equal(6, await db.Fights.CountAsync());
+                Assert.Equal(22, await db.Users.CountAsync());
+                Assert.Equal(10, await db.Fights.CountAsync());
                 Assert.Equal(13, await db.Swipes.CountAsync());
                 Assert.Equal(5, await db.Matches.CountAsync());
                 var discovery = (await client.GetFromJsonAsync<List<ProfileResponse>>("/api/profiles/discover"))!;

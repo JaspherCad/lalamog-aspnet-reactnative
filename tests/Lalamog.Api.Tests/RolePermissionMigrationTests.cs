@@ -62,11 +62,11 @@ public class RolePermissionMigrationTests : IClassFixture<ApiFixture>
                 var original = await db.Users.FindAsync(userId);
                 Assert.Equal(hash, original!.PasswordHash);
                 Assert.Equal("Preserved role-upgrade bio", (await db.Profiles.FindAsync(userId))!.Bio);
-                Assert.Equal(8, await db.SystemFeatures.CountAsync());
-                Assert.Equal(2, await db.Roles.CountAsync());
+                Assert.Equal(13, await db.SystemFeatures.CountAsync());
+                Assert.Equal(4, await db.Roles.CountAsync());
                 Assert.Single(await (from link in db.UserRoles where link.UserId == userId select link).ToListAsync());
-                Assert.True(await (from link in db.UserRoles where link.UserId == userId && link.Role.Name == "User" select link).AnyAsync());
-                Assert.False(await (from link in db.UserRoles where link.UserId == userId && link.Role.Name == "Admin" select link).AnyAsync());
+                Assert.True(await (from link in db.UserRoles where link.UserId == userId && link.Role.Name == "FIGHTER" select link).AnyAsync());
+                Assert.False(await (from link in db.UserRoles where link.UserId == userId && link.Role.Name == "ADMIN" select link).AnyAsync());
                 Assert.False(db.Database.HasPendingModelChanges());
                 var assignment = await (from stored in db.UserRoles where stored.UserId == userId select stored).SingleAsync();
                 // Composite uniqueness and foreign keys are enforced by SQL Server.

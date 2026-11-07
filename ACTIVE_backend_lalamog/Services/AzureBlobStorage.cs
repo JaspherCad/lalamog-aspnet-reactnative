@@ -116,6 +116,17 @@ public class AzureBlobStorage : IFileStorage
         }
     }
 
+    public async Task SetGymCoverAsync(long gymId, StoredFile photo, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
+            await _container.GetBlobClient($"gyms/{gymId}/cover").UploadAsync(photo.Content, new BlobUploadOptions
+            { HttpHeaders = new BlobHttpHeaders { ContentType = photo.ContentType } }, cancellationToken);
+        }
+        catch (RequestFailedException) { throw new ApiException(503, "Photo storage is unavailable. Please try again."); }
+    }
+
     private async Task UploadAsync(string blobName, StoredFile photo, CancellationToken cancellationToken)
     {
         await _container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);

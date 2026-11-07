@@ -119,6 +119,9 @@ namespace Lalamog.Api.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("GymId")
+                        .HasColumnType("bigint");
+
                     b.Property<double?>("Latitude")
                         .HasColumnType("float");
 
@@ -141,12 +144,19 @@ namespace Lalamog.Api.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
+                    b.Property<decimal?>("QuotedPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<string>("RegionCode")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTimeOffset>("ScheduledAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("SessionDurationMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -166,13 +176,17 @@ namespace Lalamog.Api.Migrations
 
                     b.HasIndex("MatchId")
                         .IsUnique()
-                        .HasFilter("[Status] IN ('scheduled', 'confirmed')");
+                        .HasFilter("[Status] IN ('pending_approval', 'scheduled', 'confirmed')");
+
+                    b.HasIndex("GymId", "ScheduledAt");
 
                     b.ToTable("Fights", t =>
                         {
                             t.HasCheckConstraint("CK_Fight_Coordinates", "([Latitude] IS NULL AND [Longitude] IS NULL) OR ([Latitude] IS NOT NULL AND [Longitude] IS NOT NULL AND [Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180)");
 
-                            t.HasCheckConstraint("CK_Fight_Status", "[Status] IN ('scheduled', 'confirmed', 'canceled', 'completed')");
+                            t.HasCheckConstraint("CK_Fight_SharedVenue", "[GymId] IS NULL OR ([Location] = '' AND [Address] = '' AND [RegionCode] IS NULL AND [ProvinceCode] IS NULL AND [CityCode] IS NULL AND [BarangayCode] IS NULL AND [PsgcVersion] IS NULL AND [Latitude] IS NULL AND [Longitude] IS NULL)");
+
+                            t.HasCheckConstraint("CK_Fight_Status", "[Status] IN ('pending_approval', 'scheduled', 'confirmed', 'canceled', 'completed')");
                         });
                 });
 
@@ -186,6 +200,9 @@ namespace Lalamog.Api.Migrations
 
                     b.Property<DateTimeOffset>("AcceptedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("AllowPublicIdentity")
+                        .HasColumnType("bit");
 
                     b.Property<string>("EmergencyContactName")
                         .IsRequired()
@@ -314,6 +331,219 @@ namespace Lalamog.Api.Migrations
 
                             t.HasCheckConstraint("CK_Profile_Experience", "[ExperienceLevel] BETWEEN 1 AND 3");
                         });
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.Gym", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int?>("BarangayId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContactInformation")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SessionDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SessionPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("BarangayId", "CityId");
+
+                    b.ToTable("Gyms", t =>
+                        {
+                            t.HasCheckConstraint("CK_Gym_Details", "[SessionPrice] >= 0 AND [SessionDurationMinutes] BETWEEN 30 AND 240 AND ([IsPublished] = 0 OR [OwnerUserId] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Map_Coordinates", "[Latitude] BETWEEN -90 AND 90 AND [Longitude] BETWEEN -180 AND 180");
+                        });
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapBarangay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Barangays");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapCity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ProvinceId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("ProvinceId");
+
+                    b.HasIndex("RegionId");
+
+                    b.ToTable("Cities", t =>
+                        {
+                            t.HasCheckConstraint("CK_City_Parent", "([ProvinceId] IS NOT NULL AND [RegionId] IS NULL) OR ([ProvinceId] IS NULL AND [RegionId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapProvince", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("RegionId");
+
+                    b.ToTable("Provinces");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapRegion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Regions");
                 });
 
             modelBuilder.Entity("Lalamog.Api.Models.Role", b =>
@@ -452,11 +682,18 @@ namespace Lalamog.Api.Migrations
 
             modelBuilder.Entity("Lalamog.Api.Models.Fight", b =>
                 {
+                    b.HasOne("Lalamog.Api.Models.Gym", "Gym")
+                        .WithMany("Fights")
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Lalamog.Api.Models.FighterMatch", "Match")
                         .WithMany()
                         .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Gym");
 
                     b.Navigation("Match");
                 });
@@ -502,6 +739,71 @@ namespace Lalamog.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.Gym", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.MapCity", "City")
+                        .WithMany("Gyms")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Lalamog.Api.Models.AppUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Lalamog.Api.Models.MapBarangay", "Barangay")
+                        .WithMany("Gyms")
+                        .HasForeignKey("BarangayId", "CityId")
+                        .HasPrincipalKey("Id", "CityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Barangay");
+
+                    b.Navigation("City");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapBarangay", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.MapCity", "City")
+                        .WithMany("Barangays")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("City");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapCity", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.MapProvince", "Province")
+                        .WithMany("Cities")
+                        .HasForeignKey("ProvinceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Lalamog.Api.Models.MapRegion", "Region")
+                        .WithMany("IndependentCities")
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Province");
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapProvince", b =>
+                {
+                    b.HasOne("Lalamog.Api.Models.MapRegion", "Region")
+                        .WithMany("Provinces")
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Region");
                 });
 
             modelBuilder.Entity("Lalamog.Api.Models.RoleSystemFeature", b =>
@@ -568,6 +870,35 @@ namespace Lalamog.Api.Migrations
             modelBuilder.Entity("Lalamog.Api.Models.Fight", b =>
                 {
                     b.Navigation("Confirmations");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.Gym", b =>
+                {
+                    b.Navigation("Fights");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapBarangay", b =>
+                {
+                    b.Navigation("Gyms");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapCity", b =>
+                {
+                    b.Navigation("Barangays");
+
+                    b.Navigation("Gyms");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapProvince", b =>
+                {
+                    b.Navigation("Cities");
+                });
+
+            modelBuilder.Entity("Lalamog.Api.Models.MapRegion", b =>
+                {
+                    b.Navigation("IndependentCities");
+
+                    b.Navigation("Provinces");
                 });
 
             modelBuilder.Entity("Lalamog.Api.Models.Role", b =>

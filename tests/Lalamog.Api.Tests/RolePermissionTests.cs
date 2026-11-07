@@ -38,13 +38,13 @@ public class RolePermissionTests : IClassFixture<ApiFixture>
 
         using HttpClient admin = await AdminAsync();
         var features = (await admin.GetFromJsonAsync<List<SystemFeatureResponse>>("/api/access/system-features"))!;
-        Assert.Equal(8, features.Count);
-        Assert.Equal(8, (from feature in features select feature.Code).Distinct().Count());
+        Assert.Equal(13, features.Count);
+        Assert.Equal(13, (from feature in features select feature.Code).Distinct().Count());
         List<RoleResponse> roles = (await admin.GetFromJsonAsync<List<RoleResponse>>("/api/access/roles"))!;
-        RoleResponse standard = Assert.Single(from role in roles where role.Name == "User" select role);
-        RoleResponse administrator = Assert.Single(from role in roles where role.Name == "Admin" select role);
-        Assert.Equal(7, standard.SystemFeatures.Count);
-        Assert.Equal(ApplicationPermissions.Admin_ManageAccess, Assert.Single(administrator.SystemFeatures).Code);
+        RoleResponse standard = Assert.Single(from role in roles where role.Name == "FIGHTER" select role);
+        RoleResponse administrator = Assert.Single(from role in roles where role.Name == "ADMIN" select role);
+        Assert.Equal(8, standard.SystemFeatures.Count);
+        Assert.Equal(3, administrator.SystemFeatures.Count);
         var original = (await admin.GetFromJsonAsync<UserRolesResponse>($"/api/access/users/{userId}/roles"))!;
         Assert.Equal(new[] { standard.Id }, original.RoleIds);
 
@@ -155,7 +155,7 @@ public class RolePermissionTests : IClassFixture<ApiFixture>
         {
             email = Guid.NewGuid().ToString("N") + "@example.test",
             password = "Practice123!Example", nickname = "Permission tester",
-            roles = new[] { "Admin" }, roleIds = new[] { 1 }, systemFeatureIds = new[] { 1 }
+            roles = new[] { "ADMIN" }, roleIds = new[] { 1 }, systemFeatureIds = new[] { 1 }
         });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Guid id = (await response.Content.ReadFromJsonAsync<AuthResponse>())!.UserId;

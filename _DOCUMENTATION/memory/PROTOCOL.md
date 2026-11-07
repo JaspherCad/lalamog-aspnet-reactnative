@@ -35,6 +35,17 @@ Update the sections whose facts changed, and add/replace a concise **Latest work
 
 For behavior-preserving work, say what was refactored/repaired and why the existing contract/invariants remain correct; do not skip the record because no new endpoint was added. Plans stay labeled planned until code and checks support implementation claims. Never include secret values, tokens, contacts, user messages or private uploads.
 
+## Keep current facts unambiguous
+
+Update the authoritative current sections instead of stacking new dated
+corrections above contradictory live contracts. Keep retired routes/models and
+old test counts explicitly historical. The feature index, bootstrap, current
+state and handoff must agree on completion status. Preserve useful migration and
+recovery evidence; link existing history rather than create per-chat documents.
+Before a requested Git handoff, check that private/runtime/test artifacts remain
+ignored and that newly created source, migrations and guides are visible to Git.
+Do not commit or push unless the user authorizes that action.
+
 ## Update the navigation and shared state
 
 New substantial guide: register its relative link/status in the feature index and a question/source row in CODEX_BOOTSTRAP.md; the knowledge checker requires both. Extend an existing guide for small related subfeatures instead of creating one file per screen or chat. The context exporter supports `-FeatureFile _DOCUMENTATION/features/NAME.md` for newly added guides; update named aliases only when useful. New docs are not discoverable just because they exist on disk.

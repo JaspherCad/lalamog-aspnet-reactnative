@@ -15,7 +15,7 @@ async function fixture(page: Page, offline = false) {
     const url = new URL(route.request().url()); const path = url.pathname.replace('/api', '');
     const body = route.request().postDataJSON(); let value: unknown;
     if (path === '/auth/csrf') value = { token: 'map-fixture-csrf' };
-    else if (path === '/auth/me') value = { userId: 'me' };
+    else if (path === '/auth/me') value = { userId: 'me', permissions: ['user_canView', 'user_canMatch', 'user_canChat', 'user_canSchedule', 'user_canMap'] };
     else if (path === '/profiles/me') {
       if (route.request().method() === 'PUT') { saved.push(body); profile = { ...profile, ...body, location: body.mapLocation?.cityCode ? 'Quezon City' : body.location }; }
       value = profile;
@@ -25,6 +25,7 @@ async function fixture(page: Page, offline = false) {
     } else if (path === '/areas/provinces') value = url.searchParams.get('regionCode') === '1800000000' ? [{ code: '1804500000', name: 'Negros Occidental' }] : [];
     else if (path === '/areas/cities') value = url.searchParams.get('regionCode') === '1300000000' ? [{ code: '1381300000', name: 'Quezon City' }] : [];
     else if (path === '/areas/barangays') value = [{ code: '1381300082', name: 'Pinyahan' }, { code: '1381300001', name: 'Alicia' }];
+    else if (path === '/gyms') value = [];
     else if (path === '/maps/reverse') {
       reverseCalls.push(body);
       value = {
@@ -211,4 +212,45 @@ test('moving pin cancels old suggestion; lookup never overwrites public profile 
   await expect(page.getByText('Current pin address', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Use this address', exact: true })).toHaveCount(0);
   await expect(page.getByLabel('City / area', { exact: true })).toHaveValue('Existing city text');
+});
+
+test('public gym pins open accessible details and safe fight history at mobile and desktop widths', async ({ page }) => {
+  await fixture(page);
+  const gyms = [
+    { id: 11, name: 'Demo Antipolo Gym 1', latitude: 14.5855941, longitude: 121.1872028 },
+    { id: 12, name: 'Demo Antipolo Gym 2', latitude: 14.584692375159655, longitude: 121.18830765431449 },
+    { id: 13, name: 'Demo Antipolo Gym 3', latitude: 14.584110919940445, longitude: 121.18684478334319 }
+  ].map(gym => ({ ...gym, isDemo: true, address: 'Fictional test gym pin, Antipolo, Rizal, Philippines',
+    areaPath: [{ code: '0400000000', name: 'CALABARZON', level: 'region' }, { code: '0405800000', name: 'Rizal', level: 'province' }, { code: '0405802000', name: 'City of Antipolo', level: 'city' }],
+    description: 'Demo gym', contactInformation: '', sessionPrice: 500, sessionDurationMinutes: 60, isPublished: true, version: 'demo', coverUrl: '', slug: `gym-${gym.id}`, fights: [{ id: 101 + gym.id, scheduledAt: '2026-10-21T08:00:00Z', status: 'completed' }] }));
+  let failDetails = false;
+  await page.route('**/api/gyms', route => route.fulfill({ json: gyms.map(gym => ({ ...gym, fights: [] })) }));
+  await page.route(/\/api\/gyms\/\d+$/, route => failDetails
+    ? route.fulfill({ status: 503, json: { title: 'Gym details unavailable.' } })
+    : route.fulfill({ json: gyms.find(gym => gym.id === Number(route.request().url().split('/').pop())) }));
+  for (const width of [360, 375, 390, 1440]) {
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto('/map');
+    await expect(page.locator('.public-gym-marker')).toHaveCount(3);
+    await page.locator('.public-gym-marker[title="Demo Antipolo Gym 1"]').press('Enter');
+    const dialog = page.getByRole('dialog', { name: 'Demo Antipolo Gym 1' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('CALABARZON › Rizal › City of Antipolo');
+    await expect(dialog).toContainText('Fictional demo gym');
+    await expect(dialog).toContainText('completed');
+    await expect(dialog.getByText('Hidden emergency contact', { exact: false })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+    await page.screenshot({ path: `test-results/public-gym-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
+  }
+  failDetails = true;
+  await page.locator('.public-gym').filter({ hasText: 'Demo Antipolo Gym 2' }).press('Enter');
+  await expect(page.getByRole('dialog')).toContainText('Gym details unavailable.');
+  failDetails = false;
+  await page.getByRole('button', { name: 'Retry gym details' }).press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Demo Antipolo Gym 2' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close dialog' }).press('Enter');
+  gyms[2].fights = [];
+  await page.locator('.public-gym').filter({ hasText: 'Demo Antipolo Gym 3' }).press('Enter');
+  await expect(page.getByRole('dialog')).toContainText('No completed fights yet.');
 });

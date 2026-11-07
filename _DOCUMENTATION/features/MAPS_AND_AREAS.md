@@ -1,6 +1,70 @@
 # Maps, Azure address lookup and Philippine areas
 
-Status: **implemented** local area selectors, optional GPS/private pins, explicit address suggestions and participant-only fight map. On 2026-11-07 the owner selected Azure Maps using Maps:AzureMapsApiKey, replacing Nominatim for reverse lookup. Leaflet/OSM tiles and the local PSGC catalog remain. BE-02/FE-03 delivered; BE-03/FE-04 partial because nearby-distance filtering remains planned. Fresh verification is recorded below.
+2026-11-07 permission-container update: Public gym reads use visitor_canViewGyms: anonymous requests check the reserved VISITOR container; authenticated requests check their assigned-role union. Published-owner eligibility uses owner_canManageGyms, regardless of role title. Reverse lookup remains authenticated user_canMap. See [role permissions](ROLE_PERMISSIONS.md).
+
+2026-11-07 current: Gym Booking MVP supersedes the earlier Map venue name and admin publication API: Gym/Gyms and Fight.GymId preserve all existing venue IDs and geography. Anonymous /api/gyms and public /gyms/:id and /map show registered venues; owner APIs manage listings/requests. /api/maps retains only protected reverse lookup. Explicit geographic models remain unchanged. Current contracts/privacy/model and checks: [gym booking](GYM_BOOKING.md). Earlier Map/MapId source paths and routes below are historical.
+
+## Public gym venues and explicit geography
+
+Active geography models are MapRegion, MapProvince, MapCity and MapBarangay;
+tables are Regions, Provinces, Cities and Barangays. Each has an integer ID,
+unique PSGC Code and Name. No active entity has a self-reference, generic parent
+or persisted Level discriminator. Gyms replaced the old Maps venue table.
+
+```mermaid
+erDiagram
+    Regions ||--o{ Provinces : contains
+    Provinces o|--o{ Cities : contains
+    Regions o|--o{ Cities : independent
+    Cities ||--o{ Barangays : contains
+    Cities ||--o{ Gyms : contains
+    Barangays o|--o{ Gyms : optional
+    Gyms o|--o{ Fights : hosts
+```
+
+A city has exactly one ProvinceId or independent RegionId. Gym.CityId is required;
+optional (BarangayId,CityId) FK ensures a verified barangay belongs to that city.
+Dependent deletion is restricted. These named joins support future geographic
+queries; ranking outcomes and fighter representative areas remain unimplemented.
+Private profile pins are not silently used as public ranking areas.
+
+Source: Models/MapRegion.cs, MapProvince.cs, MapCity.cs, MapBarangay.cs, Gym.cs,
+Fight.cs; Data/AppDbContext.cs and DatabaseSeeder.cs; GymService/GymRepository and
+their interfaces. PSGC reference JSON may retain source ancestry; it is not an
+EF recursive entity. Manila submunicipalities are flattened to their city.
+MapAreaResponse is only a flat breadcrumb. GymRequest.areaCode accepts a city or
+barangay code and resolves named IDs. Avatar/profile privacy remains unchanged.
+
+### Public routes and privacy
+
+The public map uses GET /api/gyms and /api/gyms/{id}, guarded by
+visitor_canViewGyms (VISITOR for anonymous, own role union when signed in).
+Owners manage their venues and booking decisions under /api/gyms; admin moderation
+is under /api/admin/gyms. Public completed histories exclude match/participant
+IDs, contacts, waivers and cancellation text; public names/avatars require both
+fighter consents. Private fight pins remain participant-only. Full source,
+contracts and demo: [gym booking](GYM_BOOKING.md),
+[permission containers](ROLE_PERMISSIONS.md).
+
+The old GET/POST /api/maps and admin venue scheduling routes are retired.
+POST /api/maps/reverse remains protected by user_canMap, authentication and CSRF.
+Explicit address lookup, OSM attribution, local selectors and manual fallback
+remain intact. Gym location changes are blocked while unfinished bookings exist.
+
+### Migration and verification
+
+PublicGymMaps is historical evidence for the initial recursive schema.
+ExplicitMapGeography copied names/codes into typed tables, preserved venue IDs
+and pins and refused unknown ancestry instead of guessing. GymBookingMvp renamed
+Maps/Fight.MapId to Gyms/GymId in place, preserving links. Back up and verify
+before normal upgrades; do not recreate old models or delete migration history.
+Current startup uses inline MigrateAsync then static DatabaseSeeder.SeedAsync.
+
+2026-11-07 application checks: 85 backend cases passed, frontend build/model
+checks passed, and 20 permission/map/layout plus two isolated booking browser
+cases passed. Prior 79/80-case geography records were historical intermediate
+runs. Physical GPS, distance filtering, ranking and deployment remain unverified
+or deferred; listing moderation is implemented. Latest operations: [handoff](../memory/HANDOFF.md).
 
 ## Legacy provider audit and registration links
 
@@ -31,8 +95,8 @@ Refresh deliberately: verify the next PSA release's terms/counts/codes/ancestry/
 - `Controllers/AreasController.cs`, `Interfaces/IAreaService.cs`, `Services/AreaService.cs`; reference-only `Models/AreaCatalog.cs` and `PhilippineArea.cs` are not DbSets. Anonymous lookup returns `{ code, name }[]`, cacheable for one day.
 - GET `/api/areas/regions`; `/provinces?regionCode=...`; `/cities?regionCode=...&provinceCode=...`; `/barangays?cityCode=...`. Omitted province means all cities in region; `provinceCode=none` means independent cities. Invalid ancestry returns 400.
 - Private data: `DTOs/MapLocation.cs`, profile/schedule/fight DTOs, `FighterProfile`, `Fight`, `ProfileService`, `FightService`, `DtoMapper`, `AppDbContext`.
-- Web `LocationPicker.tsx`: cascading region â†’ province/independent city â†’ city/municipality â†’ locally filtered barangay; reset children when parents change. `LocationMap.tsx`: click/drag pin, tile-error/manual fallback, visible attribution, cleanup. GPS only on explicit action with denied/timeout fallback; coordinate inputs remain usable.
-- `ProfileEditor.tsx` and `Fights.tsx` accept structured areas and optional pins. `FightMap.tsx` replaces `/map` placeholder, using participant-authorized fight list, status filtering, selected venue and arrangement links. It displays no emergency contacts.
+- Web `LocationPicker.tsx`: cascading region → province/independent city → city/municipality → locally filtered barangay; reset children when parents change. `LocationMap.tsx`: click/drag pin, tile-error/manual fallback, visible attribution, cleanup. GPS only on explicit action with denied/timeout fallback; coordinate inputs remain usable.
+- `ProfileEditor.tsx` and `Fights.tsx` accept structured areas and optional pins. `FightMap.tsx` combines shared gym API pins/details with participant-authorized private pins, private status filtering and arrangement links. It displays no emergency contacts.
 
 ## Privacy, migration and compatibility
 
@@ -40,7 +104,7 @@ Nested `mapLocation`: nullable `regionCode`, `provinceCode`, `cityCode`, `barang
 
 Own profile GET/update/avatar responses include private mapLocation. Discovery/match-opponent responses omit the field entirely. A structured selection makes public location the canonical city name; exact profile barangay/pin remain private. Omitted/null update mapLocation preserves existing data for old clients; `{}` clears it. Session pins remain participant-only through existing authorized fight routes; name/address remain editable text. Explicit lookup sends the selected public-place coordinates to Azure Maps; it never runs automatically on GPS/pin movement or profile browsing.
 
-`Migrations/20261102074948_PhilippineMapLocations.cs`: fourteen nullable columns plus two SQL pair/range checks across profiles/fights. Existing text/rows preserved; old fights remain unpinned. Verified COPY_ONLY/CHECKSUM backup preceded local Lalamog migration; private backup path is in ignored `.cache/map-backup.json`. Development startup invokes MigrateAsync then static DatabaseSeeder.SeedAsync inline in Program.cs (owner revision 2026-11-04). Other environments use explicit migrations. No fake venue pins seeded.
+`Migrations/20261102074948_PhilippineMapLocations.cs`: fourteen nullable columns plus two SQL pair/range checks across profiles/fights. Existing text/rows preserved; old fights remain unpinned. Verified COPY_ONLY/CHECKSUM backup preceded local Lalamog migration; private backup path is in ignored `.cache/map-backup.json`. Development startup invokes MigrateAsync then static DatabaseSeeder.SeedAsync inline in Program.cs (owner revision 2026-11-04). Other environments use explicit migrations. This original migration seeded no venue pins; the later PublicGymMaps slice above adds three explicitly fictional shared gym pins.
 
 ## Azure Maps suggested address lookup (owner revision, 2026-11-07)
 

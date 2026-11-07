@@ -29,13 +29,25 @@ Recorded 2026-10-28. **Observed** means current source. **Required direction** c
 | ADR-005 | REST/SQL message history authoritative; SignalR wake-up notifications | SignalR portion superseded 2026-11-02 by REST-only polling; history remains authoritative | Reconnect and delivery failures recover by cursor; not dependent on broker today |
 | ADR-006 | Azure Blob Storage with Azurite for local development/testing | Implemented for avatars 2026-11-05; cloud deployment unverified | 2026-11-06 owner revision: SQL stores no avatar metadata; C# derives owner paths/URLs from existing UserId. Guarded legacy transfer precedes column removal. Private container, retained local originals/conditional import and shared image safeguards; [media](../features/MEDIA_STORAGE.md) |
 | ADR-007 | RabbitMQ for durable background workflows | Required direction; outbox approach proposed | First slice is session notifications; SQL transaction/outbox and idempotency avoid lost/duplicate work |
-| ADR-008 | Maps/areas with manual/cached fallbacks | Leaflet/OSM/local PSA/private pins implemented; Azure reverse lookup selected by owner 2026-11-07 (ADR-018); distance/public maps planned | Earlier no-billing-account/Nominatim choice is superseded for reverse lookup only; server-only Azure key, explicit cached requests and complete returned features; map tiles/catalog unchanged |
+| ADR-008 | Maps/areas with manual/cached fallbacks | Leaflet/OSM/local PSA/private pins implemented; Azure reverse lookup selected by owner 2026-11-07 (ADR-018); public gym venues implemented (ADR-019); distance planned | Earlier no-billing-account/Nominatim choice is superseded for reverse lookup only; server-only Azure key, explicit cached requests and complete returned features; map tiles/catalog unchanged |
 | ADR-009 | Provider-neutral Markdown as shared memory | Adopted; startup/memory requirement strengthened 2026-10-28 | AGENTS → bootstrap → navigation; each feature task automatically updates/creates its living guide and refreshes handoff under memory protocol; explicit packets serve chats without file access; host still must load instructions |
 | ADR-010 | Preserve legacy code, data, and pre-existing local changes | Observed + maintenance constraint | Cleanup is a separate explicitly authorized task; old code is not the active implementation |
 | ADR-011 | Compose runs supporting services only; API/frontend run natively | Adopted 2026-10-29 at owner request | Remove app/initializer services and builds; simplify container names/settings while preserving project/volume/port identities. Native data lives in `.cache/`; former app-volume migration is deliberate. See [local development](../features/LOCAL_DEVELOPMENT.md). |
 | ADR-012 | Folder-only repository root; documentation/solution/SDK in active backend, service configuration in infrastructure | Knowledge layout superseded by ADR-015 on 2026-11-03; backend build/service locations retained | Move rather than delete files; keep credentials outside frontend, preserve legacy source/data, and register versioned `scripts/gitignore` locally because a root ignore file would violate the requested layout. SDK minimum is installed 10.0.100 with .NET 10 roll-forward; real build/startup passed. See [local development](../features/LOCAL_DEVELOPMENT.md). |
 
 ## Changes to decisions
+
+ADR-019 (recursive geography superseded by ADR-020), adopted 2026-11-07 at owner request: persist public gym venues in Maps,
+official geographic ancestry in self-referencing MapAreas, and optional
+Fight.MapId. This avoids duplicating reusable venue facts and handles actual
+PSGC exceptions without rigid region/division/district tables. Full addresses
+are venue facts; geocoder neighborhoods are not official districts. Retain
+existing private snapshots rather than infer/publicize past private venues.
+Separate admin publication and safe history DTOs preserve participant access
+and waiver rules. Additive migration; Down snapshots linked venue facts before
+dropping shared tables; complete venue restoration requires backup. Populated
+SQL upgrade/rollback and all 79 backend checks passed; [maps](../features/MAPS_AND_AREAS.md)
+owns source/acceptance and current local migration state.
 
 ADR-013, adopted 2026-10-29 at owner request: retain a single horizontal N-tier backend with explicit constructors/methods, service-interface DI, one interface per file and property-based DTO classes in `DTOs/`. Named callbacks/query syntax replace authored arrows; generated migration history remains unchanged. No mediator, generic repository, extra architecture projects or new packages. Verified build/SQL/DI/browser evidence: [backend structure](../features/BACKEND_STRUCTURE.md).
 
@@ -48,3 +60,20 @@ No choice here authorizes a public deployment, billable service, destructive dat
 ADR-014, adopted 2026-11-01 at owner request: local application startup requires no PowerShell helper. The Development profile loads appsettings plus existing infrastructure/.env, preserving environment/command-line overrides and persistent root cache paths. Move the solution into backend solution/ so plain build/run select the API. Production does not opt into the local file by default; initialization remains explicit. No new dependency or data migration. Details and evidence: [local development](../features/LOCAL_DEVELOPMENT.md).
 
 ADR-015, adopted 2026-11-03 at owner request: place project-wide AGENTS.md at the Git root and centralize shared frontend/backend/legacy/supporting knowledge in _DOCUMENTATION. Question routing selects only relevant guides/source; central scope rules and thin entry adapters prevent competing copies. Feature work includes same-task guide/contract/handoff updates; substantial new guides register in both indexes. Preserve docs/assets/history through relocation. Context export remains an explicit safe Markdown manifest; link/registration checks do not prove model compliance. No watcher/host hook, runtime, dependency, schema, data or legacy-source change. Verification: [agent workflow](../features/AGENT_WORKFLOW.md).
+
+ADR-020, owner revision 2026-11-07: use explicit Region/Province/City/Barangay
+entities with integer IDs, named foreign keys and inverse collections. Reject
+self-referencing persisted geography. Independent cities have a direct region
+FK instead of a province; SQL enforces one parent path. Gym city/barangay
+consistency uses a composite FK. Fixed joins support future area ranking;
+ranking/fighter public representation is separate work. Preserving migration
+and verification: [maps](../features/MAPS_AND_AREAS.md).
+
+ADR-021, owner-approved 2026-11-07: focus the MVP on gym promotion and matched
+fight bookings. Three roles (Admin/Fighter/GymOwner), one owner to many Gyms,
+and Fight as the booking record. Owner approval reserves a single space;
+quoted price/duration remain stable. Pay at gym; no result/ranking calculation.
+Public completed identities require both fighter consents and support later
+withdrawal. Preserve explicit geography, cookie/CSRF, REST chat and N-tier
+code standards. No queue workers, SignalR, payments or extra architecture.
+Migration/test/demo and recovery: [gym booking](../features/GYM_BOOKING.md).

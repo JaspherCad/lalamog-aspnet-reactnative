@@ -8,11 +8,13 @@ namespace Lalamog.Api.Services
     public class MatchingService : IMatchingService
     {
         private readonly IMatchingRepository _matchingRepository;
+        private readonly IAccessRepository _access;
         private readonly IProfileRepository _profileRepository;
 
-        public MatchingService(IMatchingRepository matchingRepository, IProfileRepository profileRepository)
+        public MatchingService(IMatchingRepository matchingRepository, IProfileRepository profileRepository, IAccessRepository access)
         {
             _matchingRepository = matchingRepository;
+            _access = access;
             _profileRepository = profileRepository;
         }
 
@@ -30,7 +32,7 @@ namespace Lalamog.Api.Services
             async Task<SwipeResponse> ApplySwipeAsync()
             {
                 FighterProfile? target = await _profileRepository.GetAsync(request.TargetId, cancellationToken);
-                if (target == null)
+                if (target == null || !await _access.HasFeatureAsync(request.TargetId, Lalamog.Api.Authorization.ApplicationPermissions.User_Match, cancellationToken))
                 {
                     throw new ApiException(404, "Fighter not found.");
                 }

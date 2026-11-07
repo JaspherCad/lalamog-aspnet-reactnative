@@ -168,6 +168,25 @@ namespace Lalamog.Api.Services
             }
         }
 
+        public async Task SetGymCoverAsync(long gymId, StoredFile photo, CancellationToken cancellationToken)
+        {
+            string path = ResolveUpload($"gyms/{gymId}/cover");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    await photo.Content.CopyToAsync(output, cancellationToken);
+                }
+                File.Move(temporary, path, overwrite: true);
+            }
+            finally
+            {
+                File.Delete(temporary);
+            }
+        }
+
         public Task DeleteAsync(string blobName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -177,7 +196,7 @@ namespace Lalamog.Api.Services
 
         private string ResolveUpload(string blobName)
         {
-            if (!BlobNamePattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName))
+            if (!BlobNamePattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName) && !GymCoverPattern().IsMatch(blobName))
             {
                 throw new ApiException(404, "Photo not found.");
             }
@@ -186,7 +205,7 @@ namespace Lalamog.Api.Services
 
         public static void ValidateBlobName(string blobName)
         {
-            if (!BlobNamePattern().IsMatch(blobName) && !SeedPortraitPattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName))
+            if (!BlobNamePattern().IsMatch(blobName) && !SeedPortraitPattern().IsMatch(blobName) && !AvatarNamePattern().IsMatch(blobName) && !GymCoverPattern().IsMatch(blobName))
             {
                 throw new ApiException(404, "Photo not found.");
             }
@@ -197,6 +216,9 @@ namespace Lalamog.Api.Services
 
         [GeneratedRegex(@"\Aseed-[a-z]{2,16}\.webp\z", RegexOptions.CultureInvariant)]
         private static partial Regex SeedPortraitPattern();
+
+        [GeneratedRegex(@"\Agyms/[1-9][0-9]*/cover\z", RegexOptions.CultureInvariant)]
+        private static partial Regex GymCoverPattern();
 
         [GeneratedRegex(@"\Aavatars/[a-f0-9]{32}/current\z", RegexOptions.CultureInvariant)]
         private static partial Regex AvatarNamePattern();

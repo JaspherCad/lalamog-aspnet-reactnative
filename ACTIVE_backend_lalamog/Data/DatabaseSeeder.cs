@@ -10,8 +10,14 @@ public static class DatabaseSeeder
     public static async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
         // Create the feature catalog and default grants only when their role is new.
+        bool initializeMapGrant = !await (from feature in context.SystemFeatures
+            where feature.Code == ApplicationPermissions.Admin_ManageMaps select feature).AnyAsync(cancellationToken);
+        bool initializeVisitorPermission = !await (from feature in context.SystemFeatures where feature.Code == ApplicationPermissions.Visitor_ViewGyms select feature).AnyAsync(cancellationToken);
+        bool initializeEnablePermission = !await (from feature in context.SystemFeatures where feature.Code == ApplicationPermissions.Owner_EnableFighter select feature).AnyAsync(cancellationToken);
         var featureDefinitions = new[]
         {
+            (Code: ApplicationPermissions.Visitor_ViewGyms, Description: "Browse published gyms and consented public history."),
+            (Code: ApplicationPermissions.Owner_EnableFighter, Description: "Opt in to the default Fighter permission container."),
             (Code: ApplicationPermissions.User_View, Description: "View your profile and discover public fighter profiles."),
             (Code: ApplicationPermissions.User_EditProfile, Description: "Edit your own fighter profile."),
             (Code: ApplicationPermissions.User_Upload, Description: "Upload your own avatar image."),
@@ -19,7 +25,10 @@ public static class DatabaseSeeder
             (Code: ApplicationPermissions.User_Chat, Description: "Read and send messages in your own matches."),
             (Code: ApplicationPermissions.User_Schedule, Description: "View and manage sessions in your own matches."),
             (Code: ApplicationPermissions.User_Map, Description: "Request an address suggestion for an explicit map pin."),
-            (Code: ApplicationPermissions.Admin_ManageAccess, Description: "View system features and manage role/feature assignments.")
+            (Code: ApplicationPermissions.Admin_ManageAccess, Description: "View system features and manage role/feature assignments."),
+            (Code: ApplicationPermissions.Owner_ManageGyms, Description: "Create and manage your own gym listings."),
+            (Code: ApplicationPermissions.Owner_ManageBookings, Description: "Approve and manage bookings for your own gyms."),
+            (Code: ApplicationPermissions.Admin_ManageMaps, Description: "Review gym listings, unpublish them and assign eligible owners.")
         };
         foreach (var definition in featureDefinitions)
         {
@@ -31,10 +40,10 @@ public static class DatabaseSeeder
             }
         }
         var userRole = await (from role in context.Roles
-                              where role.Name == "User" select role).SingleOrDefaultAsync(cancellationToken);
+                              where role.Name == "FIGHTER" select role).SingleOrDefaultAsync(cancellationToken);
         if (userRole == null)
         {
-            userRole = new Role { Name = "User", Description = "Standard app features for a fighter." };
+            userRole = new Role { Name = "FIGHTER", Description = "Standard app features for a fighter." };
             context.Set<Role>().Add(userRole);
             await context.SaveChangesAsync(cancellationToken);
             foreach (var definition in (from item in featureDefinitions
@@ -52,16 +61,75 @@ public static class DatabaseSeeder
             await context.SaveChangesAsync(cancellationToken);
         }
         var adminRole = await (from role in context.Roles
-                               where role.Name == "Admin" select role).SingleOrDefaultAsync(cancellationToken);
+                               where role.Name == "ADMIN" select role).SingleOrDefaultAsync(cancellationToken);
         bool initializeAdminRole = adminRole == null;
         if (adminRole == null)
         {
-            adminRole = new Role { Name = "Admin", Description = "Manages role and system-feature assignments." };
+            adminRole = new Role { Name = "ADMIN", Description = "Manages role and system-feature assignments." };
             context.Set<Role>().Add(adminRole);
             await context.SaveChangesAsync(cancellationToken);
             var feature = await (from stored in context.SystemFeatures
                                  where stored.Code == ApplicationPermissions.Admin_ManageAccess select stored).SingleAsync(cancellationToken);
             context.Set<RoleSystemFeature>().Add(new RoleSystemFeature { RoleId = adminRole.Id, SystemFeatureId = feature.Id });
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        // Introduce the new grant once, including an existing Admin role. Revocation survives reruns.
+        if (initializeMapGrant)
+        {
+            var mapFeature = await (from feature in context.SystemFeatures
+                where feature.Code == ApplicationPermissions.Admin_ManageMaps select feature).SingleAsync(cancellationToken);
+            context.RoleSystemFeatures.Add(new RoleSystemFeature { RoleId = adminRole.Id, SystemFeatureId = mapFeature.Id });
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        var gymOwnerRole = await (from role in context.Roles where role.Name == "GYM_OWNER" select role).SingleOrDefaultAsync(cancellationToken);
+        bool initializeGymOwners = gymOwnerRole == null;
+        if (gymOwnerRole == null)
+        {
+            gymOwnerRole = new Role { Name = "GYM_OWNER", Description = "Promotes gyms and manages their bookings." };
+            context.Roles.Add(gymOwnerRole); await context.SaveChangesAsync(cancellationToken);
+            var ownerCodes = new[] { ApplicationPermissions.User_View, ApplicationPermissions.User_EditProfile,
+                ApplicationPermissions.User_Upload, ApplicationPermissions.User_Map, ApplicationPermissions.Owner_ManageGyms, ApplicationPermissions.Owner_ManageBookings, ApplicationPermissions.Owner_EnableFighter };
+            foreach (string code in ownerCodes)
+            {
+                var feature = await (from item in context.SystemFeatures where item.Code == code select item).SingleAsync(cancellationToken);
+                context.RoleSystemFeatures.Add(new RoleSystemFeature { RoleId = gymOwnerRole.Id, SystemFeatureId = feature.Id });
+            }
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        // VISITOR has no AppUser or UserRole row; its public grant is checked for anonymous reads.
+        var visitorRole = await (from role in context.Roles where role.Name == "VISITOR" select role).SingleOrDefaultAsync(cancellationToken);
+        if (visitorRole == null)
+        {
+            visitorRole = new Role { Name = "VISITOR", Description = "Public permissions for non-logged-in visitors." };
+            context.Roles.Add(visitorRole); await context.SaveChangesAsync(cancellationToken);
+            var feature = await (from item in context.SystemFeatures where item.Code == ApplicationPermissions.Visitor_ViewGyms select item).SingleAsync(cancellationToken);
+            context.RoleSystemFeatures.Add(new RoleSystemFeature { RoleId = visitorRole.Id, SystemFeatureId = feature.Id });
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        if (initializeVisitorPermission)
+        {
+            var feature = await (from item in context.SystemFeatures where item.Code == ApplicationPermissions.Visitor_ViewGyms select item).SingleAsync(cancellationToken);
+            foreach (Role role in new[] { userRole, adminRole, gymOwnerRole })
+            {
+                context.RoleSystemFeatures.Add(new RoleSystemFeature { RoleId = role.Id, SystemFeatureId = feature.Id });
+            }
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        if (initializeEnablePermission && !initializeGymOwners)
+        {
+            var feature = await (from item in context.SystemFeatures where item.Code == ApplicationPermissions.Owner_EnableFighter select item).SingleAsync(cancellationToken);
+            context.RoleSystemFeatures.Add(new RoleSystemFeature { RoleId = gymOwnerRole.Id, SystemFeatureId = feature.Id });
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        var owner = await (from user in context.Users where user.NormalizedEmail == "OWNER.SEED@EXAMPLE.TEST" select user).SingleOrDefaultAsync(cancellationToken);
+        if (owner == null)
+        {
+            owner = new AppUser { Email = "owner.seed@example.test", NormalizedEmail = "OWNER.SEED@EXAMPLE.TEST", PasswordHash = PasswordHashing.Hash("Lalamog123!Test") };
+            context.Users.Add(owner); await context.SaveChangesAsync(cancellationToken);
+            context.Profiles.Add(new FighterProfile { UserId = owner.Id, Nickname = "Demo Gym Owner", FighterName = "Seed-GymOwner", NormalizedFighterName = "SEED-GYMOWNER" });
+            context.UserRoles.Add(new UserRole { UserId = owner.Id, RoleId = gymOwnerRole.Id });
             await context.SaveChangesAsync(cancellationToken);
         }
 
@@ -253,6 +321,71 @@ public static class DatabaseSeeder
                     await context.SaveChangesAsync(cancellationToken);
                 }
             }
+        }
+
+        // Only the verified city ancestry is assigned. These pins are fictional gyms,
+        // not geocoded residential addresses or verified barangay boundaries.
+        var region = await (from item in context.Regions where item.Code == "0400000000" select item).SingleOrDefaultAsync(cancellationToken);
+        if (region == null) { region = new MapRegion { Code = "0400000000", Name = "Region IV-A (CALABARZON)" }; context.Regions.Add(region); await context.SaveChangesAsync(cancellationToken); }
+        var province = await (from item in context.Provinces where item.Code == "0405800000" select item).SingleOrDefaultAsync(cancellationToken);
+        if (province == null) { province = new MapProvince { Code = "0405800000", Name = "Rizal", RegionId = region.Id }; context.Provinces.Add(province); await context.SaveChangesAsync(cancellationToken); }
+        var city = await (from item in context.Cities where item.Code == "0405802000" select item).SingleOrDefaultAsync(cancellationToken);
+        if (city == null) { city = new MapCity { Code = "0405802000", Name = "City of Antipolo", ProvinceId = province.Id }; context.Cities.Add(city); await context.SaveChangesAsync(cancellationToken); }
+        var gymSeeds = new[]
+        {
+            (Slug: "demo-antipolo-gym-1", Latitude: 14.5855941, Longitude: 121.1872028),
+            (Slug: "demo-antipolo-gym-2", Latitude: 14.584692375159655, Longitude: 121.18830765431449),
+            (Slug: "demo-antipolo-gym-3", Latitude: 14.584110919940445, Longitude: 121.18684478334319)
+        };
+        int gymNumber = 0;
+        foreach (var gym in gymSeeds)
+        {
+            gymNumber++;
+            var map = await (from stored in context.Gyms where stored.Slug == gym.Slug select stored).SingleOrDefaultAsync(cancellationToken);
+            if (map != null && initializeGymOwners && map.OwnerUserId == null)
+            {
+                map.OwnerUserId = owner.Id; map.IsPublished = true; map.SessionPrice = 500;
+                map.Description = "Fictional demo gym. Pay at the gym; price covers both fighters.";
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            if (map == null)
+            {
+                map = new Gym { OwnerUserId = owner.Id, IsPublished = true, SessionPrice = 500, Description = "Fictional demo gym. Pay at the gym; price covers both fighters.", Slug = gym.Slug, Name = $"Demo Antipolo Gym {gymNumber}",
+                    Address = "Fictional test gym pin, Antipolo, Rizal, Philippines", IsDemo = true,
+                    Latitude = gym.Latitude, Longitude = gym.Longitude, CityId = city.Id };
+                context.Gyms.Add(map);
+                await context.SaveChangesAsync(cancellationToken);
+                // Add one completed fictional public fight only with a newly seeded gym.
+                // Later edits, removals and statuses are never reset on startup.
+                var publicMatch = matches[gymNumber - 1];
+                var publicFight = new Fight { GymId = map.Id, MatchId = publicMatch.Id, QuotedPrice = 500, SessionDurationMinutes = 60,
+                    ScheduledAt = new DateTimeOffset(2026, 10, 20 + gymNumber, 8, 0, 0, TimeSpan.Zero),
+                    Status = "completed" };
+                context.Fights.Add(publicFight);
+                await context.SaveChangesAsync(cancellationToken);
+                foreach (Guid participant in new[] { publicMatch.User1Id, publicMatch.User2Id })
+                {
+                    context.FightConfirmations.Add(new FightConfirmation { FightId = publicFight.Id, UserId = participant,
+                        EmergencyContactName = "Fictional test contact", EmergencyContactPhone = "000-000-0000",
+                        AcceptedAt = publicFight.ScheduledAt.AddDays(-1) });
+                }
+                await context.SaveChangesAsync(cancellationToken);
+            }
+        }
+        var demoGym = await (from gym in context.Gyms where gym.Slug == "demo-antipolo-gym-3" select gym).SingleAsync(cancellationToken);
+        var demoTime = new DateTimeOffset(2026, 11, 6, 8, 0, 0, TimeSpan.Zero);
+        var demoMatch = matches[3];
+        if (!await (from fight in context.Fights where fight.GymId == demoGym.Id && fight.MatchId == demoMatch.Id && fight.ScheduledAt == demoTime select fight).AnyAsync(cancellationToken)
+            && !await (from fight in context.Fights where fight.MatchId == demoMatch.Id && (fight.Status == "scheduled" || fight.Status == "confirmed" || fight.Status == "pending_approval") select fight).AnyAsync(cancellationToken))
+        {
+            var demo = new Fight { GymId = demoGym.Id, MatchId = demoMatch.Id, ScheduledAt = demoTime, QuotedPrice = 500, SessionDurationMinutes = 60, Status = "confirmed" };
+            context.Fights.Add(demo); await context.SaveChangesAsync(cancellationToken);
+            foreach (Guid participant in new[] { demoMatch.User1Id, demoMatch.User2Id })
+            {
+                context.FightConfirmations.Add(new FightConfirmation { FightId = demo.Id, UserId = participant,
+                    EmergencyContactName = "Fictional test contact", EmergencyContactPhone = "000-000-0000", AcceptedAt = demoTime.AddDays(-1) });
+            }
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 }

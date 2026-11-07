@@ -190,6 +190,11 @@ form > button, form > fieldset > button { width: 100%; }
 .empty .corner-label { display: table; }
 .paper-dialog { color: var(--ink); width: min(540px, calc(100% - 32px)); max-height: calc(100dvh - 40px); padding: 20px; }
 .paper-dialog::backdrop { background: #121714c9; }
+.public-gym-marker { color: #a33622; font-size: 29px; text-shadow: 0 1px 2px white; }
+.public-gym { border-left: 4px solid #a33622; }
+.gym-fight-list { padding: 0; list-style: none; display: grid; gap: 12px; }
+.gym-fight-list li { display: grid; gap: 5px; padding: 12px 0; border-top: 1px solid var(--ink); }
+.paper-dialog { overflow-wrap: anywhere; }
 .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
 .dialog-heading h2 { text-transform: uppercase; font-size: 36px; margin: 0; }
 .dialog-heading .icon-button { margin-top: -4px; }
@@ -366,3 +371,24 @@ summary { cursor: pointer; min-height: 44px; padding: 10px 0; font-weight: 700; 
 @media (min-width: 600px) {
   .address-details dl > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: .75rem; }
 }
+
+/* Gym marketplace and owner workflows. */
+.gym-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px; margin: 24px 0; }
+.gym-card { padding: 0; overflow: hidden; }
+.gym-card > div:not(.gym-cover-placeholder) { padding: 20px; }
+.gym-cover { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.gym-cover-placeholder { min-height: 180px; aspect-ratio: 16/9; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 24px; background: #263e36; color: #f2e9ce; }
+.gym-cover-placeholder strong { font-family: var(--font-display, Georgia); font-size: 30px; line-height: 1.1; }
+.gym-cover-placeholder span { letter-spacing: .12em; font-size: 11px; }
+.gym-details-layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); align-items: start; }
+.gym-details-layout .panel { margin: 20px 0; }
+.gym-book-box { position: sticky; top: 20px; }
+.gym-price { font-size: 36px; font-weight: 700; margin-bottom: 0; }
+.gym-form-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.gym-editor { margin-bottom: 16px; }
+.gym-editor fieldset { min-width: 0; }
+.gym-editor .location-picker { width: 100%; }
+.gym-selection { grid-column: 1/-1; }
+.history-portraits { display: flex; gap: 8px; }
+.history-portraits img { width: 44px; height: 44px; object-fit: cover; border-radius: 50%; }
+@media (max-width: 700px) { .gym-details-layout,.gym-form-row { grid-template-columns: 1fr; } .gym-book-box { position: static; } .main-nav { overflow-x: auto; } .main-nav a { flex-shrink: 0; } }

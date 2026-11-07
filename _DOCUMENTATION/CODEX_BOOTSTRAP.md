@@ -1,6 +1,6 @@
 # CODEX_BOOTSTRAP: route a question to project knowledge
 
-Scope: every coding provider. Updated: 2026-11-03 (Asia/Manila).
+Scope: every coding provider. Updated: 2026-11-07 (Asia/Manila).
 Entry: [root AGENTS.md](../AGENTS.md). Home: [knowledge index](README.md).
 Follow links once; backlinks do not restart the sequence.
 
@@ -33,17 +33,18 @@ in older guides are relative to ACTIVE_backend_lalamog unless stated otherwise.
 
 | Question, symptom, or task | Owning feature guide | Source starting points / additional knowledge |
 | --- | --- | --- |
+| Gym owners, registration, booking approvals and public gym history | [Gym booking](features/GYM_BOOKING.md) | ACTIVE_backend_lalamog/Models/Gym.cs, Services/GymService.cs; ACTIVE_frontend_lalamog/src/Gyms.tsx, OwnerGyms.tsx |
 | UI, paper dossiers, swipe gestures, match reveal, typography, mobile layout | [Frontend design](features/FRONTEND_DESIGN.md) | ACTIVE_frontend_lalamog/src/Discover.tsx, ui.tsx, styles.css; [DESIGN](DESIGN.md), [frontend scope](scopes/FRONTEND.md). Target concepts are distinct from implemented UI. |
 | Constructors, DTOs, interfaces, repository boundaries, backend readability | [Backend structure](features/BACKEND_STRUCTURE.md) | ACTIVE_backend_lalamog/Controllers, Services, Repositories, Interfaces, DTOs, Models; [backend scope](scopes/BACKEND.md) |
 | dotnet/npm startup, SQL 18456/4060, migrations/seeds, Compose, local storage | [Local development](features/LOCAL_DEVELOPMENT.md) | ACTIVE_backend_lalamog/Program.cs, Data/DatabaseSeeder.cs, solution/Lalamog.slnx, global.json; infrastructure/compose.yaml; [getting started](GETTING_STARTED.md), [development](runbooks/DEVELOPMENT.md) |
-| Roles, system features, permission policies and access assignment | [Role permissions](features/ROLE_PERMISSIONS.md) | ACTIVE_backend_lalamog/Authorization, Services/AccessService.cs, Controllers/AccessController.cs; [backend scope](scopes/BACKEND.md) |
+| Permission containers, anonymous VISITOR, policies and access assignment | [Role permissions](features/ROLE_PERMISSIONS.md) | ACTIVE_backend_lalamog/Authorization, Services/AccessService.cs, Controllers/AccessController.cs; [backend scope](scopes/BACKEND.md) |
 | Signup/login/logout, cookies, CSRF, native account hashing | [Authentication](features/AUTHENTICATION.md) | ACTIVE_backend_lalamog/Services/AuthService.cs, Program.cs; ACTIVE_frontend_lalamog/src/api.ts; [API contracts](API_CONTRACTS.md) |
 | Fighter name/alias, style choices, profiles, discovery privacy | [Profiles and discovery](features/PROFILES_AND_DISCOVERY.md) | ACTIVE_backend_lalamog/Services/ProfileService.cs; ACTIVE_frontend_lalamog/src/ProfileEditor.tsx, Discover.tsx, types.ts |
 | Like/pass, reciprocal likes, duplicates, canonical pairs | [Matching](features/MATCHING.md) | ACTIVE_backend_lalamog/Services/MatchingService.cs, Repositories; [data model](DATA_MODEL.md), [domain rules](DOMAIN_RULES.md) |
 | Chat messages, three-second polling, stale/duplicate history, membership | [Chat](features/CHAT.md) | ACTIVE_backend_lalamog/Services/ConversationService.cs; ACTIVE_frontend_lalamog/src/Matches.tsx, api.ts; REST only |
 | Propose/cancel/complete fight, waivers, emergency contacts, UTC/concurrency | [Sessions and waivers](features/SESSIONS_AND_WAIVERS.md) | ACTIVE_backend_lalamog/Services/FightService.cs; ACTIVE_frontend_lalamog/src/Fights.tsx; [domain rules](DOMAIN_RULES.md) |
 | User-derived avatars without SQL metadata, demo photos, Azure/Azurite and local migration | [Media storage](features/MEDIA_STORAGE.md) | ACTIVE_backend_lalamog/Services/AzureBlobStorage.cs, LocalFileStorage.cs, Data/SeedPortraits, Interfaces/IFileStorage.cs; [infrastructure scope](scopes/INFRASTRUCTURE.md) |
-| Map/GPS, private pins, Philippine barangays, Azure Maps suggested address | [Maps and areas](features/MAPS_AND_AREAS.md) | ACTIVE_frontend_lalamog/src/LocationPicker.tsx, LocationMap.tsx, FightMap.tsx; ACTIVE_backend_lalamog/Services/AreaService.cs, ReverseGeocodingService.cs |
+| Map/GPS, public gym venues/history, private pins, Philippine barangays, Azure Maps suggested address | [Maps and areas](features/MAPS_AND_AREAS.md) | ACTIVE_frontend_lalamog/src/LocationPicker.tsx, LocationMap.tsx, FightMap.tsx; ACTIVE_backend_lalamog/Services/AreaService.cs, ReverseGeocodingService.cs, GymService.cs; Models/Gym.cs, MapRegion.cs, MapProvince.cs, MapCity.cs, MapBarangay.cs |
 | Broker/outbox, notifications, retries, Redis integration | [Background workflows](features/BACKGROUND_WORKFLOWS.md) | infrastructure/compose.yaml; [infrastructure scope](scopes/INFRASTRUCTURE.md). Broker/Redis provisioned; app workflows planned. |
 | Agent instructions, auto-maintained Markdown, routing, context exports | [Agent workflow](features/AGENT_WORKFLOW.md) | AGENTS.md, scripts/agent-context.ps1, scripts/check-knowledge.ps1; [tooling scope](scopes/TOOLING.md), [protocol](memory/PROTOCOL.md) |
 

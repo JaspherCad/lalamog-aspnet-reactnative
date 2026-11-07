@@ -14,6 +14,16 @@ public class AccessService : IAccessService
         _access = access;
     }
 
+    public Task<AuthResponse> SessionAsync(Guid userId, CancellationToken cancellationToken)
+    { return _access.SessionAsync(userId, cancellationToken); }
+    public Task EnableFighterAsync(Guid userId, CancellationToken cancellationToken)
+    { return _access.EnableFighterAsync(userId, cancellationToken); }
+    public Task<List<AccessUserResponse>> ListUsersAsync(CancellationToken cancellationToken)
+    { return _access.ListUsersAsync(cancellationToken); }
+
+    public Task<bool> HasVisitorFeatureAsync(string code, CancellationToken cancellationToken)
+    { return _access.HasVisitorFeatureAsync(code, cancellationToken); }
+
     public Task<bool> HasFeatureAsync(Guid userId, string code, CancellationToken cancellationToken)
     {
         return _access.HasFeatureAsync(userId, code, cancellationToken);

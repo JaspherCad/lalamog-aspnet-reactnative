@@ -13,7 +13,7 @@ async function fixture(page: Page, options: { failSwipe?: boolean; delaySwipe?: 
     if (path === '/areas/regions') value = [{ code: '1300000000', name: 'National Capital Region (NCR)' }];
     else if (path.startsWith('/areas/')) value = [];
     else if (path === '/auth/csrf') value = { token: 'fixture-csrf' };
-    else if (path === '/auth/me') value = { userId: 'me' };
+    else if (path === '/auth/me') value = { userId: 'me', permissions: ['user_canView', 'user_canMatch', 'user_canChat', 'user_canSchedule', 'user_canMap'] };
     else if (path === '/profiles/discover') value = [sample, { ...sample, userId: 'second', nickname: 'Ana' }];
     else if (path === '/profiles/me') {
       if (route.request().method() === 'PUT') { saved.push(body); profile = { ...profile, ...body }; }
@@ -23,6 +23,7 @@ async function fixture(page: Page, options: { failSwipe?: boolean; delaySwipe?: 
       if (fail) { fail = false; await route.fulfill({ status: 503, json: { title: 'Connection interrupted. Try again.' } }); return; }
       value = { matched: body.direction === 'like', matchId: 7 };
     } else if (path === '/matches') value = [{ id: 7, opponent: sample, createdAt: '2026-11-01T10:00:00Z' }];
+    else if (path === '/gyms') value = [];
     else if (path === '/fights') {
       if (route.request().method() === 'POST') { saved.push(body); value = { ...body, id: 3, status: 'scheduled', user1Id: 'me', user2Id: 'opponent', user1Confirmed: false, user2Confirmed: false, confirmations: [], cancellationReason: null }; }
       else value = [];
@@ -56,6 +57,13 @@ for (const width of [360, 375, 390, 1440]) {
     await expect(page.getByRole('meter', { name: 'Average rating from opponents' })).toHaveAttribute('aria-valuenow', '4');
     await expect(page.locator('.opponent-rating')).toContainText('8 opponent reviews');
     await expect(page.getByLabel('Fighting styles')).toContainText('Wrestling');
+    const portrait = (await page.locator('.portrait-panel').boundingBox())!;
+    const details = (await page.locator('.dossier-info').boundingBox())!;
+    expect(portrait.x + portrait.width).toBeLessThan(details.x);
+    expect(Math.abs(portrait.y - details.y)).toBeLessThan(2);
+    for (const action of ['Fight intel', 'Like', 'Pass']) {
+      expect((await page.getByRole('button', { name: action, exact: true }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
     await page.getByRole('button', { name: 'Fight intel', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -138,6 +146,27 @@ test('five styles save and reload through current API; chat arranges a fight for
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });
 
+test('long fighter details and missing photo reflow on a small notebook', async ({ page }) => {
+  await fixture(page);
+  await page.route('**/api/profiles/discover', route => route.fulfill({ json: [{ ...sample,
+    fighterName: 'A-Very-Long-Fighter-Name', nickname: 'The surprisingly long alias',
+    availability: 'Saturday and Sunday afternoons after training', location: 'City of San Jose del Monte',
+    bio: 'A longer scouting note with averylongunbrokenwordthatmustwrapinsideitscolumn. '.repeat(4),
+    fightingStyle: 'streetfighting|kickboxing|bjj|wrestling|martial',
+  }] }));
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 568 });
+    await page.goto('/');
+    await expect(page.getByTestId('swipe-card')).toContainText('Saturday and Sunday');
+    await expect(page.getByLabel('A-Very-Long-Fighter-Name, no profile photo')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+    await page.getByRole('button', { name: 'Pass', exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: 'Pass', exact: true })).toBeInViewport();
+  }
+  await page.getByRole('button', { name: 'Pass', exact: true }).click();
+  await expect(page.getByText('You’re all caught up.')).toBeVisible();
+});
+
 test('failed profile save retains edits, empty selection is rejected, long text stays within mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 }); const state = await fixture(page);
   await page.goto('/profile');
@@ -162,7 +191,7 @@ test('sign-in errors preserve fields; signup sends CSRF and the designed form st
     else if (path.endsWith('/register')) { registerBody = route.request().postDataJSON(); token = route.request().headers()['x-csrf-token']; await route.fulfill({ status: 400, json: { title: 'Choose a different nickname.' } }); }
     else await route.fulfill({ status: 401, json: { title: 'Email or password not recognized.' } });
   });
-  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/');
+  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/login');
   await page.getByLabel('Email', { exact: true }).fill('demo@example.test'); await page.getByLabel('Password', { exact: true }).fill('Practice123!Example');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Email or password'); await expect(page.getByLabel('Email', { exact: true })).toHaveValue('demo@example.test');
@@ -170,7 +199,7 @@ test('sign-in errors preserve fields; signup sends CSRF and the designed form st
   await page.getByLabel('Fighter name (unique)').fill('Demo-Jae');
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Choose a different nickname');
-  expect(registerBody).toEqual({ email: 'demo@example.test', password: 'Practice123!Example', nickname: 'Demo Jae', fighterName: 'Demo-Jae' }); expect(token).toBe('auth-fixture');
+  expect(registerBody).toEqual({ accountType: 'fighter', email: 'demo@example.test', password: 'Practice123!Example', nickname: 'Demo Jae', fighterName: 'Demo-Jae' }); expect(token).toBe('auth-fixture');
   await page.screenshot({ path: 'test-results/redesign-auth.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });

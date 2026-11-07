@@ -1,97 +1,72 @@
 # Current project state
 
-2026-11-07 current maps revision: owner-selected Azure Maps replaces Nominatim reverse lookup. The protected POST retains compatible address fields and returns complete Azure GeoJSON features plus postal/street/country/match metadata. The web form adds an expandable address breakdown; Leaflet/OSM tiles, local PSGC selectors and private pin contracts remain. Source, checks and limits: [maps guide](features/MAPS_AND_AREAS.md).
-
-2026-11-06 current: avatars use user-ID-derived API/storage paths with no avatar metadata in SQL. Guarded transfer preserves existing files before column removal. 21 demo users include fifteen discovery-only additions with zero seeded swipes/matches; Ana is also initially unconnected. All 64 backend tests, Compose Azurite restart, build/model/publish/assets and knowledge checks passed. After a verified SQL backup, normal startup applied the upgrade; API is healthy at localhost:5080 and live Alex sees all fifteen additions with working portraits. Current evidence is in [media storage](features/MEDIA_STORAGE.md). Older dated records below are historical.
-
-2026-11-05 media update: AzureBlobStorage/private Azurite storage and sixteen bundled synthetic demo portraits are implemented. SQL stores AvatarBlobName; C# builds existing public avatar URLs. A preserving column rename retains old references, and first reads import old local/default files without deleting originals. Five targeted SQL/Azurite checks passed, including emulator restart persistence; final regression/model/knowledge checks are recorded in [media storage](features/MEDIA_STORAGE.md). Cloud deployment remains unverified.
-
-2026-11-04 latest discovery seed expansion: DatabaseSeeder.cs now supplies sixteen fictional accounts, including ten additional complete profiles with no seeded swipes or matches. Normal Development restart adds them without resetting existing data; refresh Discover afterward. Current scenarios, verification and rerun behavior are in [local development](features/LOCAL_DEVELOPMENT.md) and [profiles/discovery](features/PROFILES_AND_DISCOVERY.md). No schema, API or frontend changes.
-
-2026-11-04 latest: owner-approved static Data/DatabaseSeeder.cs replaces duplicated Program.cs EF callbacks. Development startup migrates then calls SeedAsync with a scoped AppDbContext, rebuilding all fictional test data after a fresh SQL volume and preserving edits/grant removals on ordinary restarts. Build zero warnings/errors, four targeted SQL checks and all 61 backend tests passed. No schema change or live volume reset. [Local development](features/LOCAL_DEVELOPMENT.md) owns the current flow; earlier inline-seed records below are historical.
-
-2026-11-04: database-backed role/system-feature authorization is implemented with four join/catalog entities, eight explicit policies, safe User signup defaults, mirrored inline seeds and admin selection endpoints. AppUsers may have multiple roles. Existing cookie/CSRF/participant checks and public avatar/area contracts remain; all setup stays inline. Build zero warnings/errors, all 61 backend tests, EF model and knowledge/whitespace checks passed; evidence is in [role permissions](features/ROLE_PERMISSIONS.md). Normal app database is not migrated in this task; next Development startup applies it.
-
-2026-11-03 knowledge layout: root AGENTS.md covers the entire repository; shared Markdown/assets live in _DOCUMENTATION with question/source routing, scope guides and mandatory per-feature maintenance. This supersedes backend-only/folder-only-root instructions. SDK/tool/solution and app/data locations remain unchanged. See [repository map](REPOSITORY_MAP.md) and [agent workflow](features/AGENT_WORKFLOW.md). Runtime claims dated below are historical; this documentation task does not revalidate app processes/tests.
-
-2026-11-02 latest fresh-volume startup fix: owner confirmed Compose down -v should be followed by immediate seed refill. Current SQL volume creation time was later than the previous successful migration, proving volume recreation removed Lalamog again (4060). Development Program.cs now calls MigrateAsync inline before accepting requests; schema and six-user sample data initialize automatically. Other environments retain explicit migration commands. New isolated SQL startup/restart-preservation test plus existing inline-seed/cookie checks passed (three targeted cases); actual missing-DB startup also passed health/cookie login and all-model counts. API remains running at localhost:5080; details in handoff.
-
-2026-11-02 latest local SQL recovery: existing credential worked against master, current SQL volume lacked Lalamog. Created/migrated/seeded it (6 fake users/profiles, 5 matches, 6 fights). Owner approved built-in ignored appsettings.Development.json for local SQL values; startup remains inline in Program.cs. Normal API at localhost:5080 passes health/native cookie login/session/profile with no connection override. Active auth has no OAuth. Older backup paths are not present in the current volume; previous runtime records are historical.
-
-2026-11-02 subsequent owner request: free Nominatim reverse geocoding now supports explicit public-place suggested addresses. Pin → Find address → review/copy/edit venue text. Singleton shared throttle/cache and HttpClient settings inline in Program.cs; no API key, schema change or automatic location disclosure. See maps guide/current handoff for checks.
-
-2026-11-02 maps: Leaflet/OSM, bundled PSA Q3 2026 area selectors (including NIR), optional GPS/private profile pins and participant-only fight map implemented. Initial slice used manual addresses; the subsequent explicit Nominatim follow-up adds suggestions without an API key. Additive PhilippineMapLocations migration applied after verified SQL backup. Backend 43-case suite, frontend production build and fixture map/profile/chat checks passed; details/limits in [maps guide](features/MAPS_AND_AREAS.md).
-
-2026-11-02 latest: strict basic-inline Program.cs configuration/seeding rule is prominent in AGENTS/bootstrap/engineering/scoped instructions. Minimal MVC CSRF/default SQL retry/cookie fixes pass all 34 backend tests. Six fictional users and all related models are seeded by mirrored inline EF callbacks, parent-first and repeatably. Local database migration/seed/repeat and Development HTTP login/CSRF/chat/fight smoke passed with original accounts/passwords preserved; details are in handoff/local development; older no-seeding/failure records below are historical.
-
-2026-11-02 native-account follow-up: plain AppUser/DbContext, individual model files, native password/lockout/cookie flow; Identity base classes/managers/package removed. Data-preserving NativeAppUsers migration tested on populated isolated SQL and now applied to backed-up local Lalamog with repeatable inline seed. Build/EF checks and all 34 backend tests passed after the basic CSRF/concurrency fixes. See authentication/handoff.
-
-2026-11-02 latest startup/chat direction: removed custom security/hub middleware, DataProtection persistence setup and partial Program. Messaging is REST-only with three-second browser refresh; SignalR package/hub/proxies removed. See [chat](features/CHAT.md) and current handoff for verification.
-
-2026-11-02 startup follow-up: ordinary appsettings.json configuration with DefaultConnection; all API .env loading/demo seeding/initializer mode removed. All service/middleware options stay inline in Program.cs. See [local development](features/LOCAL_DEVELOPMENT.md) and current handoff for verification.
-
-Source audit: **2026-10-28, Asia/Manila**. This is the current baseline for fresh sessions. Capability labels describe inspected source; runtime checks are recorded separately below.
+Updated: 2026-11-07 (Asia/Manila). Current source, feature guides and dated
+verification establish this inventory. Earlier rollout records live in the
+[change log](memory/CHANGELOG.md); [handoff](memory/HANDOFF.md) owns continuation.
 
 ## Product and scope
 
-2026-11-02 identity follow-up: Old Newspaper Types highlights/red names, black aliases and grey/green/violet/blue/red style emblems are implemented. Separate FighterName/NormalizedFighterName fields and unique index preserve existing Nickname as non-unique alias; signup/profile support both with compatible legacy requests. Additive UniqueFighterNames migration/backfill and real-SQL uniqueness/concurrency/populated-upgrade tests were added. Final 22 backend tests, nine fixture browser cases and frontend production build passed; migration/runtime status is in handoff.
+LALAMOG is a mobile-first React browser app where fighters discover each other,
+mutually match, chat and arrange a private fight or request a registered gym.
+Gym owners promote multiple venues and manage bookings. Payment happens at the
+gym; completion records attendance/history without a winner or ranking.
 
-2026-11-02 owner direction supersedes the old training-service positioning below: fun Tinder/Fight Club portfolio, as specified in [design brief](DESIGN_BRIEF.md). React UI now uses shared textured paper, dossier gestures/match reveal, multi-style compatibility, updated auth/profile/inbox/chat/fight screens and exact-pair arrangements. Build and nine deterministic fixture browser tests passed; live SQL/SignalR/avatar/waiver/persistence flows were not rerun. `/preview` is explicitly fictional; `/map` now shows participant-only pinned sessions (2026-11-02 maps follow-up). Public records/badges/maps/video/Azurite remain future services. See [frontend design](features/FRONTEND_DESIGN.md).
+| Capability | Current status / authoritative detail |
+| --- | --- |
+| React DOM/TypeScript/Vite | Implemented; shared paper design, swipe-only ruled notebook/Polaroid presentation, responsive layouts and REST API integration; [frontend](features/FRONTEND_DESIGN.md) |
+| .NET 10/EF Core SQL Server | One horizontal backend: controllers → interface-based services → domain repositories; inline Program configuration and static DatabaseSeeder; [structure](features/BACKEND_STRUCTURE.md) |
+| Native accounts/cookies/CSRF | Plain AppUser, native password/lockout handling, claims-derived identity; [authentication](features/AUTHENTICATION.md) |
+| Permission containers | FIGHTER, ADMIN, GYM_OWNER and anonymous VISITOR; current SQL permission unions, custom containers and resource checks; [roles](features/ROLE_PERMISSIONS.md) |
+| Profiles/discovery/matching | Unique fighter names, aliases, five styles, matching-permission eligibility, canonical mutual matches; [profiles](features/PROFILES_AND_DISCOVERY.md), [matching](features/MATCHING.md) |
+| Private chat | Participant-authorized REST with three-second active refresh/cursor recovery; [chat](features/CHAT.md) |
+| Gyms and public directory/map | Multiple owner venues, cover/details/pin/price/duration, publication and admin moderation; [gym booking](features/GYM_BOOKING.md) |
+| Private fights and gym bookings | Match membership, quote snapshots, owner decisions, overlap-safe approval, two waivers, cancellation and completion; [gym booking](features/GYM_BOOKING.md), [sessions](features/SESSIONS_AND_WAIVERS.md) |
+| Public completed gym history | Anonymous entries; identities require both fighter consents, with withdrawal; private arrangements excluded |
+| Philippine geography | Explicit Regions/Provinces/Cities/Barangays with named FKs; no recursive area model. Local PSA selectors and optional private pins; [maps](features/MAPS_AND_AREAS.md) |
+| Address suggestions | Protected explicit Azure Maps reverse lookup with server-only key/cache/manual fallback; Leaflet/OSM tiles remain |
+| Media | User-ID-derived avatars and Gym-ID-derived covers; no SQL image metadata; Azure Blob/private Azurite plus retained local fallback; [media](features/MEDIA_STORAGE.md) |
+| Startup/seeding | Development migrates then calls static DatabaseSeeder; other environments require explicit migrations and do not seed demo accounts; [local development](features/LOCAL_DEVELOPMENT.md) |
+| Agent knowledge | Root AGENTS → bootstrap → owning guides/source; mandatory same-task guide/handoff updates, safe context exports and validation; [workflow](features/AGENT_WORKFLOW.md) |
+| RabbitMQ/Redis | Provisioned infrastructure only; no application workflows, queues, workers or cache/backplane |
+| Ranking/results, video, online payments | Outside the current MVP; no ranking calculation, winners, video or online payment flow |
 
-LALAMOG connects sparring partners through discovery, mutual matching, private chat, and training-session scheduling. The supported product is a **React browser web application with mobile-first design**, backed by ASP.NET Core and Microsoft SQL Server. Native mobile implementation is outside the current target.
+## Repository and runtime boundaries
 
-| Area | Status | Evidence / next step |
-| --- | --- | --- |
-| AI entry and per-feature memory updates | Implemented repository workflow | Root AGENTS -> central CODEX_BOOTSTRAP -> guide/source; per-feature maintenance and dual-router registration; host must load instructions, no background updater |
-| React DOM/TypeScript/Vite web | Implemented | `ACTIVE_frontend_lalamog/src/`, `ACTIVE_frontend_lalamog/package.json`; responsive layouts exist, wider mobile QA remains |
-| .NET 10 API with domain services/repositories | Implemented | `ACTIVE_backend_lalamog/`, `Lalamog.slnx` |
-| Explicit horizontal N-tier style and service abstractions | Implemented 2026-10-29 | Five business service interfaces; individual interface/DTO classes; inline Program.cs startup callbacks (2026-11-02 owner override), explicit methods elsewhere; zero schema drift, 15 tests and isolated browser core passed; `_DOCUMENTATION/features/BACKEND_STRUCTURE.md` |
-| SQL Server + EF migrations | Implemented | `AppDbContext`, both active migration directories, Compose Express service |
-| Native AppUser + cookie authentication | Implemented; built-in MVC CSRF filter restored; all 34 backend tests pass | `Program.cs`, `AuthService`, `ACTIVE_frontend_lalamog/src/api.ts`; no browser JWT |
-| Profile edit, discovery, avatar | Implemented | `ProfileService`, `ProfileEditor`, local image decoder/storage |
-| Like/pass and mutual matching | Implemented | `MatchingService`, serializable repository runner, SQL unique indexes |
-| Private REST-only chat with three-second browser refresh | Implemented; SignalR removed 2026-11-02 | `ConversationService`, `Matches.tsx`, cursor recovery |
-| Schedule, two waivers/contacts, cancel, complete | Implemented | `FightService`; completion records no result/rating |
-| SQL/uploads persistence | Configured | SQL named volume; native uploads in .cache; custom cookie-key setup removed 2026-11-02, existing files preserved; opt-in restart test |
-| Local application startup | Infrastructure-only Compose | Direct dotnet/npm startup with appsettings.json; no API .env loader; static DatabaseSeeder runs after migration in the Development startup scope; optional launchers; see `_DOCUMENTATION/features/LOCAL_DEVELOPMENT.md` |
-| RabbitMQ | Provisioned only | Compose service; no client package, outbox, producer, or consumer |
-| Redis | Provisioned only | Compose service; no cache/backplane integration |
-| Azure Blob Storage | Avatar adapter implemented; cloud deployment unverified | Private container, server-built URLs and legacy first-read import; [media](features/MEDIA_STORAGE.md) |
-| Azurite | Implemented local Blob service | Pinned image, loopback 10000, persistent volume and real integration/restart tests |
-| GPS, web map picker, private venue map | Implemented | Optional GPS, manual addresses, private pins; distance/public maps remain planned; explicit public-place reverse lookup implemented; BE-03/FE-04 partial |
-| Philippine region/province/city/barangay catalog | Implemented | Bundled PSA 2026-Q3, 18 regions/42,010 barangays, local anonymous lookup endpoints; BE-02/FE-03 |
-| Results, Elo, disputes, public events/maps | Deferred | Historical guides are not active API capabilities |
-| Recovery/email verification, moderation, public deployment | Pending | Backlog work; local HTTP stack only |
+Active apps are ACTIVE_backend_lalamog/ and ACTIVE_frontend_lalamog/. Tests live
+in tests/Lalamog.Api.Tests/ and frontend tests/. The solution is
+ACTIVE_backend_lalamog/solution/Lalamog.slnx; SDK/tool manifests stay in backend.
+Both backend Migrations/ and Data/Migrations/ belong to active AppDbContext.
+Legacy backend/frontend/reference trees remain preserved and must not run their
+migrations against active SQL. Superseded ApiFactory/WorkflowTests and
+scripts/smoke.py are not supported test flows.
 
-## Repository boundaries
+Compose hosts SQL, Azurite, RabbitMQ and Redis only. Normal API/frontend ports
+are 5080/5173. Native startup uses built-in appsettings loading; there is no API
+.env loader, initializer mode, IdentityUser or SignalR. Secrets, local runtime
+state and backups stay ignored. Shared ignore rules live in scripts/gitignore,
+registered through repository-local setup. Preserve SQL/storage/key files;
+resets require explicit authorization. [Repository map](REPOSITORY_MAP.md).
 
-- Git root: root `AGENTS.md`, thin `GEMINI.md`, `_DOCUMENTATION/`, `.git/`, active/legacy apps, `infrastructure/`, `scripts/`, and `tests/`. Shared docs/archives live in `_DOCUMENTATION/`; `global.json`, `.config/dotnet-tools.json` and `solution/Lalamog.slnx` remain inside `ACTIVE_backend_lalamog/`.
-- Active: `ACTIVE_backend_lalamog/`, `ACTIVE_frontend_lalamog/`, `tests/Lalamog.Api.Tests/`, `scripts/setup.ps1`, `scripts/dev.ps1`, `infrastructure/compose.yaml`.
-- Legacy: unchanged `LEGACY_backend_lalamog/` (.NET/PostgreSQL-era application), unchanged `LEGACY_frontend_lalamog/` (Expo/React Native), `LEGACY_reference/` (old root solution/SQL script). Historical documents are under `_DOCUMENTATION/archive/`; legacy source contents are unchanged.
-- Historical scaffold artifacts remain in active directories: `scripts/smoke.py` uses JWT/no-CSRF; `ApiFactory.cs` and `WorkflowTests.cs` are excluded from tests. Do not run/revive them as the supported flow without porting them.
-- Two migration locations belong to active `AppDbContext`: `Migrations/` and `Data/Migrations/`. Neither is disposable just because of its folder name.
+Fresh fictional seed: 22 accounts/profiles, 3 gyms, 5 matches, 10 fights,
+4 roles, 13 permissions, 20 grants and 23 user-role assignments. Counts describe
+an isolated fresh seed, not the normal database with retained test additions.
+The verified normal upgrade retained 27 accounts, 28 assignments, 5 gyms and
+11 fights. See handoff for the retained-additions decision and backup chronology.
 
-## Environment facts
+## Verification and remaining work
 
-2026-10-29 root cleanup/SDK fix: `ACTIVE_backend_lalamog/global.json` now accepts installed SDK 10.0.100 and later .NET 10 feature bands. SDK resolution, forced locked restore and active solution build passed with zero warnings/errors. Compose and private `.env` are under `infrastructure/`; `scripts/services.ps1` supplies explicit Compose paths. Setup registers `scripts/gitignore` through repository-local Git configuration so secrets/build output stay ignored; root is no longer file-free under the 2026-11-03 owner layout. Native app data remains in root `.cache/`.
+2026-11-07 application evidence: 85 backend cases passed with zero skipped,
+including SQL/Azurite and populated migrations; frontend build and EF model
+consistency passed. Twenty permission/map/layout browser checks and two isolated
+full booking/admin cases passed. A final five-case permission rerun passed after
+readability edits. These are dated results, not checks automatically rerun by
+editing this page. Latest documentation checks are in the handoff.
 
-Updated 2026-10-29: Compose project `lalamog` runs SQL on 14333, RabbitMQ 5672/15672, and Redis 16379 only. Container names are `lalamog-sql`, `lalamog-rabbitmq`, and `lalamog-redis`. Native API uses 5080 and Vite 5173. The optional `scripts/dev.ps1` starts the API and `-Web` starts Vite; apply migrations with EF tools. Demo seeding/initializer mode were removed on 2026-11-02. No application build or initializer service remains in Compose. Existing infrastructure volume keys/ports/credentials are preserved; former upload/key volumes remain declared for recovery, with no automatic migration into native `.cache/`. `WEB_PORT` is obsolete. See [local development](features/LOCAL_DEVELOPMENT.md) for verification and migration limits.
+The normal app is locally running with the tested permission upgrade. Physical
+GPS, cloud deployment and a new SQL container restart were not rerun. There is
+no production-readiness claim. No required Gym Booking MVP implementation remains.
 
-Existing local edits, untracked code/migrations, and legacy upload changes were present before the knowledge-base work. No clean checkout can be assumed. Inspect Git status; preserve those files.
-
-## Verification evidence and limits
-
-The pre-existing root README records a 2026-10-28 build, eight SQL integration tests, two browser tests, and dependency audits as passing. This is **historical evidence**, not a rerun by the documentation audit. That initial inventory contained eight `[Fact]` tests and two Playwright tests; it is historical, and the current test tree has expanded. See [handoff](memory/HANDOFF.md) for checks actually performed during this change.
-
-The photo test's method name mentions storage instances, but its body primarily checks HTTP upload formats/errors/path handling; container restart durability is exercised separately in the Playwright persistence test. Do not overstate individual test coverage.
-
-## Next implementation order
-
-1. BE-01 + FE-02 remaining: grace-period orphan cleanup, broader browser failure UX and backup/restore operations; core Blob/Azurite parity and first-read migration are delivered.
-2. BE-03/FE-04 remaining: distance/radius discovery if requested. Catalog/private pins/basic map and explicit public-place address suggestions are delivered.
-3. BE-04 + FE-05: SQL outbox/RabbitMQ and durable in-app session notifications.
-4. FE-01/06/07 + BE-05/06/07: mobile resilience, authentication/recovery, moderation/privacy, wider persistence/failure checks, and operational readiness.
-
-Task IDs and acceptance criteria live in the [backlog overview](BACKLOG.md). Completing these requires code and verification; this documentation pass does not implement those integrations.
-
-Historical 2026-11-01 local startup (API .env flow superseded 2026-11-02): the backend supported plain dotnet build/run through its Development launch profile, appsettings.Development.json and private infrastructure/.env. Solution moved to backend solution/Lalamog.slnx; full checks use that explicit path. Configuration tests and direct/proxied SQL health passed; no migrations/data reset. Details: [local development](features/LOCAL_DEVELOPMENT.md).
+Next work is owner-selected: geographic representation/ranking rules and distance
+queries, account recovery/email verification, broader reporting/blocking/privacy,
+backup/restore operations, or concrete durable notifications. Do not start these
+or introduce infrastructure automatically. [Backlog](BACKLOG.md).

@@ -1,5 +1,9 @@
 # Profiles and discovery
 
+2026-11-07 permission-container update: Discovery and swipe-target eligibility now use user_canMatch through any assigned role. The FIGHTER label itself grants nothing; owner-only defaults lack this permission. Custom containers with matching permission are eligible. See [role permissions](ROLE_PERMISSIONS.md).
+
+2026-11-07 current: Gym MVP discovery now includes only users assigned Fighter; owner-only profiles are excluded from both discover results and direct swipe targets. Owners may enable Fighter explicitly and keep the same profile/account. Existing public/private profile boundaries remain. Source: ProfileRepository, MatchingService and auth/access services. Latest checks: [gym booking](GYM_BOOKING.md).
+
 2026-11-02 address-lookup follow-up: profile pin can explicitly request a public-place address suggestion. Current provider is Azure Maps (owner revision 2026-11-07); this sends coordinates after the visible notice; never automatic for GPS/discovery or pin movement. Suggestion is view-only on profiles: public city text, PSGC codes and private storage contract stay unchanged. Source/provider limits/tests: [maps guide](MAPS_AND_AREAS.md).
 
 2026-11-02 latest work: ProfileEditor uses LocationPicker with manual text, local PSA selectors, optional GPS and map pin. ProfileService validates/saves nullable private fields; own GET/update/avatar includes mapLocation, discovery and match opponent omit it. Older updates omitting/null mapLocation preserve it; `{}` clears. SQL privacy/preservation/invalid-input tests passed in full 43-case backend run; fixture save/reload/failure checks passed. Source/migration/recovery: [maps guide](MAPS_AND_AREAS.md).
@@ -35,6 +39,15 @@ Browser core flow covers profile editing; matching tests cover discovery exclusi
 
 
 ## Latest work record
+
+- 2026-11-07 / swipe-only field notebook: `Discover.tsx` and new scoped
+  `Discover.css` place the portrait/styles left, ruled fighter facts/record right
+  and typed notes below. Existing DTOs, public/private boundaries, target
+  eligibility, exclusions and Like/Pass requests are unchanged. Live missing
+  records remain unavailable; sample stats remain preview-only. Production
+  build and all 11 design browser fixture cases passed, including failure
+  recovery, gestures, long text/five styles/missing photos and narrow layouts.
+  Source/recovery/coverage limits: [frontend design](FRONTEND_DESIGN.md).
 
 - 2026-11-06 / recovered avatar and seed requirements: fifteen additions outside all seeded swipes/matches, 21 users total, all with bundled default portraits. User-ID image URLs replace SQL avatar references; custom storage images and interactions survive reruns. All 64 backend tests passed, including decoding all defaults, discovery from every seed viewer, guarded migration and saved like/pass across restart. Normal API is now updated after a verified SQL backup; live Alex discovery contains all fifteen additions, all their portraits return 200, and SQL confirms zero swipes/matches for each. Compose Azurite persistence also passed. Current evidence/limits: [media storage](MEDIA_STORAGE.md); current account list: [local development](LOCAL_DEVELOPMENT.md).
 

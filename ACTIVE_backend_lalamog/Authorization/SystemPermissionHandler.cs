@@ -17,17 +17,21 @@ public class SystemPermissionHandler : AuthorizationHandler<SystemFeatureRequire
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context, SystemFeatureRequirement requirement)
     {
-        string? userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (context.User.Identity?.IsAuthenticated != true || !Guid.TryParse(userId, out Guid actorId))
-        {
-            return;
-        }
-
         CancellationToken cancellationToken = CancellationToken.None;
         if (context.Resource is HttpContext httpContext)
         {
             cancellationToken = httpContext.RequestAborted;
         }
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            if (await _access.HasVisitorFeatureAsync(requirement.Code, cancellationToken))
+            {
+                context.Succeed(requirement);
+            }
+            return;
+        }
+        string? userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out Guid actorId)) { return; }
         if (await _access.HasFeatureAsync(actorId, requirement.Code, cancellationToken))
         {
             context.Succeed(requirement);

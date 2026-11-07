@@ -16,17 +16,17 @@ namespace Lalamog.Api.DTOs
             Address = address;
         }
 
+        public long? GymId { get; set; }
+        public string? GymVersion { get; set; }
         public long MatchId { get; set; }
 
         public DateTimeOffset ScheduledAt { get; set; }
 
-        [Required]
         [MaxLength(200)]
-        public string Location { get; set; } = null!;
+        public string Location { get; set; } = "";
 
-        [Required]
         [MaxLength(300)]
-        public string Address { get; set; } = null!;
+        public string Address { get; set; } = "";
         public MapLocation? MapLocation { get; set; }
     }
 }
