@@ -192,6 +192,9 @@ with existing red Old Newspaper Types headings. Lists read as aligned notebook
 entries; selected filter rows have a faint yellow tint and native checkmarks.
 The header/44px close button stays sticky during dialog scrolling. Long names
 wrap; long content scrolls inside the dialog without scrolling the map page.
+The owner clarified that white paper applies only to the swipeable card.
+Map popups, frames, tape and floating controls retain the warm palette; the
+broader white/grey trial below is historical and withdrawn.
 
 Gym details add numbered Venue notes/Session details and a CSS-taped Polaroid
 frame around `GymCover`. Existing venue images are reused; missing/failed images
@@ -243,6 +246,17 @@ Official API reference: [Azure reverse geocoding](https://learn.microsoft.com/en
 Recovery: restore the service, response DTO, inline named client, web types/UI and provider fixtures together. Keep Maps:AzureMapsApiKey private and restart the API after rebuilding; clearing/restarting the process also clears its old cache. Manual text/catalog/map controls work during a provider outage. No database migration, volume reset, media change or legacy edit is required.
 
 ## Latest work record and verification
+
+Historical, withdrawn 2026-11-08 / broad white-paper trial: changed map notebook sheets, sticky headers,
+photo frames, list/form surfaces and paper controls to white with neutral grey
+backing/borders/tape. `FightMap.css` and the matching `Discover.css` palette are
+the only application files changed. Kept red ink, CSS rules and small yellow
+highlighter accents. Production build and the focused notebook popup case
+passed (12.2s), covering all six popup types and long/photo content at
+320/375/390/1440px. White mobile filter/gym screenshots visually reviewed.
+No full map/backend suite or new physical-device/accessibility audit was run
+for this CSS-only palette trial. Recovery: restore the two scoped CSS palettes
+together if returning to the previous warm-paper appearance.
 
 2026-11-08 / notebook map popups: all six map dialogs now reuse the approved
 swipe notebook visual language through one map-specific wrapper. CSS supplies

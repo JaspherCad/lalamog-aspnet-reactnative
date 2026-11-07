@@ -4,7 +4,16 @@ Updated: 2026-11-08 (Asia/Manila). [Change log](CHANGELOG.md).
 
 ## Current implementation and next action
 
-Latest task: all six map popups now use the swipe notebook skin. `MapModal` in
+Latest task: corrected palette scope after owner clarification. Only the
+swipeable card sheet is white (#FFFFFF), with its old brown tint removed.
+The original warm textured background, backing sheets, tape, photo frame,
+buttons and map popups are restored. The broad white/grey trial is withdrawn.
+Build and mobile visual/viewport checks passed. Only two Discover.css
+color declarations differ from the preceding approved implementation.
+Current palette: [design](../DESIGN.md),
+[frontend guide](../features/FRONTEND_DESIGN.md#latest-work-record).
+
+Preceding task: all six map popups now use the swipe notebook skin. `MapModal` in
 `FightMap.tsx`, notebook rules in `FightMap.css` and optional `Modal.className`
 in `ui.tsx` supply spiral binding, ruled paper/red margins, typed labels and
 taped venue-photo frames. Sticky close headers keep controls reachable during

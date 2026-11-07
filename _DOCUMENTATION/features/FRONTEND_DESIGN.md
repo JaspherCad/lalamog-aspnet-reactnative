@@ -1,5 +1,11 @@
 # Mobile-first fighter dossier design
 
+2026-11-08 palette clarification: only the swipeable card sheet is white
+(#FFFFFF), through its --notebook-paper token and flat background in
+Discover.css. The warm textured background, backing sheets, tape, photo frame
+and buttons remain. Map popups retain warm paper. The broad white/grey trial
+below is historical and withdrawn; do not reproduce it as current UI.
+
 2026-11-08 current map presentation: `/map` fills the screen between app header
 and navigation. Floating paper title/legend, filters, info and browse buttons
 open native dialogs for lists and details; the page has no vertical scroll.
@@ -67,6 +73,18 @@ Run: frontend `npm run build`; set `LALAMOG_WEB_URL` to the running preview, opt
 No current APIs for public competitive records, measurements, opponent reviews/aggregates, badges, rankings or video. Public gym maps/history are implemented separately. Show honest unavailable/empty states; seeded visual examples must be explicitly labeled and separate from real accounts. `RecordPanel` in `ui.tsx` uses one proportional W/L/D bar plus cm/kg and opponent-rating stars/score/count; its separate `FighterStats` view type is not an extension of the backend Profile DTO. Only preview Miko has sample stats (178 cm, 76 kg, 4/5 from 8 reviews). Rating meter green = average/5, red = remaining scale; unknown is neutral.
 
 ## Latest work record
+
+- 2026-11-08 / palette correction: restored the original warm surroundings and map palette; only the swipe card sheet is white. Production build and mobile visual/viewport checks passed. Source change against the preceding approved design is limited to two declarations in Discover.css. No behavior or layout changes.
+
+- Historical, withdrawn 2026-11-08 / broad white-paper trial: replaced cream/brown notebook sheets and
+  related photo/backing/control surfaces with white/neutral grey in Discover
+  and map popups. Removed the portrait sepia tint. Layout and behavior remain.
+  Production build passed; mobile 375x812 and desktop 1440x900 preview checks
+  confirmed no page overflow and working profile dialog/Escape. Focused map
+  notebook popup regression passed across all six popup types, long notes and
+  photos; white swipe/filter/gym screenshots reviewed. Broad browser/backend
+  suites were not rerun for this CSS-only change. Current design is a user-
+  requested palette trial, not a new domain/API feature.
 
 - 2026-11-08 / notebook map popups: Filters, About, public/private lists and
   gym/private-fight details now use one map-specific notebook wrapper. Existing

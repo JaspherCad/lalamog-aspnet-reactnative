@@ -1,5 +1,11 @@
 # LALAMOG — Design system and interaction direction
 
+Owner palette clarification 2026-11-08: **only the swipeable card sheet is
+white (#FFFFFF)**. Keep the original warm textured background, backing sheets,
+tape, photo frames, buttons and map popups. The broader white/grey palette
+trial was withdrawn after the owner clarified the scope. Notebook lines,
+red headings and geometry remain unchanged.
+
 Owner revision 2026-11-08, implemented for `/map`: the map is the viewport's
 main surface between header and navigation, with no vertical page scrolling.
 Title/legend, Filters, About and browse actions float on it. Lists, filters and

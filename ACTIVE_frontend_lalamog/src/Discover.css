@@ -1,6 +1,6 @@
 /* The notebook skin belongs only to Discover (including its fictional preview). */
 .discover-page {
-  --notebook-paper: #f3ecd7;
+  --notebook-paper: #ffffff;
   --notebook-rule: #657c8e30;
   --typewriter: 'Courier New', Courier, monospace;
 }
@@ -12,7 +12,7 @@
 .discover-page .sheet-one { transform: translate(-4px, 5px) rotate(-.5deg); }
 .discover-page .sheet-two { transform: translate(4px, 9px) rotate(.5deg); background: #b2a07c; }
 .discover-page .fighter-dossier {
-  background: linear-gradient(90deg, #b7a47c24, transparent 12%, #fff5 55%, transparent), var(--notebook-paper);
+  background: var(--notebook-paper);
   border: 1px solid #6d634e;
   box-shadow: 2px 3px 8px #30291d26;
   padding-top: 19px;
